@@ -532,5 +532,5 @@
 .score-pill--low { background: rgba(244,63,94,0.12); color: #be123c; }
 
 @media (max-width: 900px) {
-    .careers-grid, .careers-steps, .admin-stats { grid-template-columns: 1fr; }
+    .careers-grid, .careers-steps, .admin-stats, .answer-key-grid { grid-template-columns: 1fr; }
 }
