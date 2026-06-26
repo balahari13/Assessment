@@ -47,6 +47,8 @@ export default async (req, context) => {
             grammar: body.grammar || {},
             fillBlank: body.fillBlank || {},
             englishPercent: body.englishPercent || 0,
+            reading: body.reading || {},
+            workplace: body.workplace || {},
             typing: body.typing || {},
             voice: body.voice || {},
             overallScore: body.overallScore || 0

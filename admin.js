@@ -78,6 +78,25 @@
             return `<li><strong>F${i + 1}.</strong> ${item.q} <span class="answer-key-ans">→ ${answers}</span></li>`;
         }).join('');
 
+        const readingHtml = (data.readingPassages || []).map((passage, pIdx) => {
+            const qHtml = passage.questions.map((item, i) => {
+                const correct = item.options[item.answer] || '—';
+                return `<li><strong>Q${i + 1}.</strong> ${item.q} <span class="answer-key-ans">→ ${correct}</span></li>`;
+            }).join('');
+            return `
+                <div class="answer-key-passage-block">
+                    <h4>Passage ${pIdx + 1}: ${passage.title}</h4>
+                    <p class="answer-key-passage-snippet">${passage.passage}</p>
+                    <ol class="answer-key-list">${qHtml}</ol>
+                </div>
+            `;
+        }).join('');
+
+        const workplaceHtml = (data.workplaceQuestions || []).map((item, i) => {
+            const correct = item.options[item.answer] || '—';
+            return `<li><strong>W${i + 1}.</strong> ${item.q} <span class="answer-key-ans">→ ${correct}</span></li>`;
+        }).join('');
+
         const voiceHtml = data.voicePrompts.map((item, i) =>
             `<li><strong>V${i + 1}.</strong> [${item.type}] ${item.text}</li>`
         ).join('');
@@ -91,6 +110,14 @@
                 <section class="answer-key-section">
                     <h3>Fill in the Blanks (${data.fillBlankQuestions.length})</h3>
                     <ol class="answer-key-list">${fillHtml}</ol>
+                </section>
+                <section class="answer-key-section answer-key-section--full">
+                    <h3>Reading Comprehension</h3>
+                    ${readingHtml}
+                </section>
+                <section class="answer-key-section answer-key-section--full">
+                    <h3>Workplace &amp; Psychology (${(data.workplaceQuestions || []).length})</h3>
+                    <ol class="answer-key-list">${workplaceHtml}</ol>
                 </section>
                 <section class="answer-key-section answer-key-section--full">
                     <h3>Typing Passage</h3>
@@ -108,7 +135,7 @@
         const tbody = document.getElementById('results-body');
         cachedResults = results;
         if (!results.length) {
-            tbody.innerHTML = '<tr><td colspan="10">No assessment submissions yet.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="12">No assessment submissions yet.</td></tr>';
             return;
         }
 
@@ -120,6 +147,8 @@
                 <td>${email || '—'}</td>
                 <td>${r.phone || '—'}</td>
                 <td><span class="score-pill ${scoreClass(getEnglishPercent(r))}">${getEnglishPercent(r)}%</span></td>
+                <td><span class="score-pill ${scoreClass(r.reading?.percent || 0)}">${r.reading?.percent || 0}%</span></td>
+                <td><span class="score-pill ${scoreClass(r.workplace?.percent || 0)}">${r.workplace?.percent || 0}%</span></td>
                 <td><span class="score-pill ${scoreClass(Math.min(100, (r.typing?.bestWpm || 0)))}">${r.typing?.bestWpm || 0} WPM</span></td>
                 <td>${r.typing?.bestAccuracy || 0}%</td>
                 <td><span class="score-pill ${scoreClass(r.voice?.completionPercent || 0)}">${r.voice?.completionPercent || 0}%</span></td>
@@ -147,17 +176,21 @@
     function renderSummary(summary) {
         document.getElementById('stat-total').textContent = summary.total;
         document.getElementById('stat-grammar').textContent = `${summary.avgGrammar}%`;
+        document.getElementById('stat-reading').textContent = `${summary.avgReading || 0}%`;
+        document.getElementById('stat-workplace').textContent = `${summary.avgWorkplace || 0}%`;
         document.getElementById('stat-typing').textContent = `${summary.avgTypingWpm} WPM`;
         document.getElementById('stat-voice').textContent = `${summary.avgVoice}%`;
     }
 
     function exportCsv(results) {
-        const headers = ['Name', 'Email', 'Phone', 'English %', 'MCQ %', 'Fill Blank %', 'Best WPM', 'Accuracy %', 'Voice %', 'Overall %', 'Completed At'];
+        const headers = ['Name', 'Email', 'Phone', 'English %', 'MCQ %', 'Fill Blank %', 'Reading %', 'Workplace %', 'Best WPM', 'Accuracy %', 'Voice %', 'Overall %', 'Completed At'];
         const rows = results.map(r => [
             r.fullName, r.email, r.phone,
             getEnglishPercent(r),
             r.grammar?.percent || 0,
             r.fillBlank?.percent || 0,
+            r.reading?.percent || 0,
+            r.workplace?.percent || 0,
             r.typing?.bestWpm || 0,
             r.typing?.bestAccuracy || 0,
             r.voice?.completionPercent || 0,

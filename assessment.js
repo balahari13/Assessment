@@ -9,6 +9,9 @@
     let sectionIndex = 0;
     let englishQuestionIndex = 0;
     let englishPhase = 'mcq';
+    let readingPassageIndex = 0;
+    let readingQuestionIndex = 0;
+    let workplaceQuestionIndex = 0;
     let globalTimer = null;
     let sectionTimer = null;
     let globalSecondsLeft = data.totalMinutes * 60;
@@ -21,6 +24,8 @@
     const state = {
         grammar: { answers: [], score: 0, percent: 0 },
         fillBlank: { answers: [], score: 0, percent: 0 },
+        reading: { answers: [], score: 0, percent: 0 },
+        workplace: { answers: [], score: 0, percent: 0 },
         typing: { rounds: [], bestWpm: 0, bestAccuracy: 0 },
         voice: { recordings: [], completionPercent: 0 }
     };
@@ -191,7 +196,7 @@
             `;
 
         const nextLabel = isLastFill
-            ? 'Continue to Typing'
+            ? 'Continue to Reading'
             : isLastEnglish
                 ? 'Continue to Fill in the Blanks'
                 : 'Next Question';
@@ -307,6 +312,8 @@
         clearInterval(globalTimer);
         clearInterval(sectionTimer);
         saveCurrentEnglishAnswer();
+        saveCurrentReadingAnswer();
+        saveCurrentWorkplaceAnswer();
         const panel = document.getElementById('assessment-content');
         panel.innerHTML = `
             <div class="form-alert form-alert--error" style="display:block">
@@ -315,6 +322,233 @@
             </div>
         `;
         finishAssessment(false, 'tab-switch');
+    }
+
+    function getReadingQuestionsTotal() {
+        return data.readingPassages.reduce((sum, p) => sum + p.questions.length, 0);
+    }
+
+    function getReadingFlatIndex(passageIdx, questionIdx) {
+        let idx = 0;
+        for (let p = 0; p < passageIdx; p++) idx += data.readingPassages[p].questions.length;
+        return idx + questionIdx;
+    }
+
+    function ensureReadingAnswers() {
+        const total = getReadingQuestionsTotal();
+        if (state.reading.answers.length !== total) {
+            state.reading.answers = new Array(total).fill(null);
+        }
+    }
+
+    function saveCurrentReadingAnswer() {
+        const checked = document.querySelector('input[name="reading-q"]:checked');
+        if (checked) {
+            const flat = getReadingFlatIndex(readingPassageIndex, readingQuestionIndex);
+            state.reading.answers[flat] = parseInt(checked.value, 10);
+        }
+    }
+
+    function finalizeReadingScores() {
+        ensureReadingAnswers();
+        let score = 0;
+        data.readingPassages.forEach((passage, pIdx) => {
+            passage.questions.forEach((item, qIdx) => {
+                const flat = getReadingFlatIndex(pIdx, qIdx);
+                if (state.reading.answers[flat] === item.answer) score += 1;
+            });
+        });
+        state.reading.score = score;
+        state.reading.percent = Math.round((score / getReadingQuestionsTotal()) * 100);
+    }
+
+    function renderReading() {
+        setPanelCompact(false);
+        ensureReadingAnswers();
+        renderReadingQuestion();
+    }
+
+    function renderReadingQuestion() {
+        const panel = document.getElementById('assessment-content');
+        const section = data.sections[sectionIndex];
+        const passageData = data.readingPassages[readingPassageIndex];
+        const totalPassages = data.readingPassages.length;
+        const totalQuestions = passageData.questions.length;
+        const item = passageData.questions[readingQuestionIndex];
+        const flat = getReadingFlatIndex(readingPassageIndex, readingQuestionIndex);
+        const selected = state.reading.answers[flat];
+        const isLastPassage = readingPassageIndex === totalPassages - 1;
+        const isLastQuestion = readingQuestionIndex === totalQuestions - 1;
+
+        const nextLabel = isLastPassage && isLastQuestion
+            ? 'Continue to Workplace Assessment'
+            : 'Next Question';
+
+        panel.innerHTML = `
+            <div class="section-intro">
+                <h2>Reading Comprehension</h2>
+                <p class="section-desc">Read the passage carefully, then answer each question. Passage ${readingPassageIndex + 1} of ${totalPassages}.</p>
+                <span class="section-timer">Section time remaining: <span id="section-timer">${formatTime(sectionSecondsLeft || section.minutes * 60)}</span></span>
+            </div>
+            <div class="reading-passage-box">
+                <h3 class="reading-passage-title">${passageData.title}</h3>
+                <p class="reading-passage-text">${passageData.passage}</p>
+            </div>
+            <div class="grammar-pagination">
+                <span>Question <strong>${readingQuestionIndex + 1}</strong> of <strong>${totalQuestions}</strong></span>
+            </div>
+            <fieldset class="grammar-q">
+                <legend>${item.q}</legend>
+                <div class="grammar-options">
+                    ${item.options.map((opt, j) => `
+                        <label>
+                            <input type="radio" name="reading-q" value="${j}" ${selected === j ? 'checked' : ''} required>
+                            <span>${opt}</span>
+                        </label>
+                    `).join('')}
+                </div>
+            </fieldset>
+            <div class="assessment-actions">
+                <button type="button" class="btn btn-secondary" id="reading-prev" ${readingPassageIndex === 0 && readingQuestionIndex === 0 ? 'hidden' : ''}>Previous</button>
+                <button type="button" class="btn btn-primary" id="reading-next">${nextLabel}</button>
+            </div>
+        `;
+
+        document.getElementById('reading-next').addEventListener('click', () => {
+            const checked = document.querySelector('input[name="reading-q"]:checked');
+            if (!checked) {
+                const firstRadio = document.querySelector('input[name="reading-q"]');
+                if (firstRadio) firstRadio.reportValidity();
+                return;
+            }
+            saveCurrentReadingAnswer();
+            if (isLastPassage && isLastQuestion) {
+                finalizeReadingScores();
+                goNextSection();
+                return;
+            }
+            if (readingQuestionIndex < totalQuestions - 1) {
+                readingQuestionIndex += 1;
+            } else {
+                readingPassageIndex += 1;
+                readingQuestionIndex = 0;
+            }
+            renderReadingQuestion();
+        });
+
+        const prevBtn = document.getElementById('reading-prev');
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                saveCurrentReadingAnswer();
+                if (readingQuestionIndex > 0) {
+                    readingQuestionIndex -= 1;
+                } else {
+                    readingPassageIndex -= 1;
+                    readingQuestionIndex = data.readingPassages[readingPassageIndex].questions.length - 1;
+                }
+                renderReadingQuestion();
+            });
+        }
+    }
+
+    function ensureWorkplaceAnswers() {
+        if (state.workplace.answers.length !== data.workplaceQuestions.length) {
+            state.workplace.answers = new Array(data.workplaceQuestions.length).fill(null);
+        }
+    }
+
+    function saveCurrentWorkplaceAnswer() {
+        const checked = document.querySelector('input[name="workplace-q"]:checked');
+        if (checked) {
+            state.workplace.answers[workplaceQuestionIndex] = parseInt(checked.value, 10);
+        }
+    }
+
+    function finalizeWorkplaceScores() {
+        ensureWorkplaceAnswers();
+        let score = 0;
+        data.workplaceQuestions.forEach((item, i) => {
+            if (state.workplace.answers[i] === item.answer) score += 1;
+        });
+        state.workplace.score = score;
+        state.workplace.percent = Math.round((score / data.workplaceQuestions.length) * 100);
+    }
+
+    function renderWorkplace() {
+        setPanelCompact(false);
+        workplaceQuestionIndex = 0;
+        ensureWorkplaceAnswers();
+        renderWorkplaceQuestion();
+    }
+
+    function renderWorkplaceQuestion() {
+        const panel = document.getElementById('assessment-content');
+        const section = data.sections[sectionIndex];
+        const total = data.workplaceQuestions.length;
+        const i = workplaceQuestionIndex;
+        const item = data.workplaceQuestions[i];
+        const selected = state.workplace.answers[i];
+        const isLast = i === total - 1;
+
+        const dots = data.workplaceQuestions.map((_, idx) => {
+            let cls = 'grammar-progress-dot';
+            if (state.workplace.answers[idx] !== null) cls += ' grammar-progress-dot--done';
+            if (idx === i) cls += ' grammar-progress-dot--current';
+            return `<span class="${cls}" aria-hidden="true"></span>`;
+        }).join('');
+
+        panel.innerHTML = `
+            <div class="section-intro">
+                <h2>Workplace &amp; Psychology</h2>
+                <p class="section-desc">Choose the best response for each workplace scenario. One question per page.</p>
+                <span class="section-timer">Section time remaining: <span id="section-timer">${formatTime(sectionSecondsLeft || section.minutes * 60)}</span></span>
+            </div>
+            <div class="grammar-pagination">
+                <span>Question <strong>${i + 1}</strong> of <strong>${total}</strong></span>
+                <div class="grammar-progress-dots">${dots}</div>
+            </div>
+            <fieldset class="grammar-q">
+                <legend>${item.q}</legend>
+                <div class="grammar-options">
+                    ${item.options.map((opt, j) => `
+                        <label>
+                            <input type="radio" name="workplace-q" value="${j}" ${selected === j ? 'checked' : ''} required>
+                            <span>${opt}</span>
+                        </label>
+                    `).join('')}
+                </div>
+            </fieldset>
+            <div class="assessment-actions">
+                <button type="button" class="btn btn-secondary" id="workplace-prev" ${i === 0 ? 'hidden' : ''}>Previous</button>
+                <button type="button" class="btn btn-primary" id="workplace-next">${isLast ? 'Continue to Typing' : 'Next Question'}</button>
+            </div>
+        `;
+
+        document.getElementById('workplace-next').addEventListener('click', () => {
+            const checked = document.querySelector('input[name="workplace-q"]:checked');
+            if (!checked) {
+                const firstRadio = document.querySelector('input[name="workplace-q"]');
+                if (firstRadio) firstRadio.reportValidity();
+                return;
+            }
+            saveCurrentWorkplaceAnswer();
+            if (isLast) {
+                finalizeWorkplaceScores();
+                goNextSection();
+                return;
+            }
+            workplaceQuestionIndex += 1;
+            renderWorkplaceQuestion();
+        });
+
+        const prevBtn = document.getElementById('workplace-prev');
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                saveCurrentWorkplaceAnswer();
+                workplaceQuestionIndex = Math.max(0, workplaceQuestionIndex - 1);
+                renderWorkplaceQuestion();
+            });
+        }
     }
 
     let typingStart = null;
@@ -569,6 +803,8 @@
         document.getElementById('section-name').textContent = section.label;
 
         if (section.id === 'grammar') renderGrammar();
+        else if (section.id === 'reading') { readingPassageIndex = 0; readingQuestionIndex = 0; renderReading(); }
+        else if (section.id === 'workplace') renderWorkplace();
         else if (section.id === 'typing') renderTyping();
         else if (section.id === 'voice') { voiceRound = 0; renderVoice(); }
         startTimers(section.minutes);
@@ -583,6 +819,12 @@
         if (currentSection.id === 'grammar') {
             saveCurrentEnglishAnswer();
             finalizeEnglishScores();
+        } else if (currentSection.id === 'reading') {
+            saveCurrentReadingAnswer();
+            finalizeReadingScores();
+        } else if (currentSection.id === 'workplace') {
+            saveCurrentWorkplaceAnswer();
+            finalizeWorkplaceScores();
         } else if (currentSection.id === 'typing') {
             saveTypingProgress();
         }
@@ -595,14 +837,26 @@
         renderSection();
     }
 
+    function getSectionScore(sectionId) {
+        if (sectionId === 'grammar') return getEnglishPercent();
+        if (sectionId === 'reading') return state.reading.percent || 0;
+        if (sectionId === 'workplace') return state.workplace.percent || 0;
+        if (sectionId === 'typing') return Math.min(100, Math.round((state.typing.bestWpm / 60) * 100));
+        if (sectionId === 'voice') {
+            const completedVoice = state.voice.recordings.filter(r => r && r.completed).length;
+            state.voice.completionPercent = Math.round((completedVoice / data.voicePrompts.length) * 100);
+            return state.voice.completionPercent;
+        }
+        return 0;
+    }
+
     function computeOverall() {
         finalizeEnglishScores();
-        const g = getEnglishPercent();
-        const t = Math.min(100, Math.round((state.typing.bestWpm / 60) * 100));
-        const completedVoice = state.voice.recordings.filter(r => r && r.completed).length;
-        state.voice.completionPercent = Math.round((completedVoice / data.voicePrompts.length) * 100);
-        const v = state.voice.completionPercent;
-        return Math.round(g * 0.35 + t * 0.35 + v * 0.30);
+        finalizeReadingScores();
+        finalizeWorkplaceScores();
+        return Math.round(
+            data.sections.reduce((sum, s) => sum + getSectionScore(s.id) * s.weight, 0)
+        );
     }
 
     async function finishAssessment(timedOut, terminatedReason) {
@@ -622,6 +876,12 @@
         if (currentSection?.id === 'grammar') {
             saveCurrentEnglishAnswer();
             finalizeEnglishScores();
+        } else if (currentSection?.id === 'reading') {
+            saveCurrentReadingAnswer();
+            finalizeReadingScores();
+        } else if (currentSection?.id === 'workplace') {
+            saveCurrentWorkplaceAnswer();
+            finalizeWorkplaceScores();
         } else if (currentSection?.id === 'typing') {
             saveTypingProgress();
         }
@@ -639,6 +899,8 @@
             grammar: state.grammar,
             fillBlank: state.fillBlank,
             englishPercent: getEnglishPercent(),
+            reading: state.reading,
+            workplace: state.workplace,
             typing: {
                 bestWpm: state.typing.bestWpm,
                 bestAccuracy: state.typing.bestAccuracy,

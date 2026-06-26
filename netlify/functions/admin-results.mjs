@@ -30,6 +30,8 @@ export default async (req, context) => {
                 const fill = r.fillBlank?.percent || 0;
                 return r.fillBlank ? Math.round((mcq + fill) / 2) : mcq;
             })),
+            avgReading: average(results.map(r => r.reading?.percent || 0)),
+            avgWorkplace: average(results.map(r => r.workplace?.percent || 0)),
             avgTypingWpm: average(results.map(r => r.typing?.bestWpm || 0)),
             avgVoice: average(results.map(r => r.voice?.completionPercent || 0))
         };
