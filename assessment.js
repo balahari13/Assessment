@@ -97,6 +97,7 @@
     }
 
     function renderGrammar() {
+        setPanelCompact(false);
         grammarQuestionIndex = 0;
         ensureGrammarAnswers();
         renderGrammarQuestion();
@@ -223,6 +224,47 @@
 
     let typingStart = null;
 
+    function setPanelCompact(compact) {
+        const panel = document.getElementById('assessment-content');
+        panel.classList.toggle('assessment-panel--compact', compact);
+    }
+
+    function blockTypingClipboard(event) {
+        event.preventDefault();
+    }
+
+    function bindTypingInputGuards(input, display) {
+        const blockShortcut = (event) => {
+            const key = event.key?.toLowerCase();
+            if (event.ctrlKey || event.metaKey) {
+                if (key === 'v' || key === 'c' || key === 'x') {
+                    event.preventDefault();
+                }
+            }
+            if (event.shiftKey && key === 'insert') {
+                event.preventDefault();
+            }
+        };
+
+        input.addEventListener('paste', blockTypingClipboard);
+        input.addEventListener('copy', blockTypingClipboard);
+        input.addEventListener('cut', blockTypingClipboard);
+        input.addEventListener('drop', blockTypingClipboard);
+        input.addEventListener('contextmenu', blockTypingClipboard);
+        input.addEventListener('keydown', blockShortcut);
+        input.addEventListener('beforeinput', (event) => {
+            if (event.inputType === 'insertFromPaste' || event.inputType === 'insertFromDrop') {
+                event.preventDefault();
+            }
+        });
+
+        if (display) {
+            display.addEventListener('copy', blockTypingClipboard);
+            display.addEventListener('cut', blockTypingClipboard);
+            display.addEventListener('contextmenu', blockTypingClipboard);
+        }
+    }
+
     function renderTypingDisplay(passage, typed) {
         let html = '';
         for (let i = 0; i < passage.length; i++) {
@@ -250,32 +292,36 @@
     }
 
     function renderTyping() {
+        setPanelCompact(true);
         const panel = document.getElementById('assessment-content');
         const section = data.sections[sectionIndex];
         const passage = data.typingPassage;
 
         panel.innerHTML = `
-            <div class="section-intro">
-                <h2>Typing Speed Assessment</h2>
-                <p class="section-desc">Type the full paragraph below exactly as shown. You have <strong>${section.minutes} minutes</strong> for this section (10 lines minimum).</p>
-                <span class="section-timer">Section time remaining: <span id="section-timer">${formatTime(section.minutes * 60)}</span></span>
-            </div>
-            <div class="typing-display typing-display--multiline" id="typing-display"></div>
-            <textarea class="typing-input" id="typing-input" rows="10" placeholder="Start typing here..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
-            <div class="typing-stats">
-                <span>WPM: <strong id="stat-wpm">0</strong></span>
-                <span>Accuracy: <strong id="stat-accuracy">0%</strong></span>
-                <span>Progress: <strong id="stat-progress">0%</strong></span>
-            </div>
-            <div class="assessment-actions">
-                <span></span>
-                <button type="button" class="btn btn-primary" id="typing-next">Continue to Voice</button>
+            <div class="typing-section">
+                <div class="section-intro">
+                    <h2>Typing Speed Assessment</h2>
+                    <p class="section-desc">Type the 6-line passage exactly as shown. Copy and paste are disabled. Time: <strong>${section.minutes} min</strong>.</p>
+                    <span class="section-timer">Section time remaining: <span id="section-timer">${formatTime(section.minutes * 60)}</span></span>
+                </div>
+                <div class="typing-display typing-display--multiline typing-display--compact" id="typing-display"></div>
+                <textarea class="typing-input typing-input--compact" id="typing-input" rows="6" placeholder="Type here..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+                <div class="typing-stats typing-stats--compact">
+                    <span>WPM: <strong id="stat-wpm">0</strong></span>
+                    <span>Accuracy: <strong id="stat-accuracy">0%</strong></span>
+                    <span>Progress: <strong id="stat-progress">0%</strong></span>
+                </div>
+                <div class="assessment-actions">
+                    <span></span>
+                    <button type="button" class="btn btn-primary" id="typing-next">Continue to Voice</button>
+                </div>
             </div>
         `;
 
         const input = document.getElementById('typing-input');
         const display = document.getElementById('typing-display');
         typingStart = Date.now();
+        bindTypingInputGuards(input, display);
         input.focus();
 
         function onInput() {
@@ -285,10 +331,11 @@
             document.getElementById('stat-accuracy').textContent = `${stats.accuracy}%`;
             const progress = Math.min(100, Math.round((typed.length / passage.length) * 100));
             document.getElementById('stat-progress').textContent = `${progress}%`;
+            display.innerHTML = renderTypingDisplay(passage, typed);
         }
 
         input.addEventListener('input', onInput);
-        display.textContent = passage;
+        display.innerHTML = renderTypingDisplay(passage, '');
 
         function completeTyping() {
             const typed = input.value;
@@ -307,6 +354,7 @@
     let audioChunks = [];
 
     async function renderVoice() {
+        setPanelCompact(false);
         const panel = document.getElementById('assessment-content');
         const section = data.sections[sectionIndex];
         const promptItem = data.voicePrompts[voiceRound];

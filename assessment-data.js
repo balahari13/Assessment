@@ -32,16 +32,12 @@ window.ASSESSMENT_DATA = {
         { q: 'What is the opposite of "early"?', options: ['soon', 'late', 'fast', 'quick'], answer: 1 },
         { q: 'Thank you ___ your help.', options: ['to', 'for', 'with', 'at'], answer: 1 }
     ],
-    typingPassage: `Customer service excellence in a business process outsourcing environment demands more than speed alone.
-Agents must listen actively, interpret incomplete information, and respond with clarity under measurable service level agreements.
-Accurate typing supports every channel including live chat, email, ticketing systems, and internal escalation notes.
-A single typing error in an account number, refund amount, or compliance statement can create rework, customer dissatisfaction, and audit risk.
-Professional BPO operators therefore balance pace with precision while maintaining a courteous and confident tone.
-They document each interaction thoroughly so downstream teams can continue the workflow without confusion or delay.
-Remote work requires additional discipline because supervisors cannot physically observe performance on the floor.
-Successful candidates demonstrate focus, consistency, and accountability when handling high volumes across extended shifts.
-This assessment measures how quickly and accurately you can reproduce business-critical language in a timed environment.
-Read carefully, type exactly what appears above, and proofread before submitting your response.`,
+    typingPassage: `A healthy environment supports every form of life on our shared planet.
+Trees absorb carbon dioxide and release the oxygen that humans and animals need daily.
+Rivers and lakes provide fresh water for communities, farms, and natural wildlife habitats.
+Recycling plastic and paper reduces waste that would otherwise pollute land and oceans.
+Solar panels and wind turbines generate clean energy without burning harmful fossil fuels.
+Simple habits like saving water and planting trees protect nature for future generations.`,
     voicePrompts: [
         { type: 'word', text: 'Hello', minDuration: 1 },
         { type: 'word', text: 'Support', minDuration: 1 },
