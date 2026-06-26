@@ -375,29 +375,30 @@
             }
         };
 
-        try {
-            const { ok, data: res } = await window.TrinitasAPI.submitAssessment(payload);
-            if (!ok) {
-                throw new Error(res.message || res.error || 'submit failed');
-            }
-            sessionStorage.removeItem(SESSION_KEY);
-            panel.innerHTML = `
-                <div class="form-alert form-alert--success" style="display:block">
-                    <h2 style="margin-bottom:0.5rem">Assessment Submitted</h2>
-                    <p>Thank you, ${session.fullName}. Your preliminary assessment has been recorded. Our recruitment team will contact you if your profile matches current openings.</p>
-                    <p style="margin-top:0.75rem"><strong>Overall score:</strong> ${overallScore}%</p>
-                </div>
-                <a href="careers.html" class="btn btn-primary" style="margin-top:1.5rem">Back to Careers</a>
-            `;
-        } catch (err) {
+        const { ok, data: res } = await window.TrinitasAPI.submitAssessment(payload);
+
+        if (!ok) {
             panel.innerHTML = `
                 <div class="form-alert form-alert--error" style="display:block">
-                    <p>${err.message || 'Submission failed.'} Please contact <a href="mailto:info@trinitasnxt.in">info@trinitasnxt.in</a>.</p>
+                    <p>${res.message || 'Submission failed.'} Please contact <a href="mailto:info@trinitasnxt.in">info@trinitasnxt.in</a>.</p>
                 </div>
                 <button type="button" class="btn btn-primary" id="retry-submit" style="margin-top:1rem">Retry Submit</button>
             `;
             document.getElementById('retry-submit').addEventListener('click', () => finishAssessment(timedOut));
+            return;
         }
+
+        sessionStorage.removeItem(SESSION_KEY);
+        const viaEmail = res.via === 'email';
+        panel.innerHTML = `
+            <div class="form-alert form-alert--success" style="display:block">
+                <h2 style="margin-bottom:0.5rem">Assessment Submitted</h2>
+                <p>Thank you, ${session.fullName}. Your preliminary assessment has been recorded. Our recruitment team will contact you if your profile matches current openings.</p>
+                <p style="margin-top:0.75rem"><strong>Overall score:</strong> ${overallScore}%</p>
+                ${viaEmail ? '<p style="margin-top:0.5rem;font-size:0.88rem">A copy was sent to our recruitment inbox.</p>' : ''}
+            </div>
+            <a href="careers.html" class="btn btn-primary" style="margin-top:1.5rem">Back to Careers</a>
+        `;
     }
 
     function init() {

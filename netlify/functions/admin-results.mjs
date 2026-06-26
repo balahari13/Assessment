@@ -4,9 +4,9 @@ import {
     getAssessmentStore,
     verifyAdminToken,
     listAttempts
-} from './_shared.mjs';
+} from './lib/shared.mjs';
 
-export default async (req) => {
+export default async (req, context) => {
     if (req.method === 'OPTIONS') {
         return new Response(null, { status: 204, headers: corsHeaders() });
     }
@@ -15,7 +15,7 @@ export default async (req) => {
     }
 
     try {
-        const store = getAssessmentStore();
+        const store = getAssessmentStore(context);
         const authorized = await verifyAdminToken(store, req.headers.get('Authorization'));
         if (!authorized) {
             return jsonResponse(401, { error: 'Unauthorized' });
@@ -31,6 +31,7 @@ export default async (req) => {
 
         return jsonResponse(200, { results, summary });
     } catch (err) {
+        console.error('admin-results error:', err);
         return jsonResponse(500, { error: 'Server error', detail: err.message });
     }
 };

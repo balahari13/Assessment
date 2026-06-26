@@ -5,9 +5,9 @@ import {
     normalizeEmail,
     saveAttempt,
     getAttempt
-} from './_shared.mjs';
+} from './lib/shared.mjs';
 
-export default async (req) => {
+export default async (req, context) => {
     if (req.method === 'OPTIONS') {
         return new Response(null, { status: 204, headers: corsHeaders() });
     }
@@ -25,7 +25,7 @@ export default async (req) => {
             return jsonResponse(400, { error: 'Name, email, and phone are required' });
         }
 
-        const store = getAssessmentStore();
+        const store = getAssessmentStore(context);
         const existing = await getAttempt(store, email);
         if (existing) {
             return jsonResponse(403, {
@@ -57,6 +57,7 @@ export default async (req) => {
 
         return jsonResponse(200, { success: true, message: 'Assessment submitted successfully' });
     } catch (err) {
+        console.error('submit-assessment error:', err);
         return jsonResponse(500, { error: 'Server error', detail: err.message });
     }
 };

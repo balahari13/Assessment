@@ -21,7 +21,12 @@ export function jsonResponse(status, body) {
     });
 }
 
-export function getAssessmentStore() {
+export function getAssessmentStore(context) {
+    const siteID = context?.site?.id || process.env.SITE_ID;
+    const token = process.env.NETLIFY_BLOBS_TOKEN;
+    if (siteID && token) {
+        return getStore({ name: STORE_NAME, siteID, token, consistency: 'strong' });
+    }
     return getStore({ name: STORE_NAME, consistency: 'strong' });
 }
 

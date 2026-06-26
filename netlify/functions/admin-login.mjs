@@ -4,9 +4,9 @@ import {
     getAssessmentStore,
     verifyAdminCredentials,
     createAdminToken
-} from './_shared.mjs';
+} from './lib/shared.mjs';
 
-export default async (req) => {
+export default async (req, context) => {
     if (req.method === 'OPTIONS') {
         return new Response(null, { status: 204, headers: corsHeaders() });
     }
@@ -23,7 +23,7 @@ export default async (req) => {
             return jsonResponse(401, { error: 'Invalid credentials' });
         }
 
-        const store = getAssessmentStore();
+        const store = getAssessmentStore(context);
         const { token, signature } = await createAdminToken(store);
 
         return jsonResponse(200, {
@@ -32,6 +32,7 @@ export default async (req) => {
             expiresInHours: 24
         });
     } catch (err) {
+        console.error('admin-login error:', err);
         return jsonResponse(500, { error: 'Server error', detail: err.message });
     }
 };
