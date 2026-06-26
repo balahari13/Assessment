@@ -55,6 +55,55 @@
         loadResults();
     }
 
+    function getEnglishPercent(result) {
+        if (typeof result.englishPercent === 'number') return result.englishPercent;
+        const mcq = result.grammar?.percent || 0;
+        const fill = result.fillBlank?.percent || 0;
+        if (result.fillBlank) return Math.round((mcq + fill) / 2);
+        return mcq;
+    }
+
+    function renderAnswerKey() {
+        const data = window.ASSESSMENT_DATA;
+        const container = document.getElementById('answer-key-content');
+        if (!data || !container) return;
+
+        const mcqHtml = data.grammarQuestions.map((item, i) => {
+            const correct = item.options[item.answer] || '—';
+            return `<li><strong>Q${i + 1}.</strong> ${item.q} <span class="answer-key-ans">→ ${correct}</span></li>`;
+        }).join('');
+
+        const fillHtml = data.fillBlankQuestions.map((item, i) => {
+            const answers = (item.answers || []).join(' / ');
+            return `<li><strong>F${i + 1}.</strong> ${item.q} <span class="answer-key-ans">→ ${answers}</span></li>`;
+        }).join('');
+
+        const voiceHtml = data.voicePrompts.map((item, i) =>
+            `<li><strong>V${i + 1}.</strong> [${item.type}] ${item.text}</li>`
+        ).join('');
+
+        container.innerHTML = `
+            <div class="answer-key-grid">
+                <section class="answer-key-section">
+                    <h3>Multiple Choice (${data.grammarQuestions.length})</h3>
+                    <ol class="answer-key-list">${mcqHtml}</ol>
+                </section>
+                <section class="answer-key-section">
+                    <h3>Fill in the Blanks (${data.fillBlankQuestions.length})</h3>
+                    <ol class="answer-key-list">${fillHtml}</ol>
+                </section>
+                <section class="answer-key-section answer-key-section--full">
+                    <h3>Typing Passage</h3>
+                    <pre class="answer-key-passage">${data.typingPassage}</pre>
+                </section>
+                <section class="answer-key-section answer-key-section--full">
+                    <h3>Voice Prompts (${data.voicePrompts.length})</h3>
+                    <ol class="answer-key-list">${voiceHtml}</ol>
+                </section>
+            </div>
+        `;
+    }
+
     function renderTable(results) {
         const tbody = document.getElementById('results-body');
         cachedResults = results;
@@ -70,7 +119,7 @@
                 <td>${r.fullName || '—'}</td>
                 <td>${email || '—'}</td>
                 <td>${r.phone || '—'}</td>
-                <td><span class="score-pill ${scoreClass(r.grammar?.percent || 0)}">${r.grammar?.percent || 0}%</span></td>
+                <td><span class="score-pill ${scoreClass(getEnglishPercent(r))}">${getEnglishPercent(r)}%</span></td>
                 <td><span class="score-pill ${scoreClass(Math.min(100, (r.typing?.bestWpm || 0)))}">${r.typing?.bestWpm || 0} WPM</span></td>
                 <td>${r.typing?.bestAccuracy || 0}%</td>
                 <td><span class="score-pill ${scoreClass(r.voice?.completionPercent || 0)}">${r.voice?.completionPercent || 0}%</span></td>
@@ -103,10 +152,12 @@
     }
 
     function exportCsv(results) {
-        const headers = ['Name', 'Email', 'Phone', 'Grammar %', 'Best WPM', 'Accuracy %', 'Voice %', 'Overall %', 'Completed At'];
+        const headers = ['Name', 'Email', 'Phone', 'English %', 'MCQ %', 'Fill Blank %', 'Best WPM', 'Accuracy %', 'Voice %', 'Overall %', 'Completed At'];
         const rows = results.map(r => [
             r.fullName, r.email, r.phone,
+            getEnglishPercent(r),
             r.grammar?.percent || 0,
+            r.fillBlank?.percent || 0,
             r.typing?.bestWpm || 0,
             r.typing?.bestAccuracy || 0,
             r.voice?.completionPercent || 0,
@@ -142,6 +193,7 @@
     function showDashboard() {
         document.getElementById('admin-login').hidden = true;
         document.getElementById('admin-dashboard').hidden = false;
+        renderAnswerKey();
         loadResults();
     }
 
@@ -171,6 +223,14 @@
         });
 
         document.getElementById('admin-refresh').addEventListener('click', loadResults);
+
+        document.getElementById('toggle-answer-key').addEventListener('click', () => {
+            const panel = document.getElementById('answer-key-panel');
+            const visible = !panel.hidden;
+            panel.hidden = visible;
+            document.getElementById('toggle-answer-key').textContent = visible ? 'Answer Key' : 'Hide Answer Key';
+            if (!visible) renderAnswerKey();
+        });
     }
 
     document.addEventListener('DOMContentLoaded', () => {

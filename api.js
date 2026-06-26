@@ -56,6 +56,8 @@
                 phone: payload.phone,
                 overall_score: `${payload.overallScore}%`,
                 grammar_score: `${payload.grammar?.percent || 0}%`,
+                fill_blank_score: `${payload.fillBlank?.percent || 0}%`,
+                english_score: `${payload.englishPercent || 0}%`,
                 typing_wpm: `${payload.typing?.bestWpm || 0}`,
                 typing_accuracy: `${payload.typing?.bestAccuracy || 0}%`,
                 voice_completion: `${payload.voice?.completionPercent || 0}%`,

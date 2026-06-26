@@ -24,7 +24,12 @@ export default async (req, context) => {
         const results = await listAttempts(store);
         const summary = {
             total: results.length,
-            avgGrammar: average(results.map(r => r.grammar?.percent || 0)),
+            avgGrammar: average(results.map(r => {
+                if (typeof r.englishPercent === 'number') return r.englishPercent;
+                const mcq = r.grammar?.percent || 0;
+                const fill = r.fillBlank?.percent || 0;
+                return r.fillBlank ? Math.round((mcq + fill) / 2) : mcq;
+            })),
             avgTypingWpm: average(results.map(r => r.typing?.bestWpm || 0)),
             avgVoice: average(results.map(r => r.voice?.completionPercent || 0))
         };

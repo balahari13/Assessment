@@ -7,7 +7,8 @@
 
     let session = null;
     let sectionIndex = 0;
-    let grammarQuestionIndex = 0;
+    let englishQuestionIndex = 0;
+    let englishPhase = 'mcq';
     let globalTimer = null;
     let sectionTimer = null;
     let globalSecondsLeft = data.totalMinutes * 60;
@@ -19,6 +20,7 @@
 
     const state = {
         grammar: { answers: [], score: 0, percent: 0 },
+        fillBlank: { answers: [], score: 0, percent: 0 },
         typing: { rounds: [], bestWpm: 0, bestAccuracy: 0 },
         voice: { recordings: [], completionPercent: 0 }
     };
@@ -79,10 +81,27 @@
         }
     }
 
-    function saveCurrentGrammarAnswer() {
-        const checked = document.querySelector('input[name="grammar-q"]:checked');
-        if (checked) {
-            state.grammar.answers[grammarQuestionIndex] = parseInt(checked.value, 10);
+    function normalizeAnswer(value) {
+        return String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    }
+
+    function ensureFillBlankAnswers() {
+        if (state.fillBlank.answers.length !== data.fillBlankQuestions.length) {
+            state.fillBlank.answers = new Array(data.fillBlankQuestions.length).fill('');
+        }
+    }
+
+    function saveCurrentEnglishAnswer() {
+        if (englishPhase === 'mcq') {
+            const checked = document.querySelector('input[name="grammar-q"]:checked');
+            if (checked) {
+                state.grammar.answers[englishQuestionIndex] = parseInt(checked.value, 10);
+            }
+            return;
+        }
+        const input = document.getElementById('fill-blank-input');
+        if (input) {
+            state.fillBlank.answers[englishQuestionIndex] = input.value.trim();
         }
     }
 
@@ -96,79 +115,155 @@
         state.grammar.percent = Math.round((score / data.grammarQuestions.length) * 100);
     }
 
-    function renderGrammar() {
-        setPanelCompact(false);
-        grammarQuestionIndex = 0;
-        ensureGrammarAnswers();
-        renderGrammarQuestion();
+    function finalizeFillBlankScores() {
+        ensureFillBlankAnswers();
+        let score = 0;
+        data.fillBlankQuestions.forEach((item, i) => {
+            const user = normalizeAnswer(state.fillBlank.answers[i]);
+            const accepted = (item.answers || []).map(normalizeAnswer);
+            if (user && accepted.includes(user)) score += 1;
+        });
+        state.fillBlank.score = score;
+        state.fillBlank.percent = Math.round((score / data.fillBlankQuestions.length) * 100);
     }
 
-    function renderGrammarQuestion() {
+    function finalizeEnglishScores() {
+        finalizeGrammarScores();
+        finalizeFillBlankScores();
+    }
+
+    function getEnglishPercent() {
+        const totalScore = (state.grammar.score || 0) + (state.fillBlank.score || 0);
+        const totalQuestions = data.grammarQuestions.length + data.fillBlankQuestions.length;
+        return Math.round((totalScore / totalQuestions) * 100);
+    }
+
+    function renderGrammar() {
+        setPanelCompact(false);
+        englishPhase = 'mcq';
+        englishQuestionIndex = 0;
+        ensureGrammarAnswers();
+        ensureFillBlankAnswers();
+        renderEnglishQuestion();
+    }
+
+    function renderEnglishQuestion() {
         const panel = document.getElementById('assessment-content');
         const section = data.sections[sectionIndex];
-        const total = data.grammarQuestions.length;
-        const i = grammarQuestionIndex;
-        const item = data.grammarQuestions[i];
-        const selected = state.grammar.answers[i];
-        const isLast = i === total - 1;
+        const isMcq = englishPhase === 'mcq';
+        const questions = isMcq ? data.grammarQuestions : data.fillBlankQuestions;
+        const total = questions.length;
+        const i = englishQuestionIndex;
+        const item = questions[i];
+        const isLastEnglish = isMcq && i === data.grammarQuestions.length - 1;
+        const isLastFill = !isMcq && i === data.fillBlankQuestions.length - 1;
 
-        const dots = data.grammarQuestions.map((_, idx) => {
+        const dots = questions.map((_, idx) => {
             let cls = 'grammar-progress-dot';
-            if (state.grammar.answers[idx] !== null) cls += ' grammar-progress-dot--done';
+            const answered = isMcq
+                ? state.grammar.answers[idx] !== null
+                : Boolean(state.fillBlank.answers[idx]);
+            if (answered) cls += ' grammar-progress-dot--done';
             if (idx === i) cls += ' grammar-progress-dot--current';
             return `<span class="${cls}" aria-hidden="true"></span>`;
         }).join('');
 
+        const phaseLabel = isMcq ? 'Multiple Choice' : 'Fill in the Blank';
+        const questionBody = isMcq
+            ? `
+                <fieldset class="grammar-q">
+                    <legend>${item.q}</legend>
+                    <div class="grammar-options">
+                        ${item.options.map((opt, j) => `
+                            <label>
+                                <input type="radio" name="grammar-q" value="${j}" ${state.grammar.answers[i] === j ? 'checked' : ''} required>
+                                <span>${opt}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                </fieldset>
+            `
+            : `
+                <fieldset class="grammar-q fill-blank-q">
+                    <legend>${item.q}</legend>
+                    <input type="text" class="fill-blank-input" id="fill-blank-input" value="${state.fillBlank.answers[i] || ''}" placeholder="Type your answer" autocomplete="off" spellcheck="false" required>
+                </fieldset>
+            `;
+
+        const nextLabel = isLastFill
+            ? 'Continue to Typing'
+            : isLastEnglish
+                ? 'Continue to Fill in the Blanks'
+                : 'Next Question';
+
         panel.innerHTML = `
             <div class="section-intro">
                 <h2>Basic English Assessment</h2>
-                <p class="section-desc">Answer each question before moving on. One question per page. You have ${section.minutes} minutes for all ${total} questions. Do not switch tabs — 3 tab switches will end your session.</p>
+                <p class="section-desc">${phaseLabel} — one question per page. You have ${section.minutes} minutes for this section. Do not switch tabs — 3 tab switches will end your session.</p>
                 <span class="section-timer">Section time remaining: <span id="section-timer">${formatTime(sectionSecondsLeft || section.minutes * 60)}</span></span>
             </div>
             <div class="grammar-pagination">
-                <span>Question <strong>${i + 1}</strong> of <strong>${total}</strong></span>
+                <span>${phaseLabel}: <strong>${i + 1}</strong> of <strong>${total}</strong></span>
                 <div class="grammar-progress-dots">${dots}</div>
             </div>
-            <fieldset class="grammar-q">
-                <legend>${item.q}</legend>
-                <div class="grammar-options">
-                    ${item.options.map((opt, j) => `
-                        <label>
-                            <input type="radio" name="grammar-q" value="${j}" ${selected === j ? 'checked' : ''} required>
-                            <span>${opt}</span>
-                        </label>
-                    `).join('')}
-                </div>
-            </fieldset>
+            ${questionBody}
             <div class="assessment-actions">
-                <button type="button" class="btn btn-secondary" id="grammar-prev" ${i === 0 ? 'hidden' : ''}>Previous</button>
-                <button type="button" class="btn btn-primary" id="grammar-next">${isLast ? 'Continue to Typing' : 'Next Question'}</button>
+                <button type="button" class="btn btn-secondary" id="english-prev" ${i === 0 && isMcq ? 'hidden' : ''}>Previous</button>
+                <button type="button" class="btn btn-primary" id="english-next">${nextLabel}</button>
             </div>
         `;
 
-        document.getElementById('grammar-next').addEventListener('click', () => {
-            const checked = document.querySelector('input[name="grammar-q"]:checked');
-            if (!checked) {
-                const firstRadio = document.querySelector('input[name="grammar-q"]');
-                if (firstRadio) firstRadio.reportValidity();
+        if (!isMcq) {
+            const fillInput = document.getElementById('fill-blank-input');
+            fillInput.focus();
+        }
+
+        document.getElementById('english-next').addEventListener('click', () => {
+            if (isMcq) {
+                const checked = document.querySelector('input[name="grammar-q"]:checked');
+                if (!checked) {
+                    const firstRadio = document.querySelector('input[name="grammar-q"]');
+                    if (firstRadio) firstRadio.reportValidity();
+                    return;
+                }
+                saveCurrentEnglishAnswer();
+                if (isLastEnglish) {
+                    englishPhase = 'fill';
+                    englishQuestionIndex = 0;
+                    renderEnglishQuestion();
+                    return;
+                }
+                englishQuestionIndex += 1;
+                renderEnglishQuestion();
                 return;
             }
-            saveCurrentGrammarAnswer();
-            if (isLast) {
-                finalizeGrammarScores();
-                goNextSection();
-            } else {
-                grammarQuestionIndex += 1;
-                renderGrammarQuestion();
+
+            const fillInput = document.getElementById('fill-blank-input');
+            if (!fillInput.value.trim()) {
+                fillInput.reportValidity();
+                return;
             }
+            saveCurrentEnglishAnswer();
+            if (isLastFill) {
+                finalizeEnglishScores();
+                goNextSection();
+                return;
+            }
+            englishQuestionIndex += 1;
+            renderEnglishQuestion();
         });
 
-        const prevBtn = document.getElementById('grammar-prev');
+        const prevBtn = document.getElementById('english-prev');
         if (prevBtn) {
             prevBtn.addEventListener('click', () => {
-                saveCurrentGrammarAnswer();
-                grammarQuestionIndex = Math.max(0, grammarQuestionIndex - 1);
-                renderGrammarQuestion();
+                saveCurrentEnglishAnswer();
+                if (!isMcq && i === 0) {
+                    englishPhase = 'mcq';
+                    englishQuestionIndex = data.grammarQuestions.length - 1;
+                } else {
+                    englishQuestionIndex = Math.max(0, englishQuestionIndex - 1);
+                }
+                renderEnglishQuestion();
             });
         }
     }
@@ -211,7 +306,7 @@
         sessionEnded = true;
         clearInterval(globalTimer);
         clearInterval(sectionTimer);
-        saveCurrentGrammarAnswer();
+        saveCurrentEnglishAnswer();
         const panel = document.getElementById('assessment-content');
         panel.innerHTML = `
             <div class="form-alert form-alert--error" style="display:block">
@@ -279,6 +374,18 @@
         return html;
     }
 
+    function saveTypingProgress() {
+        const input = document.getElementById('typing-input');
+        if (!input) return;
+        const passage = data.typingPassage;
+        const typed = input.value;
+        const elapsedSec = typingStart ? (Date.now() - typingStart) / 1000 : 0;
+        const stats = calcTypingStats(passage, typed, elapsedSec);
+        state.typing.rounds = [{ passage: 1, ...stats, typedText: typed }];
+        state.typing.bestWpm = stats.wpm;
+        state.typing.bestAccuracy = stats.accuracy;
+    }
+
     function calcTypingStats(passage, typed, elapsedSec) {
         let correct = 0;
         for (let i = 0; i < typed.length; i++) {
@@ -338,11 +445,7 @@
         display.innerHTML = renderTypingDisplay(passage, '');
 
         function completeTyping() {
-            const typed = input.value;
-            const stats = calcTypingStats(passage, typed, (Date.now() - typingStart) / 1000);
-            state.typing.rounds = [{ passage: 1, ...stats }];
-            state.typing.bestWpm = stats.wpm;
-            state.typing.bestAccuracy = stats.accuracy;
+            saveTypingProgress();
             goNextSection();
         }
 
@@ -478,8 +581,10 @@
 
         const currentSection = data.sections[sectionIndex];
         if (currentSection.id === 'grammar') {
-            saveCurrentGrammarAnswer();
-            finalizeGrammarScores();
+            saveCurrentEnglishAnswer();
+            finalizeEnglishScores();
+        } else if (currentSection.id === 'typing') {
+            saveTypingProgress();
         }
 
         sectionIndex += 1;
@@ -491,7 +596,8 @@
     }
 
     function computeOverall() {
-        const g = state.grammar.percent || 0;
+        finalizeEnglishScores();
+        const g = getEnglishPercent();
         const t = Math.min(100, Math.round((state.typing.bestWpm / 60) * 100));
         const completedVoice = state.voice.recordings.filter(r => r && r.completed).length;
         state.voice.completionPercent = Math.round((completedVoice / data.voicePrompts.length) * 100);
@@ -514,7 +620,10 @@
 
         const currentSection = data.sections[sectionIndex];
         if (currentSection?.id === 'grammar') {
-            finalizeGrammarScores();
+            saveCurrentEnglishAnswer();
+            finalizeEnglishScores();
+        } else if (currentSection?.id === 'typing') {
+            saveTypingProgress();
         }
 
         const overallScore = computeOverall();
@@ -528,6 +637,8 @@
             tabSwitchCount,
             overallScore,
             grammar: state.grammar,
+            fillBlank: state.fillBlank,
+            englishPercent: getEnglishPercent(),
             typing: {
                 bestWpm: state.typing.bestWpm,
                 bestAccuracy: state.typing.bestAccuracy,

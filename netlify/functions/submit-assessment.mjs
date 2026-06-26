@@ -45,6 +45,8 @@ export default async (req, context) => {
             terminatedReason: body.terminatedReason || null,
             tabSwitchCount: body.tabSwitchCount || 0,
             grammar: body.grammar || {},
+            fillBlank: body.fillBlank || {},
+            englishPercent: body.englishPercent || 0,
             typing: body.typing || {},
             voice: body.voice || {},
             overallScore: body.overallScore || 0

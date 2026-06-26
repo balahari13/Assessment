@@ -41,6 +41,7 @@
                         <p class="section-desc">All preliminary assessment submissions</p>
                     </div>
                     <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+                        <button type="button" class="btn btn-secondary" id="toggle-answer-key">Answer Key</button>
                         <button type="button" class="btn btn-secondary" id="admin-refresh">Refresh</button>
                         <button type="button" class="btn btn-primary" id="export-csv">Export CSV</button>
                         <button type="button" class="btn btn-secondary" id="admin-logout">Logout</button>
@@ -49,9 +50,14 @@
 
                 <div class="admin-stats">
                     <div class="admin-stat"><strong id="stat-total">0</strong><span>Total Submissions</span></div>
-                    <div class="admin-stat"><strong id="stat-grammar">0%</strong><span>Avg Grammar</span></div>
+                    <div class="admin-stat"><strong id="stat-grammar">0%</strong><span>Avg English</span></div>
                     <div class="admin-stat"><strong id="stat-typing">0</strong><span>Avg Typing WPM</span></div>
                     <div class="admin-stat"><strong id="stat-voice">0%</strong><span>Avg Voice Completion</span></div>
+                </div>
+
+                <div class="answer-key-panel" id="answer-key-panel" hidden>
+                    <h2 style="font-size:1.15rem;margin-bottom:0.75rem">Assessment Answer Key</h2>
+                    <div id="answer-key-content"></div>
                 </div>
 
                 <div class="results-table-wrap">
@@ -61,7 +67,7 @@
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Phone</th>
-                                <th>Grammar</th>
+                                <th>English</th>
                                 <th>Typing</th>
                                 <th>Accuracy</th>
                                 <th>Voice</th>
@@ -79,6 +85,7 @@
         </div>
     </div>
 
+    <script src="assessment-data.js"></script>
     <script src="api.js"></script>
     <script src="admin.js"></script>
 </body>

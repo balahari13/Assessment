@@ -1,7 +1,7 @@
 window.ASSESSMENT_DATA = {
-    totalMinutes: 35,
+    totalMinutes: 45,
     sections: [
-        { id: 'grammar', label: 'Basic English', minutes: 18, weight: 0.35 },
+        { id: 'grammar', label: 'Basic English', minutes: 28, weight: 0.35 },
         { id: 'typing', label: 'Typing Speed', minutes: 3, weight: 0.35 },
         { id: 'voice', label: 'Voice Assessment', minutes: 14, weight: 0.30 }
     ],
@@ -32,6 +32,18 @@ window.ASSESSMENT_DATA = {
         { q: 'What is the opposite of "early"?', options: ['soon', 'late', 'fast', 'quick'], answer: 1 },
         { q: 'Thank you ___ your help.', options: ['to', 'for', 'with', 'at'], answer: 1 }
     ],
+    fillBlankQuestions: [
+        { q: 'The sun rises in the _____.', answers: ['east'] },
+        { q: 'Water freezes at _____ degrees Celsius.', answers: ['zero', '0'] },
+        { q: 'A person who flies an airplane is called a _____.', answers: ['pilot'] },
+        { q: 'The past tense of "write" is _____.', answers: ['wrote'] },
+        { q: 'We use our _____ to hear sounds.', answers: ['ears'] },
+        { q: 'Mumbai is a major city in _____.', answers: ['india'] },
+        { q: 'The opposite of "expensive" is _____.', answers: ['cheap'] },
+        { q: 'There are _____ days in a week.', answers: ['seven', '7'] },
+        { q: 'She bought a _____ of bread from the store.', answers: ['loaf'] },
+        { q: 'Please close the door _____ you leave.', answers: ['when', 'before'] }
+    ],
     typingPassage: `A healthy environment supports every form of life on our shared planet.
 Trees absorb carbon dioxide and release the oxygen that humans and animals need daily.
 Rivers and lakes provide fresh water for communities, farms, and natural wildlife habitats.
@@ -48,6 +60,6 @@ Simple habits like saving water and planting trees protect nature for future gen
         { type: 'sentence', text: 'I will review your ticket and provide an update within the agreed timeline.', minDuration: 6 },
         { type: 'sentence', text: 'Please confirm your registered email address so I can locate your account securely.', minDuration: 6 },
         { type: 'sentence', text: 'I apologize for the inconvenience and appreciate your patience while we complete this review.', minDuration: 7 },
-        { type: 'long', text: 'Thank you for contacting Trinitas support today my name is your dedicated agent I will review your ticket details service history and escalation notes carefully before sharing a clear resolution plan within our agreed service level timeline.', minDuration: 12 }
+        { type: 'long', text: 'Thank you for contacting Trinitas support. Today, my name is your dedicated agent. I will review your ticket details, service history, and escalation notes carefully before sharing a clear resolution plan within our agreed service-level timeline.', minDuration: 12 }
     ]
 };
