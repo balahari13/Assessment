@@ -96,7 +96,7 @@
 
             if (result.ok && result.data.success) {
                 markEmailCompleted(normalized.email);
-                return { ok: true, data: result.data, via: 'netlify' };
+                return { ok: true, data: { ...result.data, via: 'netlify' } };
             }
 
             if (result.status === 403 && result.data.error === 'blocked') {
