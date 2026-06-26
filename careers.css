@@ -175,6 +175,45 @@
     color: var(--blue);
 }
 
+.tab-warning {
+    background: rgba(245, 158, 11, 0.12);
+    border-bottom: 1px solid rgba(245, 158, 11, 0.25);
+    color: #b45309;
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+.tab-warning-inner { padding: 0.65rem 0; }
+.tab-warning--danger {
+    background: rgba(244, 63, 94, 0.1);
+    border-bottom-color: rgba(244, 63, 94, 0.25);
+    color: #be123c;
+}
+
+.grammar-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+.grammar-pagination strong { color: var(--navy); }
+.grammar-progress-dots {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+}
+.grammar-progress-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+}
+.grammar-progress-dot--done { background: var(--emerald); }
+.grammar-progress-dot--current { background: var(--blue); }
+
 .grammar-q { margin-bottom: 1.25rem; }
 .grammar-q legend {
     font-weight: 600;

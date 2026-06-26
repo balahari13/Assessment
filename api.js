@@ -60,6 +60,8 @@
                 typing_accuracy: `${payload.typing?.bestAccuracy || 0}%`,
                 voice_completion: `${payload.voice?.completionPercent || 0}%`,
                 duration_minutes: payload.durationMinutes || '',
+                tab_switches: payload.tabSwitchCount ?? 0,
+                terminated_reason: payload.terminatedReason || '',
                 assessment_details: JSON.stringify(payload, null, 2)
             })
         });

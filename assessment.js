@@ -2,15 +2,20 @@
     'use strict';
 
     const SESSION_KEY = 'trinitas_assessment_session';
+    const MAX_TAB_SWITCHES = 3;
     const data = window.ASSESSMENT_DATA;
 
     let session = null;
     let sectionIndex = 0;
+    let grammarQuestionIndex = 0;
     let globalTimer = null;
     let sectionTimer = null;
     let globalSecondsLeft = data.totalMinutes * 60;
     let sectionSecondsLeft = 0;
     let startedAt = Date.now();
+    let tabSwitchCount = 0;
+    let sessionEnded = false;
+    let isSubmitting = false;
 
     const state = {
         grammar: { answers: [], score: 0, percent: 0 },
@@ -50,13 +55,13 @@
         globalTimer = setInterval(() => {
             globalSecondsLeft -= 1;
             updateTimers();
-            if (globalSecondsLeft <= 0) finishAssessment(true);
+            if (globalSecondsLeft <= 0 && !sessionEnded) finishAssessment(true);
         }, 1000);
 
         sectionTimer = setInterval(() => {
             sectionSecondsLeft -= 1;
             updateTimers();
-            if (sectionSecondsLeft <= 0) goNextSection(true);
+            if (sectionSecondsLeft <= 0 && !sessionEnded) goNextSection(true);
         }, 1000);
     }
 
@@ -68,51 +73,152 @@
         if (label) label.textContent = `Section ${sectionIndex + 1} of ${data.sections.length}`;
     }
 
+    function ensureGrammarAnswers() {
+        if (state.grammar.answers.length !== data.grammarQuestions.length) {
+            state.grammar.answers = new Array(data.grammarQuestions.length).fill(null);
+        }
+    }
+
+    function saveCurrentGrammarAnswer() {
+        const checked = document.querySelector('input[name="grammar-q"]:checked');
+        if (checked) {
+            state.grammar.answers[grammarQuestionIndex] = parseInt(checked.value, 10);
+        }
+    }
+
+    function finalizeGrammarScores() {
+        ensureGrammarAnswers();
+        let score = 0;
+        data.grammarQuestions.forEach((item, i) => {
+            if (state.grammar.answers[i] === item.answer) score += 1;
+        });
+        state.grammar.score = score;
+        state.grammar.percent = Math.round((score / data.grammarQuestions.length) * 100);
+    }
+
     function renderGrammar() {
+        grammarQuestionIndex = 0;
+        ensureGrammarAnswers();
+        renderGrammarQuestion();
+    }
+
+    function renderGrammarQuestion() {
         const panel = document.getElementById('assessment-content');
         const section = data.sections[sectionIndex];
+        const total = data.grammarQuestions.length;
+        const i = grammarQuestionIndex;
+        const item = data.grammarQuestions[i];
+        const selected = state.grammar.answers[i];
+        const isLast = i === total - 1;
+
+        const dots = data.grammarQuestions.map((_, idx) => {
+            let cls = 'grammar-progress-dot';
+            if (state.grammar.answers[idx] !== null) cls += ' grammar-progress-dot--done';
+            if (idx === i) cls += ' grammar-progress-dot--current';
+            return `<span class="${cls}" aria-hidden="true"></span>`;
+        }).join('');
+
         panel.innerHTML = `
             <div class="section-intro">
-                <h2>Advanced Grammar Assessment</h2>
-                <p class="section-desc">Answer all ${data.grammarQuestions.length} questions. You have ${section.minutes} minutes for this section.</p>
-                <span class="section-timer">Section time remaining: <span id="section-timer">${formatTime(section.minutes * 60)}</span></span>
+                <h2>Basic English Assessment</h2>
+                <p class="section-desc">Answer each question before moving on. One question per page. You have ${section.minutes} minutes for all ${total} questions. Do not switch tabs — 3 tab switches will end your session.</p>
+                <span class="section-timer">Section time remaining: <span id="section-timer">${formatTime(sectionSecondsLeft || section.minutes * 60)}</span></span>
             </div>
-            <form id="grammar-form">
-                ${data.grammarQuestions.map((item, i) => `
-                    <fieldset class="grammar-q">
-                        <legend>${i + 1}. ${item.q}</legend>
-                        <div class="grammar-options">
-                            ${item.options.map((opt, j) => `
-                                <label>
-                                    <input type="radio" name="q${i}" value="${j}" required>
-                                    <span>${opt}</span>
-                                </label>
-                            `).join('')}
-                        </div>
-                    </fieldset>
-                `).join('')}
-            </form>
+            <div class="grammar-pagination">
+                <span>Question <strong>${i + 1}</strong> of <strong>${total}</strong></span>
+                <div class="grammar-progress-dots">${dots}</div>
+            </div>
+            <fieldset class="grammar-q">
+                <legend>${item.q}</legend>
+                <div class="grammar-options">
+                    ${item.options.map((opt, j) => `
+                        <label>
+                            <input type="radio" name="grammar-q" value="${j}" ${selected === j ? 'checked' : ''} required>
+                            <span>${opt}</span>
+                        </label>
+                    `).join('')}
+                </div>
+            </fieldset>
             <div class="assessment-actions">
-                <span></span>
-                <button type="button" class="btn btn-primary" id="grammar-next">Continue to Typing</button>
+                <button type="button" class="btn btn-secondary" id="grammar-prev" ${i === 0 ? 'hidden' : ''}>Previous</button>
+                <button type="button" class="btn btn-primary" id="grammar-next">${isLast ? 'Continue to Typing' : 'Next Question'}</button>
             </div>
         `;
 
         document.getElementById('grammar-next').addEventListener('click', () => {
-            const form = document.getElementById('grammar-form');
-            if (!form.reportValidity()) return;
-            let score = 0;
-            const answers = [];
-            data.grammarQuestions.forEach((item, i) => {
-                const val = parseInt(form[`q${i}`].value, 10);
-                answers.push(val);
-                if (val === item.answer) score += 1;
-            });
-            state.grammar.answers = answers;
-            state.grammar.score = score;
-            state.grammar.percent = Math.round((score / data.grammarQuestions.length) * 100);
-            goNextSection();
+            const checked = document.querySelector('input[name="grammar-q"]:checked');
+            if (!checked) {
+                const firstRadio = document.querySelector('input[name="grammar-q"]');
+                if (firstRadio) firstRadio.reportValidity();
+                return;
+            }
+            saveCurrentGrammarAnswer();
+            if (isLast) {
+                finalizeGrammarScores();
+                goNextSection();
+            } else {
+                grammarQuestionIndex += 1;
+                renderGrammarQuestion();
+            }
         });
+
+        const prevBtn = document.getElementById('grammar-prev');
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                saveCurrentGrammarAnswer();
+                grammarQuestionIndex = Math.max(0, grammarQuestionIndex - 1);
+                renderGrammarQuestion();
+            });
+        }
+    }
+
+    function updateTabWarning() {
+        const banner = document.getElementById('tab-warning');
+        const text = document.getElementById('tab-warning-text');
+        if (!banner || !text) return;
+
+        if (tabSwitchCount === 0) {
+            banner.hidden = true;
+            return;
+        }
+
+        banner.hidden = false;
+        banner.classList.toggle('tab-warning--danger', tabSwitchCount >= MAX_TAB_SWITCHES - 1);
+
+        if (tabSwitchCount >= MAX_TAB_SWITCHES) {
+            text.textContent = 'Session ended: you left this tab too many times.';
+        } else if (tabSwitchCount === MAX_TAB_SWITCHES - 1) {
+            text.textContent = `Warning: you have left this tab ${tabSwitchCount} time(s). One more switch will end your session.`;
+        } else {
+            text.textContent = `Warning: you left this tab ${tabSwitchCount} time(s). ${MAX_TAB_SWITCHES - tabSwitchCount} switch(es) remaining before your session ends.`;
+        }
+    }
+
+    function initTabDetection() {
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden || sessionEnded || isSubmitting) return;
+            tabSwitchCount += 1;
+            updateTabWarning();
+            if (tabSwitchCount >= MAX_TAB_SWITCHES) {
+                endSessionDueToTabSwitch();
+            }
+        });
+    }
+
+    function endSessionDueToTabSwitch() {
+        if (sessionEnded || isSubmitting) return;
+        sessionEnded = true;
+        clearInterval(globalTimer);
+        clearInterval(sectionTimer);
+        saveCurrentGrammarAnswer();
+        const panel = document.getElementById('assessment-content');
+        panel.innerHTML = `
+            <div class="form-alert form-alert--error" style="display:block">
+                <h2 style="margin-bottom:0.5rem">Session Ended</h2>
+                <p>Your assessment was terminated because you left this tab more than ${MAX_TAB_SWITCHES} times. Your partial responses are being submitted.</p>
+            </div>
+        `;
+        finishAssessment(false, 'tab-switch');
     }
 
     let typingStart = null;
@@ -318,8 +424,16 @@
     }
 
     function goNextSection(force) {
+        if (sessionEnded || isSubmitting) return;
         if (!force && sectionIndex >= data.sections.length - 1) return;
         clearInterval(sectionTimer);
+
+        const currentSection = data.sections[sectionIndex];
+        if (currentSection.id === 'grammar') {
+            saveCurrentGrammarAnswer();
+            finalizeGrammarScores();
+        }
+
         sectionIndex += 1;
         if (sectionIndex >= data.sections.length) {
             finishAssessment(force);
@@ -337,12 +451,23 @@
         return Math.round(g * 0.35 + t * 0.35 + v * 0.30);
     }
 
-    async function finishAssessment(timedOut) {
+    async function finishAssessment(timedOut, terminatedReason) {
+        if (isSubmitting) return;
+        isSubmitting = true;
+        sessionEnded = true;
+
         clearInterval(globalTimer);
         clearInterval(sectionTimer);
 
         const panel = document.getElementById('assessment-content');
-        panel.innerHTML = `<p class="section-desc">Submitting your assessment...</p>`;
+        if (!terminatedReason) {
+            panel.innerHTML = `<p class="section-desc">Submitting your assessment...</p>`;
+        }
+
+        const currentSection = data.sections[sectionIndex];
+        if (currentSection?.id === 'grammar') {
+            finalizeGrammarScores();
+        }
 
         const overallScore = computeOverall();
         const durationMinutes = Math.round((Date.now() - startedAt) / 60000);
@@ -351,6 +476,8 @@
             ...session,
             durationMinutes,
             timedOut: !!timedOut,
+            terminatedReason: terminatedReason || null,
+            tabSwitchCount,
             overallScore,
             grammar: state.grammar,
             typing: {
@@ -376,18 +503,32 @@
         const { ok, data: res } = await window.TrinitasAPI.submitAssessment(payload);
 
         if (!ok) {
+            isSubmitting = false;
+            sessionEnded = false;
             panel.innerHTML = `
                 <div class="form-alert form-alert--error" style="display:block">
                     <p>${res.message || 'Submission failed.'} Please contact <a href="mailto:info@trinitasnxt.in">info@trinitasnxt.in</a>.</p>
                 </div>
                 <button type="button" class="btn btn-primary" id="retry-submit" style="margin-top:1rem">Retry Submit</button>
             `;
-            document.getElementById('retry-submit').addEventListener('click', () => finishAssessment(timedOut));
+            document.getElementById('retry-submit').addEventListener('click', () => finishAssessment(timedOut, terminatedReason));
             return;
         }
 
         sessionStorage.removeItem(SESSION_KEY);
         const viaEmail = res.via === 'email';
+
+        if (terminatedReason === 'tab-switch') {
+            panel.innerHTML = `
+                <div class="form-alert form-alert--error" style="display:block">
+                    <h2 style="margin-bottom:0.5rem">Session Ended</h2>
+                    <p>Your assessment was terminated because you left this tab more than ${MAX_TAB_SWITCHES} times. Your partial responses have been recorded and our recruitment team has been notified.</p>
+                </div>
+                <a href="careers.html" class="btn btn-primary" style="margin-top:1.5rem">Back to Careers</a>
+            `;
+            return;
+        }
+
         panel.innerHTML = `
             <div class="form-alert form-alert--success" style="display:block">
                 <h2 style="margin-bottom:0.5rem">Assessment Submitted</h2>
@@ -406,6 +547,7 @@
         startedAt = Date.now();
         globalSecondsLeft = data.totalMinutes * 60;
         updateTimers();
+        initTabDetection();
         renderSection();
     }
 
