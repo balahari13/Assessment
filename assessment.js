@@ -391,8 +391,7 @@
         panel.innerHTML = `
             <div class="form-alert form-alert--success" style="display:block">
                 <h2 style="margin-bottom:0.5rem">Assessment Submitted</h2>
-                <p>Thank you, ${session.fullName}. Your preliminary assessment has been recorded. Our recruitment team will contact you if your profile matches current openings.</p>
-                <p style="margin-top:0.75rem"><strong>Overall score:</strong> ${overallScore}%</p>
+                <p>Thank you, ${session.fullName}. Your preliminary assessment has been recorded. Our recruitment team will review your submission and contact you if your profile matches current openings.</p>
                 ${viaEmail ? '<p style="margin-top:0.5rem;font-size:0.88rem">A copy was sent to our recruitment inbox.</p>' : ''}
             </div>
             <a href="careers.html" class="btn btn-primary" style="margin-top:1.5rem">Back to Careers</a>
