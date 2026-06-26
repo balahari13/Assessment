@@ -116,3 +116,22 @@ export async function verifyAdminToken(store, authHeader) {
 export function verifyAdminCredentials(username, password) {
     return username === ADMIN_ID && password === ADMIN_PASSWORD;
 }
+
+export async function deleteAttempt(store, email) {
+    const normalized = normalizeEmail(email);
+    await store.delete(attemptKey(normalized));
+    const raw = await store.get('attempts-index', { type: 'text' });
+    const index = raw ? JSON.parse(raw) : [];
+    const filtered = index.filter(e => e !== normalized);
+    await store.set('attempts-index', JSON.stringify(filtered));
+    return { ok: true, email: normalized };
+}
+
+export async function allowReattempt(store, email) {
+    const result = await deleteAttempt(store, email);
+    const raw = await store.get('reattempt-log', { type: 'text' });
+    const log = raw ? JSON.parse(raw) : [];
+    log.push({ email: result.email, grantedAt: new Date().toISOString() });
+    await store.set('reattempt-log', JSON.stringify(log));
+    return result;
+}

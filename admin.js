@@ -2,6 +2,7 @@
     'use strict';
 
     const TOKEN_KEY = 'trinitas_admin_token';
+    let cachedResults = [];
 
     function scoreClass(val) {
         if (val >= 75) return 'score-pill--high';
@@ -14,17 +15,60 @@
         return new Date(iso).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
     }
 
+    function showToast(message, type) {
+        let toast = document.getElementById('admin-toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'admin-toast';
+            document.getElementById('admin-dashboard').insertBefore(
+                toast,
+                document.querySelector('.admin-stats')
+            );
+        }
+        toast.className = `admin-toast admin-toast--${type}`;
+        toast.textContent = message;
+        toast.hidden = false;
+        setTimeout(() => { toast.hidden = true; }, 4000);
+    }
+
+    async function handleDelete(email) {
+        if (!confirm(`Delete the assessment response for ${email}? This cannot be undone.`)) return;
+        const token = sessionStorage.getItem(TOKEN_KEY);
+        const { ok, data } = await window.TrinitasAPI.adminDelete(token, email);
+        if (!ok) {
+            showToast(data.error || 'Delete failed.', 'error');
+            return;
+        }
+        showToast(data.message || 'Response deleted.', 'success');
+        loadResults();
+    }
+
+    async function handleReattempt(email) {
+        if (!confirm(`Allow ${email} to retake the assessment? Their previous submission will be removed.`)) return;
+        const token = sessionStorage.getItem(TOKEN_KEY);
+        const { ok, data } = await window.TrinitasAPI.adminReattempt(token, email);
+        if (!ok) {
+            showToast(data.error || 'Reattempt grant failed.', 'error');
+            return;
+        }
+        showToast(data.message || 'Reattempt allowed.', 'success');
+        loadResults();
+    }
+
     function renderTable(results) {
         const tbody = document.getElementById('results-body');
+        cachedResults = results;
         if (!results.length) {
-            tbody.innerHTML = '<tr><td colspan="9">No assessment submissions yet.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="10">No assessment submissions yet.</td></tr>';
             return;
         }
 
-        tbody.innerHTML = results.map(r => `
-            <tr>
+        tbody.innerHTML = results.map(r => {
+            const email = r.email || '';
+            return `
+            <tr data-email="${email}">
                 <td>${r.fullName || '—'}</td>
-                <td>${r.email || '—'}</td>
+                <td>${email || '—'}</td>
                 <td>${r.phone || '—'}</td>
                 <td><span class="score-pill ${scoreClass(r.grammar?.percent || 0)}">${r.grammar?.percent || 0}%</span></td>
                 <td><span class="score-pill ${scoreClass(Math.min(100, (r.typing?.bestWpm || 0)))}">${r.typing?.bestWpm || 0} WPM</span></td>
@@ -32,8 +76,23 @@
                 <td><span class="score-pill ${scoreClass(r.voice?.completionPercent || 0)}">${r.voice?.completionPercent || 0}%</span></td>
                 <td><strong>${r.overallScore || 0}%</strong></td>
                 <td>${formatDate(r.completedAt)}</td>
+                <td>
+                    <div class="admin-actions">
+                        <button type="button" class="btn-admin btn-admin--delete" data-action="delete" data-email="${email}">Delete</button>
+                        <button type="button" class="btn-admin btn-admin--reattempt" data-action="reattempt" data-email="${email}">Allow Reattempt</button>
+                    </div>
+                </td>
             </tr>
-        `).join('');
+        `;
+        }).join('');
+
+        tbody.querySelectorAll('[data-action]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const email = btn.dataset.email;
+                if (btn.dataset.action === 'delete') handleDelete(email);
+                else handleReattempt(email);
+            });
+        });
     }
 
     function renderSummary(summary) {

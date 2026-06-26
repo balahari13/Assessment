@@ -215,6 +215,40 @@
     margin-bottom: 1rem;
     min-height: 5rem;
 }
+.typing-display--multiline {
+    white-space: pre-wrap;
+    min-height: 14rem;
+    max-height: 20rem;
+    overflow-y: auto;
+    font-size: 0.92rem;
+    line-height: 1.75;
+}
+.voice-prompt-box--word { font-size: 1.75rem; font-weight: 700; text-align: center; }
+.voice-prompt-box--phrase { font-size: 1.2rem; }
+.voice-prompt-box--sentence { font-size: 1.05rem; }
+.voice-prompt-box--long { font-size: 1rem; line-height: 1.8; }
+.admin-actions { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+.btn-admin {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 0.35rem 0.55rem;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--white);
+    font-family: var(--font-display);
+}
+.btn-admin--delete { color: #be123c; border-color: rgba(244,63,94,0.3); }
+.btn-admin--reattempt { color: #2563eb; border-color: rgba(37,99,235,0.3); }
+.btn-admin:hover { opacity: 0.85; }
+.admin-toast {
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.88rem;
+}
+.admin-toast--success { background: rgba(16,185,129,0.1); color: #047857; border: 1px solid rgba(16,185,129,0.2); }
+.admin-toast--error { background: rgba(244,63,94,0.08); color: #be123c; border: 1px solid rgba(244,63,94,0.2); }
 .typing-display .typed-correct { color: var(--emerald); }
 .typing-display .typed-wrong { color: var(--coral); background: rgba(244,63,94,0.08); }
 .typing-display .current-char {

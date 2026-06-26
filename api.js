@@ -22,6 +22,12 @@
         }
     }
 
+    function clearEmailCompleted(email) {
+        const normalized = email.trim().toLowerCase();
+        const list = getCompletedEmails().filter(e => e !== normalized);
+        localStorage.setItem(COMPLETED_KEY, JSON.stringify(list));
+    }
+
     function isLocallyBlocked(email) {
         return getCompletedEmails().includes(email.trim().toLowerCase());
     }
@@ -128,6 +134,24 @@
                 method: 'GET',
                 headers: { Authorization: `Bearer ${token}` }
             });
+        },
+
+        async adminDelete(token, email) {
+            return request('/admin-delete', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ email })
+            });
+        },
+
+        async adminReattempt(token, email) {
+            const result = await request('/admin-reattempt', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ email })
+            });
+            if (result.ok) clearEmailCompleted(email);
+            return result;
         }
     };
 })();

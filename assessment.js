@@ -73,7 +73,7 @@
         const section = data.sections[sectionIndex];
         panel.innerHTML = `
             <div class="section-intro">
-                <h2>Basic Grammar Assessment</h2>
+                <h2>Advanced Grammar Assessment</h2>
                 <p class="section-desc">Answer all ${data.grammarQuestions.length} questions. You have ${section.minutes} minutes for this section.</p>
                 <span class="section-timer">Section time remaining: <span id="section-timer">${formatTime(section.minutes * 60)}</span></span>
             </div>
@@ -115,7 +115,6 @@
         });
     }
 
-    let typingRound = 0;
     let typingStart = null;
 
     function renderTypingDisplay(passage, typed) {
@@ -147,25 +146,24 @@
     function renderTyping() {
         const panel = document.getElementById('assessment-content');
         const section = data.sections[sectionIndex];
-        const passage = data.typingPassages[typingRound];
-        const roundLabel = `Passage ${typingRound + 1} of ${data.typingPassages.length}`;
+        const passage = data.typingPassage;
 
         panel.innerHTML = `
             <div class="section-intro">
                 <h2>Typing Speed Assessment</h2>
-                <p class="section-desc">${roundLabel}. Type the passage below as accurately as possible. Section limit: ${section.minutes} minutes total.</p>
-                <span class="section-timer">Section time remaining: <span id="section-timer">${formatTime(sectionSecondsLeft)}</span></span>
+                <p class="section-desc">Type the full paragraph below exactly as shown. You have <strong>${section.minutes} minutes</strong> for this section (10 lines minimum).</p>
+                <span class="section-timer">Section time remaining: <span id="section-timer">${formatTime(section.minutes * 60)}</span></span>
             </div>
-            <div class="typing-display" id="typing-display"></div>
-            <textarea class="typing-input" id="typing-input" placeholder="Start typing here..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+            <div class="typing-display typing-display--multiline" id="typing-display"></div>
+            <textarea class="typing-input" id="typing-input" rows="10" placeholder="Start typing here..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
             <div class="typing-stats">
                 <span>WPM: <strong id="stat-wpm">0</strong></span>
                 <span>Accuracy: <strong id="stat-accuracy">0%</strong></span>
-                <span>Round: <strong>${roundLabel}</strong></span>
+                <span>Progress: <strong id="stat-progress">0%</strong></span>
             </div>
             <div class="assessment-actions">
-                <button type="button" class="btn btn-secondary" id="typing-skip" ${typingRound >= data.typingPassages.length - 1 ? 'hidden' : ''}>Next Passage</button>
-                <button type="button" class="btn btn-primary" id="typing-next">${typingRound >= data.typingPassages.length - 1 ? 'Continue to Voice' : 'Complete Passage'}</button>
+                <span></span>
+                <button type="button" class="btn btn-primary" id="typing-next">Continue to Voice</button>
             </div>
         `;
 
@@ -176,32 +174,26 @@
 
         function onInput() {
             const typed = input.value;
-            display.innerHTML = renderTypingDisplay(passage, typed);
             const stats = calcTypingStats(passage, typed, (Date.now() - typingStart) / 1000);
             document.getElementById('stat-wpm').textContent = stats.wpm;
             document.getElementById('stat-accuracy').textContent = `${stats.accuracy}%`;
+            const progress = Math.min(100, Math.round((typed.length / passage.length) * 100));
+            document.getElementById('stat-progress').textContent = `${progress}%`;
         }
 
         input.addEventListener('input', onInput);
-        display.innerHTML = renderTypingDisplay(passage, '');
+        display.textContent = passage;
 
-        function completeRound() {
+        function completeTyping() {
             const typed = input.value;
             const stats = calcTypingStats(passage, typed, (Date.now() - typingStart) / 1000);
-            state.typing.rounds.push({ passage: typingRound + 1, ...stats });
-            state.typing.bestWpm = Math.max(state.typing.bestWpm, stats.wpm);
-            state.typing.bestAccuracy = Math.max(state.typing.bestAccuracy, stats.accuracy);
-            typingRound += 1;
-            if (typingRound < data.typingPassages.length) {
-                renderTyping();
-            } else {
-                goNextSection();
-            }
+            state.typing.rounds = [{ passage: 1, ...stats }];
+            state.typing.bestWpm = stats.wpm;
+            state.typing.bestAccuracy = stats.accuracy;
+            goNextSection();
         }
 
-        document.getElementById('typing-next').addEventListener('click', completeRound);
-        const skipBtn = document.getElementById('typing-skip');
-        if (skipBtn) skipBtn.addEventListener('click', completeRound);
+        document.getElementById('typing-next').addEventListener('click', completeTyping);
     }
 
     let voiceRound = 0;
@@ -211,16 +203,18 @@
     async function renderVoice() {
         const panel = document.getElementById('assessment-content');
         const section = data.sections[sectionIndex];
-        const prompt = data.voicePrompts[voiceRound];
+        const promptItem = data.voicePrompts[voiceRound];
+        const prompt = promptItem.text;
+        const promptLabel = { word: 'Word', phrase: 'Phrase', sentence: 'Sentence', long: 'Extended sentence' }[promptItem.type] || 'Prompt';
         const existing = state.voice.recordings[voiceRound];
 
         panel.innerHTML = `
             <div class="section-intro">
                 <h2>Voice Assessment</h2>
-                <p class="section-desc">Read the script clearly at a professional pace. Prompt ${voiceRound + 1} of ${data.voicePrompts.length}. Allow microphone access when prompted.</p>
+                <p class="section-desc">${promptLabel} ${voiceRound + 1} of ${data.voicePrompts.length}. Read clearly at a professional pace. Allow microphone access when prompted.</p>
                 <span class="section-timer">Section time remaining: <span id="section-timer">${formatTime(sectionSecondsLeft)}</span></span>
             </div>
-            <div class="voice-prompt-box">${prompt}</div>
+            <div class="voice-prompt-box voice-prompt-box--${promptItem.type}">${prompt}</div>
             <div class="voice-controls">
                 <button type="button" class="btn btn-primary" id="voice-record">${existing ? 'Re-record' : 'Start Recording'}</button>
                 <button type="button" class="btn btn-secondary" id="voice-stop" disabled>Stop</button>
@@ -260,9 +254,11 @@
                     const durationSec = Math.round((Date.now() - startTime) / 1000);
                     state.voice.recordings[voiceRound] = {
                         prompt: voiceRound + 1,
+                        type: promptItem.type,
+                        text: prompt,
                         durationSec,
                         url,
-                        completed: durationSec >= 10
+                        completed: durationSec >= promptItem.minDuration
                     };
                     playback.src = url;
                     playback.hidden = false;
@@ -316,7 +312,7 @@
         document.getElementById('section-name').textContent = section.label;
 
         if (section.id === 'grammar') renderGrammar();
-        else if (section.id === 'typing') { typingRound = 0; renderTyping(); }
+        else if (section.id === 'typing') renderTyping();
         else if (section.id === 'voice') { voiceRound = 0; renderVoice(); }
         startTimers(section.minutes);
     }
@@ -369,6 +365,8 @@
                 completionPercent: state.voice.completionPercent,
                 prompts: state.voice.recordings.map(r => ({
                     prompt: r.prompt,
+                    type: r.type,
+                    text: r.text,
                     durationSec: r.durationSec,
                     completed: r.completed
                 }))
