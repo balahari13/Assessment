@@ -1,0 +1,15 @@
+node_modules/
+deploy/
+trinitas-site.zip
+logo-source.jpg
+logo-cropped.png
+.DS_Store
+*.log
+.env
+.env.*
+*.ps1
+*.bat
+*-output.txt
+analyze-logo-run.txt
+verify-output.txt
+verify-trinitas-output.txt

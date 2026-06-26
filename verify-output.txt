@@ -1,0 +1,3 @@
+Full canvas TEXT: 839 250 1983 1311
+First text row y>=550: 550
+Left-edge text (x 839-900) minY: 916

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Careers | Trinitas NextGen Business Solutions</title>
+    <meta name="description" content="Join Trinitas NextGen Business Solutions — 100% work-from-home BPO careers in India. Complete our 30-minute preliminary assessment.">
+    <meta name="theme-color" content="#020617">
+    <link rel="icon" href="logo-icon.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="careers.css">
+</head>
+<body>
+    <header class="nav" id="nav">
+        <a href="index.html" class="nav-brand">
+            <img src="logo-icon.png" alt="" class="nav-icon">
+            <span class="nav-wordmark">
+                <strong>Trinitas</strong>
+                <span>NextGen Business Solutions</span>
+            </span>
+        </a>
+        <nav class="nav-links" aria-label="Primary">
+            <a href="index.html#services" class="nav-link">Services</a>
+            <a href="about.html" class="nav-link">About</a>
+            <a href="careers.html" class="nav-link active">Careers</a>
+            <a href="index.html#contact" class="nav-link">Contact</a>
+        </nav>
+        <a href="#register" class="nav-cta">Apply Now</a>
+        <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false">
+            <span></span><span></span><span></span>
+        </button>
+    </header>
+
+    <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+        <img src="logo-full.png" alt="Trinitas NextGen Business Solutions" class="mobile-menu-logo">
+        <nav class="mobile-menu-nav">
+            <a href="index.html#services" class="mobile-menu-link">Services</a>
+            <a href="about.html" class="mobile-menu-link">About</a>
+            <a href="careers.html" class="mobile-menu-link">Careers</a>
+            <a href="index.html#contact" class="mobile-menu-link">Contact</a>
+        </nav>
+        <a href="#register" class="mobile-menu-cta">Apply Now</a>
+    </div>
+
+    <main>
+        <section class="careers-hero">
+            <div class="container">
+                <p class="eyebrow eyebrow-light">Work From Home · India</p>
+                <h1>Build your BPO career with <span class="text-accent-light">Trinitas</span></h1>
+                <p class="lead lead-light">Join our 100% remote workforce in India. Complete a structured 30-minute preliminary assessment covering grammar, typing speed, and voice communication before our recruitment team reviews your profile.</p>
+                <div class="careers-steps">
+                    <div class="career-step"><strong>Step 1</strong><span>Register with your details</span></div>
+                    <div class="career-step"><strong>Step 2</strong><span>30-min assessment (grammar, typing, voice)</span></div>
+                    <div class="career-step"><strong>Step 3</strong><span>Results reviewed by recruitment</span></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section section-light" id="register">
+            <div class="container careers-grid">
+                <div>
+                    <p class="eyebrow">Preliminary Assessment</p>
+                    <h2>What to expect</h2>
+                    <ul class="careers-list">
+                        <li><strong>Basic Grammar</strong> — 20 multiple-choice questions (~12 minutes)</li>
+                        <li><strong>Typing Speed</strong> — 3 timed passages, WPM and accuracy measured (~10 minutes)</li>
+                        <li><strong>Voice Assessment</strong> — 3 professional scripts read aloud with microphone (~8 minutes)</li>
+                        <li><strong>One attempt only</strong> — your email is locked after submission to ensure fairness</li>
+                        <li>Use a quiet space, stable internet, and a working microphone</li>
+                    </ul>
+                </div>
+                <div class="careers-card">
+                    <h3>Register &amp; Begin</h3>
+                    <p class="section-desc">Enter your details to start. Reattempts using the same email are blocked automatically.</p>
+                    <form class="register-form" id="register-form" novalidate>
+                        <div class="form-field">
+                            <label for="fullName">Full Name</label>
+                            <input type="text" id="fullName" name="fullName" required placeholder="Your full name" autocomplete="name">
+                        </div>
+                        <div class="form-field">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" name="email" required placeholder="you@email.com" autocomplete="email">
+                        </div>
+                        <div class="form-field">
+                            <label for="phone">Phone Number</label>
+                            <input type="tel" id="phone" name="phone" required placeholder="+91 XXXXX XXXXX" autocomplete="tel">
+                        </div>
+                        <div class="form-field">
+                            <label style="display:flex;align-items:flex-start;gap:0.5rem;font-size:0.88rem;font-weight:500;text-transform:none;letter-spacing:0;">
+                                <input type="checkbox" name="consent" required style="margin-top:0.2rem">
+                                <span>I confirm this is my only attempt. I understand reattempts are not permitted and my responses will be stored for recruitment review.</span>
+                            </label>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full">Begin Assessment</button>
+                    </form>
+                    <div id="register-alert" class="form-alert" hidden></div>
+                    <div id="blocked-notice" class="blocked-notice" hidden></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-bottom" style="border-top:none;padding-top:0">
+            <span>© 2026 Trinitas NextGen Business Solutions Private Limited.</span>
+            <a href="index.html" style="color:rgba(255,255,255,0.6)">Back to Home</a>
+        </div>
+    </footer>
+
+    <script src="api.js"></script>
+    <script src="careers.js"></script>
+</body>
+</html>

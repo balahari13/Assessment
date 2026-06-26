@@ -1,0 +1,9 @@
+White canvas: 430..2488 x 220..1341
+Scan region: X=965..1953, text from Y=646
+Icon: 965..1953 x 247..1314
+Text: 965..1953 x 646..1311
+Full: 965..1953 x 247..1314
+Saved C:\Users\balah\workspace\trinitas\logo-icon.png (1187x1122) from (866,220)
+Saved C:\Users\balah\workspace\trinitas\logo-full.png (1049x1122) from (935,220)
+Saved C:\Users\balah\workspace\trinitas\logo-wordmark.png (1069x696) from (925,646)
+Done.

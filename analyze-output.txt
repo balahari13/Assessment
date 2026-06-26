@@ -1,0 +1,24 @@
+Source image: 2760x1504
+Icon scan: x=900..2000 y=220..700
+Text scan: x=900..2000 y=580..1340
+
+=== EXACT BOUNDS ===
+Icon:  minX=1101 minY=247 maxX=1785 maxY=700  (685x454, 127164 px)
+Text:  minX=900 minY=892 maxX=1983 maxY=1311  (1084x420, 120299 px)
+       (raw text scan minY=580; gap row y=848; text after gap from y=849)
+Full:  minX=900 minY=247 maxX=1983 maxY=1311  (1084x1065)
+
+=== VALIDATION ===
+Text-classified px in icon bounds: 47901 (icon shadows; no letterforms)
+Icon-classified px in text bounds: 34285
+
+=== CROPS (3% padding) ===
+Icon crop:      x=1080 y=233 w=727 h=482  (pad 21x14)
+Wordmark crop:  x=867 y=879 w=1150 h=446  (pad 33x13)
+Full crop:      x=867 y=215 w=1150 h=1129  (pad 33x32)
+Icon px in wordmark crop: 35256
+Saved C:\Users\balah\workspace\trinitas\logo-icon.png (727x482) from (1080,233)
+Saved C:\Users\balah\workspace\trinitas\logo-full.png (1150x1129) from (867,215)
+Saved C:\Users\balah\workspace\trinitas\logo-wordmark.png (1150x446) from (867,879)
+
+Done.

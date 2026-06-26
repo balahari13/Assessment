@@ -1,0 +1,8 @@
+White canvas: 430..2488 x 220..1341
+Icon: 430..1985 x 220..1341
+Text: 839..1983 x 250..1312
+Full: 430..1985 x 220..1341
+Saved C:\Users\balah\workspace\trinitas\logo-icon.png (1780x1122) from (430,220)
+Saved C:\Users\balah\workspace\trinitas\logo-full.png (1624x1122) from (430,220)
+Saved C:\Users\balah\workspace\trinitas\logo-wordmark.png (1237x1092) from (793,250)
+Done.

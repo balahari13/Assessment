@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin | Trinitas Assessment Results</title>
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#020617">
+    <link rel="icon" href="logo-icon.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="careers.css">
+</head>
+<body>
+    <div class="admin-page">
+        <div class="container">
+            <div class="admin-login-card" id="admin-login">
+                <p class="eyebrow">Trinitas Admin</p>
+                <h1 style="font-size:1.5rem;margin-bottom:0.5rem">Assessment Dashboard</h1>
+                <p class="section-desc" style="margin-bottom:1.5rem">Sign in to view candidate assessment results.</p>
+                <form id="admin-login-form">
+                    <div class="form-field">
+                        <label for="username">Admin ID</label>
+                        <input type="text" id="username" name="username" required autocomplete="username">
+                    </div>
+                    <div class="form-field">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required autocomplete="current-password">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Sign In</button>
+                </form>
+                <div id="admin-error" class="form-alert form-alert--error" style="margin-top:1rem" hidden></div>
+            </div>
+
+            <div class="admin-dashboard" id="admin-dashboard" hidden>
+                <div class="admin-toolbar">
+                    <div>
+                        <h1 style="font-size:1.5rem">Assessment Results</h1>
+                        <p class="section-desc">All preliminary assessment submissions</p>
+                    </div>
+                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+                        <button type="button" class="btn btn-secondary" id="admin-refresh">Refresh</button>
+                        <button type="button" class="btn btn-primary" id="export-csv">Export CSV</button>
+                        <button type="button" class="btn btn-secondary" id="admin-logout">Logout</button>
+                    </div>
+                </div>
+
+                <div class="admin-stats">
+                    <div class="admin-stat"><strong id="stat-total">0</strong><span>Total Submissions</span></div>
+                    <div class="admin-stat"><strong id="stat-grammar">0%</strong><span>Avg Grammar</span></div>
+                    <div class="admin-stat"><strong id="stat-typing">0</strong><span>Avg Typing WPM</span></div>
+                    <div class="admin-stat"><strong id="stat-voice">0%</strong><span>Avg Voice Completion</span></div>
+                </div>
+
+                <div class="results-table-wrap">
+                    <table class="results-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Grammar</th>
+                                <th>Typing</th>
+                                <th>Accuracy</th>
+                                <th>Voice</th>
+                                <th>Overall</th>
+                                <th>Completed</th>
+                            </tr>
+                        </thead>
+                        <tbody id="results-body">
+                            <tr><td colspan="9">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="api.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preliminary Assessment | Trinitas Careers</title>
+    <meta name="robots" content="noindex">
+    <meta name="theme-color" content="#020617">
+    <link rel="icon" href="logo-icon.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="careers.css">
+</head>
+<body class="assessment-shell">
+    <div class="assessment-topbar">
+        <div class="container assessment-topbar-inner">
+            <div>
+                <strong style="font-family:var(--font-display);color:var(--navy)">Trinitas Preliminary Assessment</strong>
+                <div class="assessment-meta">
+                    <span>Candidate: <strong id="candidate-name">—</strong></span>
+                    <span>Email: <strong id="candidate-email">—</strong></span>
+                    <span>Section: <strong id="section-name">—</strong></span>
+                </div>
+                <div class="assessment-progress"><div class="assessment-progress-fill" id="progress-fill"></div></div>
+                <div class="assessment-meta" style="margin-top:0.35rem">
+                    <span id="progress-label">Section 1 of 3</span>
+                </div>
+            </div>
+            <div class="assessment-timer">
+                Time left: <span id="global-timer">30:00</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="assessment-body">
+        <div class="container">
+            <div class="assessment-panel" id="assessment-content">
+                <p>Loading assessment...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="assessment-data.js"></script>
+    <script src="api.js"></script>
+    <script src="assessment.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+White canvas: 430..2488 x 220..1341
+Icon bounds:  1077..1784 x 246..750
+Text scan:    839..1983 x 250..1311
+Text crop:    838..1983 x 580..1312
+Full bounds:  838..1983 x 246..1312
+Icon crop (4%):      x=1049 y=226 w=764 h=545 pad=28x20
+Wordmark crop (4%):  x=792 y=551 w=1238 h=791 pad=46x29
+Full crop (4%):      x=792 y=220 w=1238 h=1122 pad=46x43
+Saved C:\Users\balah\workspace\trinitas\logo-icon.png (764x545) from (1049,226)
+Saved C:\Users\balah\workspace\trinitas\logo-full.png (1238x1122) from (792,220)
+Saved C:\Users\balah\workspace\trinitas\logo-wordmark.png (1238x791) from (792,551)
+Done.
