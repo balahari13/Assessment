@@ -510,7 +510,7 @@
 .admin-login-card { max-width: 420px; }
 .admin-stats {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     gap: 1rem;
     margin: 1.5rem 0;
 }
@@ -573,5 +573,6 @@
 .score-pill--low { background: rgba(244,63,94,0.12); color: #be123c; }
 
 @media (max-width: 900px) {
-    .careers-grid, .careers-steps, .admin-stats, .answer-key-grid { grid-template-columns: 1fr; }
+    .careers-grid, .careers-steps, .admin-stats, .answer-key-grid { grid-template-columns: repeat(2, 1fr); }
+    .admin-stats { grid-template-columns: repeat(2, 1fr); }
 }
