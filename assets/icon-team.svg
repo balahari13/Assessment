@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none" role="img" aria-label="Remote team">
+  <rect width="120" height="120" rx="24" fill="#F5F3FF"/>
+  <circle cx="42" cy="46" r="12" fill="#7C3AED"/>
+  <circle cx="78" cy="46" r="12" fill="#2563EB"/>
+  <circle cx="60" cy="34" r="10" fill="#06B6D4"/>
+  <path d="M24 88c4-14 16-22 36-22s32 8 36 22" stroke="#7C3AED" stroke-width="6" stroke-linecap="round"/>
+</svg>

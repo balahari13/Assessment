@@ -123,23 +123,21 @@
 
 
 
-    function initChartBars() {
-        const chart = document.querySelector('.dashboard-chart');
-        if (!chart) return;
+    function initStickyCta() {
+        const bar = document.getElementById('sticky-cta');
+        if (!bar) return;
 
-        const observer = new IntersectionObserver(entries => {
-            if (!entries[0].isIntersecting) return;
-            chart.querySelectorAll('.chart-bar').forEach((bar, i) => {
-                bar.style.animationDelay = `${i * 0.08}s`;
-                bar.style.animationPlayState = 'running';
-            });
-            observer.disconnect();
-        }, { threshold: 0.5 });
+        const contact = document.getElementById('contact');
+        const showAfter = 480;
 
-        chart.querySelectorAll('.chart-bar').forEach(bar => {
-            bar.style.animationPlayState = 'paused';
-        });
-        observer.observe(chart);
+        function update() {
+            const nearContact = contact && contact.getBoundingClientRect().top < window.innerHeight * 0.75;
+            const show = window.scrollY > showAfter && !nearContact;
+            bar.hidden = !show;
+        }
+
+        window.addEventListener('scroll', update, { passive: true });
+        update();
     }
 
     function initNav() {
@@ -198,20 +196,28 @@
     function initCounters() {
         const counters = document.querySelectorAll('.stat-value[data-target]');
         const section = document.querySelector('.stats-bar');
-        if (!section) return;
+        if (!section || !counters.length) return;
+
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
         const observer = new IntersectionObserver(entries => {
             if (!entries[0].isIntersecting) return;
             counters.forEach(counter => {
                 const target = parseInt(counter.dataset.target, 10);
                 const suffix = counter.dataset.suffix || '';
-                const duration = 1400;
-                const start = performance.now();
 
                 function format(value) {
                     if (target >= 1000) return Math.floor(value).toLocaleString() + suffix;
                     return Math.floor(value) + suffix;
                 }
+
+                if (reducedMotion) {
+                    counter.textContent = format(target);
+                    return;
+                }
+
+                const duration = 1400;
+                const start = performance.now();
 
                 function step(now) {
                     const progress = Math.min((now - start) / duration, 1);
@@ -400,8 +406,8 @@
         initReveal();
         initCounters();
         initMetricBars();
-        initChartBars();
         initParallax();
+        initStickyCta();
 
         if (document.getElementById('service-modal')) initServiceModal();
         if (document.querySelector('.accordion')) initAccordion();

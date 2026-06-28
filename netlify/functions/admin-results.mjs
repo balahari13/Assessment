@@ -22,18 +22,30 @@ export default async (req, context) => {
         }
 
         const results = await listAttempts(store);
+
+        function pickSubmission(candidate, attemptNumber) {
+            if (candidate.attempt1 !== undefined) {
+                return attemptNumber === 1 ? candidate.attempt1 : candidate.attempt2;
+            }
+            return attemptNumber === 1 ? candidate : null;
+        }
+
+        function englishPercent(submission) {
+            if (!submission) return 0;
+            if (typeof submission.englishPercent === 'number') return submission.englishPercent;
+            const mcq = submission.grammar?.percent || 0;
+            const fill = submission.fillBlank?.percent || 0;
+            return submission.fillBlank ? Math.round((mcq + fill) / 2) : mcq;
+        }
+
+        const attempt1Rows = results.map(r => pickSubmission(r, 1)).filter(Boolean);
         const summary = {
             total: results.length,
-            avgGrammar: average(results.map(r => {
-                if (typeof r.englishPercent === 'number') return r.englishPercent;
-                const mcq = r.grammar?.percent || 0;
-                const fill = r.fillBlank?.percent || 0;
-                return r.fillBlank ? Math.round((mcq + fill) / 2) : mcq;
-            })),
-            avgReading: average(results.map(r => r.reading?.percent || 0)),
-            avgWorkplace: average(results.map(r => r.workplace?.percent || 0)),
-            avgTypingWpm: average(results.map(r => r.typing?.bestWpm || 0)),
-            avgVoice: average(results.map(r => r.voice?.completionPercent || 0))
+            avgGrammar: average(attempt1Rows.map(englishPercent)),
+            avgReading: average(attempt1Rows.map(r => r.reading?.percent || 0)),
+            avgWorkplace: average(attempt1Rows.map(r => r.workplace?.percent || 0)),
+            avgTypingWpm: average(attempt1Rows.map(r => r.typing?.bestWpm || 0)),
+            avgVoice: average(attempt1Rows.map(r => r.voice?.completionPercent || 0))
         };
 
         return jsonResponse(200, { results, summary });

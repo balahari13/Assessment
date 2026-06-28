@@ -3,7 +3,7 @@
 
     const SESSION_KEY = 'trinitas_assessment_session';
     const MAX_TAB_SWITCHES = 3;
-    const data = window.ASSESSMENT_DATA;
+    let data = null;
 
     let session = null;
     let sectionIndex = 0;
@@ -14,7 +14,7 @@
     let workplaceQuestionIndex = 0;
     let globalTimer = null;
     let sectionTimer = null;
-    let globalSecondsLeft = data.totalMinutes * 60;
+    let globalSecondsLeft = 60 * 60;
     let sectionSecondsLeft = 0;
     let startedAt = Date.now();
     let tabSwitchCount = 0;
@@ -30,6 +30,13 @@
         voice: { recordings: [], completionPercent: 0 }
     };
 
+    function resolveAssessmentData(attemptNumber) {
+        if (Number(attemptNumber) === 2 && window.ASSESSMENT_DATA_ATTEMPT2) {
+            return window.ASSESSMENT_DATA_ATTEMPT2;
+        }
+        return window.ASSESSMENT_DATA;
+    }
+
     function loadSession() {
         const raw = sessionStorage.getItem(SESSION_KEY);
         if (!raw) {
@@ -37,6 +44,7 @@
             return false;
         }
         session = JSON.parse(raw);
+        data = resolveAssessmentData(session.attemptNumber || 1);
         return true;
     }
 
@@ -891,6 +899,7 @@
 
         const payload = {
             ...session,
+            attemptNumber: session.attemptNumber || 1,
             durationMinutes,
             timedOut: !!timedOut,
             terminatedReason: terminatedReason || null,
@@ -965,6 +974,11 @@
 
         document.getElementById('candidate-name').textContent = session.fullName;
         document.getElementById('candidate-email').textContent = session.email;
+        const attemptLabel = data.attemptLabel || (session.attemptNumber === 2 ? 'Attempt 2' : 'Attempt 1');
+        const sectionNameEl = document.getElementById('section-name');
+        if (sectionNameEl && session.attemptNumber === 2) {
+            sectionNameEl.textContent = `${attemptLabel}`;
+        }
         startedAt = Date.now();
         globalSecondsLeft = data.totalMinutes * 60;
         updateTimers();

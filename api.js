@@ -3,33 +3,63 @@
 
     const API_BASE = '/.netlify/functions';
     const FORM_EMAIL = 'info@trinitasnxt.in';
-    const COMPLETED_KEY = 'trinitas_completed_emails';
+    const COMPLETED_KEY = 'trinitas_completed_attempts';
+    const LEGACY_COMPLETED_KEY = 'trinitas_completed_emails';
 
-    function getCompletedEmails() {
+    function migrateLegacyCompleted() {
         try {
-            return JSON.parse(localStorage.getItem(COMPLETED_KEY) || '[]');
+            const legacy = JSON.parse(localStorage.getItem(LEGACY_COMPLETED_KEY) || '[]');
+            if (!legacy.length) return;
+            const map = getCompletedMap();
+            legacy.forEach(email => {
+                const normalized = String(email).trim().toLowerCase();
+                if (!map[normalized]) map[normalized] = [1];
+            });
+            localStorage.setItem(COMPLETED_KEY, JSON.stringify(map));
+            localStorage.removeItem(LEGACY_COMPLETED_KEY);
         } catch {
-            return [];
+            /* ignore */
         }
     }
 
-    function markEmailCompleted(email) {
-        const list = getCompletedEmails();
-        const normalized = email.trim().toLowerCase();
-        if (!list.includes(normalized)) {
-            list.push(normalized);
-            localStorage.setItem(COMPLETED_KEY, JSON.stringify(list));
+    migrateLegacyCompleted();
+
+    function getCompletedMap() {
+        try {
+            return JSON.parse(localStorage.getItem(COMPLETED_KEY) || '{}');
+        } catch {
+            return {};
         }
     }
 
-    function clearEmailCompleted(email) {
+    function markEmailCompleted(email, attemptNumber = 1) {
+        const map = getCompletedMap();
         const normalized = email.trim().toLowerCase();
-        const list = getCompletedEmails().filter(e => e !== normalized);
-        localStorage.setItem(COMPLETED_KEY, JSON.stringify(list));
+        if (!map[normalized]) map[normalized] = [];
+        const attempt = Number(attemptNumber) || 1;
+        if (!map[normalized].includes(attempt)) {
+            map[normalized].push(attempt);
+            localStorage.setItem(COMPLETED_KEY, JSON.stringify(map));
+        }
     }
 
-    function isLocallyBlocked(email) {
-        return getCompletedEmails().includes(email.trim().toLowerCase());
+    function clearEmailCompleted(email, attemptNumber) {
+        const normalized = email.trim().toLowerCase();
+        const map = getCompletedMap();
+        if (!map[normalized]) return;
+        if (attemptNumber) {
+            map[normalized] = map[normalized].filter(a => a !== Number(attemptNumber));
+            if (!map[normalized].length) delete map[normalized];
+        } else {
+            delete map[normalized];
+        }
+        localStorage.setItem(COMPLETED_KEY, JSON.stringify(map));
+    }
+
+    function isLocallyBlocked(email, attemptNumber = 1) {
+        const map = getCompletedMap();
+        const normalized = email.trim().toLowerCase();
+        return (map[normalized] || []).includes(Number(attemptNumber) || 1);
     }
 
     async function request(path, options = {}) {
@@ -44,13 +74,15 @@
     }
 
     async function submitViaFormSubmit(payload) {
+        const attemptLabel = payload.attemptNumber === 2 ? 'Attempt 2 (Advanced)' : 'Attempt 1';
         const response = await fetch(`https://formsubmit.co/ajax/${FORM_EMAIL}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
             body: JSON.stringify({
-                _subject: `Career Assessment — ${payload.fullName}`,
+                _subject: `Career Assessment ${attemptLabel} — ${payload.fullName}`,
                 _template: 'table',
                 _captcha: 'false',
+                attempt: attemptLabel,
                 name: payload.fullName,
                 email: payload.email,
                 phone: payload.phone,
@@ -74,32 +106,41 @@
     }
 
     window.TrinitasAPI = {
-        async checkEligibility(email) {
+        async checkEligibility(email, attemptNumber = 1) {
             const normalized = email.trim().toLowerCase();
-            if (isLocallyBlocked(normalized)) {
+            const attempt = Number(attemptNumber) || 1;
+
+            if (isLocallyBlocked(normalized, attempt)) {
                 return {
                     ok: true,
                     data: {
                         eligible: false,
                         blocked: true,
-                        message: 'This email has already completed the assessment. Reattempts are not permitted.'
+                        attemptNumber: attempt,
+                        message: attempt === 2
+                            ? 'This email has already completed Attempt 2.'
+                            : 'This email has already completed Attempt 1.'
                     }
                 };
             }
 
             const result = await request('/check-eligibility', {
                 method: 'POST',
-                body: JSON.stringify({ email: normalized })
+                body: JSON.stringify({ email: normalized, attemptNumber: attempt })
             });
 
             if (!result.isJson || result.status === 404) {
-                return { ok: true, data: { eligible: true, blocked: false, fallback: true } };
+                return { ok: true, data: { eligible: true, blocked: false, attemptNumber: attempt, fallback: true } };
             }
             return result;
         },
 
         async submitAssessment(payload) {
-            const normalized = { ...payload, email: payload.email.trim().toLowerCase() };
+            const normalized = {
+                ...payload,
+                email: payload.email.trim().toLowerCase(),
+                attemptNumber: Number(payload.attemptNumber) || 1
+            };
 
             const result = await request('/submit-assessment', {
                 method: 'POST',
@@ -107,18 +148,18 @@
             });
 
             if (result.ok && result.data.success) {
-                markEmailCompleted(normalized.email);
+                markEmailCompleted(normalized.email, normalized.attemptNumber);
                 return { ok: true, data: { ...result.data, via: 'netlify' } };
             }
 
             if (result.status === 403 && result.data.error === 'blocked') {
-                markEmailCompleted(normalized.email);
+                markEmailCompleted(normalized.email, normalized.attemptNumber);
                 return { ok: false, data: result.data };
             }
 
             const emailed = await submitViaFormSubmit(normalized);
             if (emailed) {
-                markEmailCompleted(normalized.email);
+                markEmailCompleted(normalized.email, normalized.attemptNumber);
                 return { ok: true, data: { success: true, via: 'email' } };
             }
 
@@ -158,6 +199,14 @@
             });
             if (result.ok) clearEmailCompleted(email);
             return result;
+        },
+
+        async adminEnableAttempt2(token, email) {
+            return request('/admin-enable-attempt2', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ email })
+            });
         }
     };
 })();

@@ -3,8 +3,8 @@ import {
     jsonResponse,
     getAssessmentStore,
     normalizeEmail,
-    saveAttempt,
-    getAttempt
+    saveSubmission,
+    getCandidate
 } from './lib/shared.mjs';
 
 export default async (req, context) => {
@@ -20,26 +20,49 @@ export default async (req, context) => {
         const email = normalizeEmail(body.email);
         const fullName = String(body.fullName || '').trim();
         const phone = String(body.phone || '').trim();
+        const attemptNumber = Number(body.attemptNumber) || 1;
 
         if (!email || !fullName || !phone) {
             return jsonResponse(400, { error: 'Name, email, and phone are required' });
         }
 
         const store = getAssessmentStore(context);
-        const existing = await getAttempt(store, email);
-        if (existing) {
+        const candidate = await getCandidate(store, email);
+
+        if (attemptNumber === 1 && candidate?.attempt1) {
             return jsonResponse(403, {
                 error: 'blocked',
-                message: 'This email has already completed the assessment.'
+                message: 'This email has already completed Attempt 1.'
             });
         }
 
-        const attempt = {
+        if (attemptNumber === 2) {
+            if (!candidate?.attempt1) {
+                return jsonResponse(403, {
+                    error: 'blocked',
+                    message: 'Attempt 1 must be completed before Attempt 2.'
+                });
+            }
+            if (!candidate.attempt2Enabled) {
+                return jsonResponse(403, {
+                    error: 'blocked',
+                    message: 'Second attempt is not enabled for this email.'
+                });
+            }
+            if (candidate.attempt2) {
+                return jsonResponse(403, {
+                    error: 'blocked',
+                    message: 'This email has already completed Attempt 2.'
+                });
+            }
+        }
+
+        const submission = {
             email,
             fullName,
             phone,
+            attemptNumber,
             registeredAt: body.registeredAt || new Date().toISOString(),
-            completedAt: new Date().toISOString(),
             durationMinutes: body.durationMinutes || null,
             timedOut: !!body.timedOut,
             terminatedReason: body.terminatedReason || null,
@@ -54,15 +77,25 @@ export default async (req, context) => {
             overallScore: body.overallScore || 0
         };
 
-        const saved = await saveAttempt(store, attempt);
+        const saved = await saveSubmission(store, submission);
         if (!saved.ok) {
+            const messages = {
+                attempt1_exists: 'This email has already completed Attempt 1.',
+                attempt1_required: 'Attempt 1 must be completed first.',
+                attempt2_not_enabled: 'Second attempt is not enabled for this email.',
+                attempt2_exists: 'This email has already completed Attempt 2.'
+            };
             return jsonResponse(403, {
                 error: 'blocked',
-                message: 'This email has already completed the assessment.'
+                message: messages[saved.reason] || 'Submission blocked.'
             });
         }
 
-        return jsonResponse(200, { success: true, message: 'Assessment submitted successfully' });
+        return jsonResponse(200, {
+            success: true,
+            attemptNumber,
+            message: `Attempt ${attemptNumber} submitted successfully`
+        });
     } catch (err) {
         console.error('submit-assessment error:', err);
         return jsonResponse(500, { error: 'Server error', detail: err.message });

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none" role="img" aria-label="BPO services">
+  <rect width="120" height="120" rx="24" fill="#EFF6FF"/>
+  <path d="M30 78V42h18v36H30zm21 0V54h18v24H51zm21 0V36h18v42H72z" fill="#2563EB"/>
+  <circle cx="39" cy="36" r="6" fill="#7C3AED"/>
+  <circle cx="60" cy="48" r="6" fill="#06B6D4"/>
+  <circle cx="81" cy="30" r="6" fill="#10B981"/>
+</svg>

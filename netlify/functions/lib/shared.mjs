@@ -38,9 +38,35 @@ export function attemptKey(email) {
     return `attempt:${normalizeEmail(email)}`;
 }
 
-export async function getAttempt(store, email) {
+export function normalizeCandidate(raw, email) {
+    if (!raw) return null;
+    const data = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    if (data.attempt1 !== undefined || data.attempt2 !== undefined || data.attempt2Enabled !== undefined) {
+        return data;
+    }
+    if (data.overallScore !== undefined || data.grammar || data.englishPercent !== undefined) {
+        return {
+            email: data.email || email,
+            fullName: data.fullName,
+            phone: data.phone,
+            attempt1: data,
+            attempt2: null,
+            attempt2Enabled: false,
+            updatedAt: data.completedAt || null
+        };
+    }
+    return data;
+}
+
+export async function getCandidate(store, email) {
     const raw = await store.get(attemptKey(email), { type: 'text' });
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    return normalizeCandidate(raw, email);
+}
+
+export async function getAttempt(store, email) {
+    const candidate = await getCandidate(store, email);
+    return candidate?.attempt1 || null;
 }
 
 export async function listAttempts(store) {
@@ -48,29 +74,62 @@ export async function listAttempts(store) {
     const index = raw ? JSON.parse(raw) : [];
     const results = [];
     for (const email of index) {
-        const item = await getAttempt(store, email);
+        const item = await getCandidate(store, email);
         if (item) results.push(item);
     }
-    return results.sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
+    return results.sort((a, b) => {
+        const aDate = new Date(a.updatedAt || a.attempt2?.completedAt || a.attempt1?.completedAt || 0);
+        const bDate = new Date(b.updatedAt || b.attempt2?.completedAt || b.attempt1?.completedAt || 0);
+        return bDate - aDate;
+    });
 }
 
-export async function saveAttempt(store, attempt) {
-    const email = normalizeEmail(attempt.email);
-    const existing = await getAttempt(store, email);
-    if (existing) {
-        return { ok: false, reason: 'already_completed' };
-    }
-    attempt.email = email;
-    attempt.blocked = true;
-    await store.set(attemptKey(email), JSON.stringify(attempt));
-
+async function upsertIndex(store, email) {
     const raw = await store.get('attempts-index', { type: 'text' });
     const index = raw ? JSON.parse(raw) : [];
     if (!index.includes(email)) {
         index.push(email);
         await store.set('attempts-index', JSON.stringify(index));
     }
+}
+
+export async function saveSubmission(store, submission) {
+    const email = normalizeEmail(submission.email);
+    const attemptNumber = Number(submission.attemptNumber) || 1;
+    let candidate = await getCandidate(store, email) || {
+        email,
+        fullName: submission.fullName,
+        phone: submission.phone,
+        attempt1: null,
+        attempt2: null,
+        attempt2Enabled: false
+    };
+
+    const record = { ...submission, email, completedAt: new Date().toISOString() };
+    delete record.attemptNumber;
+
+    if (attemptNumber === 1) {
+        if (candidate.attempt1) return { ok: false, reason: 'attempt1_exists' };
+        candidate.attempt1 = record;
+        candidate.fullName = submission.fullName;
+        candidate.phone = submission.phone;
+    } else if (attemptNumber === 2) {
+        if (!candidate.attempt1) return { ok: false, reason: 'attempt1_required' };
+        if (!candidate.attempt2Enabled) return { ok: false, reason: 'attempt2_not_enabled' };
+        if (candidate.attempt2) return { ok: false, reason: 'attempt2_exists' };
+        candidate.attempt2 = record;
+    } else {
+        return { ok: false, reason: 'invalid_attempt' };
+    }
+
+    candidate.updatedAt = new Date().toISOString();
+    await store.set(attemptKey(email), JSON.stringify(candidate));
+    await upsertIndex(store, email);
     return { ok: true };
+}
+
+export async function saveAttempt(store, attempt) {
+    return saveSubmission(store, { ...attempt, attemptNumber: attempt.attemptNumber || 1 });
 }
 
 function signToken(token) {
@@ -131,7 +190,25 @@ export async function allowReattempt(store, email) {
     const result = await deleteAttempt(store, email);
     const raw = await store.get('reattempt-log', { type: 'text' });
     const log = raw ? JSON.parse(raw) : [];
-    log.push({ email: result.email, grantedAt: new Date().toISOString() });
+    log.push({ email: result.email, grantedAt: new Date().toISOString(), type: 'full-reset' });
     await store.set('reattempt-log', JSON.stringify(log));
     return result;
+}
+
+export async function enableSecondAttempt(store, email) {
+    const normalized = normalizeEmail(email);
+    const candidate = await getCandidate(store, normalized);
+    if (!candidate?.attempt1) {
+        return { ok: false, reason: 'no_attempt1' };
+    }
+    candidate.attempt2Enabled = true;
+    candidate.updatedAt = new Date().toISOString();
+    await store.set(attemptKey(normalized), JSON.stringify(candidate));
+
+    const raw = await store.get('reattempt-log', { type: 'text' });
+    const log = raw ? JSON.parse(raw) : [];
+    log.push({ email: normalized, grantedAt: new Date().toISOString(), type: 'attempt2-enabled' });
+    await store.set('reattempt-log', JSON.stringify(log));
+
+    return { ok: true, email: normalized };
 }

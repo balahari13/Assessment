@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none" role="img" aria-label="Work from home">
+  <rect width="120" height="120" rx="24" fill="#FFFBEB"/>
+  <rect x="28" y="34" width="64" height="42" rx="6" fill="#F59E0B" opacity=".2"/>
+  <rect x="34" y="40" width="52" height="30" rx="4" fill="#fff" stroke="#F59E0B" stroke-width="3"/>
+  <path d="M44 82h32" stroke="#D97706" stroke-width="6" stroke-linecap="round"/>
+  <path d="M52 82v10M68 82v10" stroke="#D97706" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="78" cy="30" r="8" fill="#10B981"/>
+  <path d="M75 30l2 2 5-5" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+</svg>

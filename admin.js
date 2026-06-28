@@ -44,18 +44,53 @@
     }
 
     async function handleReattempt(email) {
-        if (!confirm(`Allow ${email} to retake the assessment? Their previous submission will be removed.`)) return;
+        if (!confirm(`Reset all attempts for ${email}? Both Attempt 1 and 2 records will be removed.`)) return;
         const token = sessionStorage.getItem(TOKEN_KEY);
         const { ok, data } = await window.TrinitasAPI.adminReattempt(token, email);
         if (!ok) {
-            showToast(data.error || 'Reattempt grant failed.', 'error');
+            showToast(data.error || 'Reset failed.', 'error');
             return;
         }
-        showToast(data.message || 'Reattempt allowed.', 'success');
+        showToast(data.message || 'Candidate reset.', 'success');
         loadResults();
     }
 
+    async function handleEnableAttempt2(email) {
+        if (!confirm(`Enable Attempt 2 (Advanced) for ${email}?`)) return;
+        const token = sessionStorage.getItem(TOKEN_KEY);
+        const { ok, data } = await window.TrinitasAPI.adminEnableAttempt2(token, email);
+        if (!ok) {
+            showToast(data.message || data.error || 'Could not enable Attempt 2.', 'error');
+            return;
+        }
+        showToast(data.message || 'Attempt 2 enabled.', 'success');
+        loadResults();
+    }
+
+    function normalizeCandidate(record) {
+        if (!record) return null;
+        if (record.attempt1 !== undefined || record.attempt2 !== undefined) return record;
+        if (record.overallScore !== undefined || record.grammar) {
+            return {
+                email: record.email,
+                fullName: record.fullName,
+                phone: record.phone,
+                attempt1: record,
+                attempt2: null,
+                attempt2Enabled: false
+            };
+        }
+        return record;
+    }
+
+    function getSubmission(candidate, attemptNumber) {
+        const c = normalizeCandidate(candidate);
+        if (!c) return null;
+        return attemptNumber === 1 ? c.attempt1 : c.attempt2;
+    }
+
     function getEnglishPercent(result) {
+        if (!result) return 0;
         if (typeof result.englishPercent === 'number') return result.englishPercent;
         const mcq = result.grammar?.percent || 0;
         const fill = result.fillBlank?.percent || 0;
@@ -101,8 +136,14 @@
             `<li><strong>V${i + 1}.</strong> [${item.type}] ${item.text}</li>`
         ).join('');
 
+        const attempt2 = window.ASSESSMENT_DATA_ATTEMPT2;
+        const attempt2Section = attempt2 ? renderAnswerKeyForData(attempt2, 'Attempt 2 — Advanced') : '';
+
         container.innerHTML = `
             <div class="answer-key-grid">
+                <section class="answer-key-section answer-key-section--full">
+                    <h3>Attempt 1 — Standard</h3>
+                </section>
                 <section class="answer-key-section">
                     <h3>Multiple Choice (${data.grammarQuestions.length})</h3>
                     <ol class="answer-key-list">${mcqHtml}</ol>
@@ -127,7 +168,28 @@
                     <h3>Voice Prompts (${data.voicePrompts.length})</h3>
                     <ol class="answer-key-list">${voiceHtml}</ol>
                 </section>
+                ${attempt2Section}
             </div>
+        `;
+    }
+
+    function renderAnswerKeyForData(data, title) {
+        const mcqHtml = data.grammarQuestions.map((item, i) => {
+            const correct = item.options[item.answer] || '—';
+            return `<li><strong>Q${i + 1}.</strong> ${item.q} <span class="answer-key-ans">→ ${correct}</span></li>`;
+        }).join('');
+        const fillHtml = data.fillBlankQuestions.map((item, i) => {
+            const answers = (item.answers || []).join(' / ');
+            return `<li><strong>F${i + 1}.</strong> ${item.q} <span class="answer-key-ans">→ ${answers}</span></li>`;
+        }).join('');
+        return `
+            <section class="answer-key-section answer-key-section--full">
+                <h3>${title}</h3>
+                <h4>Multiple Choice</h4>
+                <ol class="answer-key-list">${mcqHtml}</ol>
+                <h4>Fill in the Blanks</h4>
+                <ol class="answer-key-list">${fillHtml}</ol>
+            </section>
         `;
     }
 
@@ -135,29 +197,30 @@
         const tbody = document.getElementById('results-body');
         cachedResults = results;
         if (!results.length) {
-            tbody.innerHTML = '<tr><td colspan="12">No assessment submissions yet.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8">No assessment submissions yet.</td></tr>';
             return;
         }
 
-        tbody.innerHTML = results.map(r => {
+        tbody.innerHTML = results.map(raw => {
+            const r = normalizeCandidate(raw);
             const email = r.email || '';
+            const a1 = getSubmission(r, 1);
+            const a2 = getSubmission(r, 2);
+            const lastDate = a2?.completedAt || a1?.completedAt || r.updatedAt;
             return `
             <tr data-email="${email}">
-                <td>${r.fullName || '—'}</td>
+                <td>${r.fullName || a1?.fullName || '—'}</td>
                 <td>${email || '—'}</td>
-                <td>${r.phone || '—'}</td>
-                <td><span class="score-pill ${scoreClass(getEnglishPercent(r))}">${getEnglishPercent(r)}%</span></td>
-                <td><span class="score-pill ${scoreClass(r.reading?.percent || 0)}">${r.reading?.percent || 0}%</span></td>
-                <td><span class="score-pill ${scoreClass(r.workplace?.percent || 0)}">${r.workplace?.percent || 0}%</span></td>
-                <td><span class="score-pill ${scoreClass(Math.min(100, (r.typing?.bestWpm || 0)))}">${r.typing?.bestWpm || 0} WPM</span></td>
-                <td>${r.typing?.bestAccuracy || 0}%</td>
-                <td><span class="score-pill ${scoreClass(r.voice?.completionPercent || 0)}">${r.voice?.completionPercent || 0}%</span></td>
-                <td><strong>${r.overallScore || 0}%</strong></td>
-                <td>${formatDate(r.completedAt)}</td>
+                <td>${r.phone || a1?.phone || '—'}</td>
+                <td>${a1 ? `<span class="score-pill ${scoreClass(a1.overallScore || 0)}">${a1.overallScore || 0}%</span>` : '—'}</td>
+                <td>${a2 ? `<span class="score-pill ${scoreClass(a2.overallScore || 0)}">${a2.overallScore || 0}%</span>` : '—'}</td>
+                <td>${r.attempt2Enabled ? '<span class="score-pill score-pill--high">Yes</span>' : 'No'}</td>
+                <td>${formatDate(lastDate)}</td>
                 <td>
                     <div class="admin-actions">
+                        <button type="button" class="btn-admin btn-admin--attempt2" data-action="enable2" data-email="${email}" ${!a1 || r.attempt2Enabled ? 'disabled' : ''}>Enable Attempt 2</button>
                         <button type="button" class="btn-admin btn-admin--delete" data-action="delete" data-email="${email}">Delete</button>
-                        <button type="button" class="btn-admin btn-admin--reattempt" data-action="reattempt" data-email="${email}">Allow Reattempt</button>
+                        <button type="button" class="btn-admin btn-admin--reattempt" data-action="reattempt" data-email="${email}">Reset All</button>
                     </div>
                 </td>
             </tr>
@@ -168,6 +231,7 @@
             btn.addEventListener('click', () => {
                 const email = btn.dataset.email;
                 if (btn.dataset.action === 'delete') handleDelete(email);
+                else if (btn.dataset.action === 'enable2') handleEnableAttempt2(email);
                 else handleReattempt(email);
             });
         });
@@ -183,20 +247,22 @@
     }
 
     function exportCsv(results) {
-        const headers = ['Name', 'Email', 'Phone', 'English %', 'MCQ %', 'Fill Blank %', 'Reading %', 'Workplace %', 'Best WPM', 'Accuracy %', 'Voice %', 'Overall %', 'Completed At'];
-        const rows = results.map(r => [
-            r.fullName, r.email, r.phone,
-            getEnglishPercent(r),
-            r.grammar?.percent || 0,
-            r.fillBlank?.percent || 0,
-            r.reading?.percent || 0,
-            r.workplace?.percent || 0,
-            r.typing?.bestWpm || 0,
-            r.typing?.bestAccuracy || 0,
-            r.voice?.completionPercent || 0,
-            r.overallScore || 0,
-            r.completedAt || ''
-        ]);
+        const headers = ['Name', 'Email', 'Phone', 'Attempt1 Overall %', 'Attempt2 Overall %', 'Attempt2 Enabled', 'Attempt1 Completed', 'Attempt2 Completed'];
+        const rows = results.map(raw => {
+            const r = normalizeCandidate(raw);
+            const a1 = getSubmission(r, 1);
+            const a2 = getSubmission(r, 2);
+            return [
+                r.fullName || a1?.fullName,
+                r.email,
+                r.phone || a1?.phone,
+                a1?.overallScore || '',
+                a2?.overallScore || '',
+                r.attempt2Enabled ? 'Yes' : 'No',
+                a1?.completedAt || '',
+                a2?.completedAt || ''
+            ];
+        });
         const csv = [headers, ...rows].map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
         const blob = new Blob([csv], { type: 'text/csv' });
         const a = document.createElement('a');

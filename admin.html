@@ -49,12 +49,12 @@
                 </div>
 
                 <div class="admin-stats">
-                    <div class="admin-stat"><strong id="stat-total">0</strong><span>Total Submissions</span></div>
-                    <div class="admin-stat"><strong id="stat-grammar">0%</strong><span>Avg English</span></div>
-                    <div class="admin-stat"><strong id="stat-reading">0%</strong><span>Avg Reading</span></div>
-                    <div class="admin-stat"><strong id="stat-workplace">0%</strong><span>Avg Workplace</span></div>
-                    <div class="admin-stat"><strong id="stat-typing">0</strong><span>Avg Typing WPM</span></div>
-                    <div class="admin-stat"><strong id="stat-voice">0%</strong><span>Avg Voice Completion</span></div>
+                    <div class="admin-stat"><strong id="stat-total">—</strong><span>Candidates</span></div>
+                    <div class="admin-stat"><strong id="stat-grammar">—</strong><span>Avg English (Att. 1)</span></div>
+                    <div class="admin-stat"><strong id="stat-reading">—</strong><span>Avg Reading</span></div>
+                    <div class="admin-stat"><strong id="stat-workplace">—</strong><span>Avg Workplace</span></div>
+                    <div class="admin-stat"><strong id="stat-typing">—</strong><span>Avg Typing WPM</span></div>
+                    <div class="admin-stat"><strong id="stat-voice">—</strong><span>Avg Voice</span></div>
                 </div>
 
                 <div class="answer-key-panel" id="answer-key-panel" hidden>
@@ -69,19 +69,15 @@
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Phone</th>
-                                <th>English</th>
-                                <th>Reading</th>
-                                <th>Workplace</th>
-                                <th>Typing</th>
-                                <th>Accuracy</th>
-                                <th>Voice</th>
-                                <th>Overall</th>
-                                <th>Completed</th>
+                                <th>Attempt 1</th>
+                                <th>Attempt 2</th>
+                                <th>2nd Enabled</th>
+                                <th>Last Activity</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="results-body">
-                            <tr><td colspan="12">Loading...</td></tr>
+                            <tr><td colspan="8">Loading...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -90,6 +86,7 @@
     </div>
 
     <script src="assessment-data.js"></script>
+    <script src="assessment-data-attempt2.js"></script>
     <script src="api.js"></script>
     <script src="admin.js"></script>
 </body>

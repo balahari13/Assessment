@@ -8,7 +8,7 @@ const siteFiles = [
     'index.html', 'about.html', 'careers.html', 'assessment.html', 'admin.html',
     '404.html', 'thank-you.html',
     'styles.css', 'careers.css', 'main.js', 'api.js', 'careers.js',
-    'assessment.js', 'assessment-data.js', 'admin.js',
+    'assessment.js', 'assessment-data.js', 'assessment-data-attempt2.js', 'admin.js',
     'logo-icon.png', 'logo-full.png', 'logo-wordmark.png'
 ];
 
@@ -27,6 +27,12 @@ for (const file of siteFiles) {
     if (existsSync(src)) {
         cpSync(src, join(deploy, file));
     }
+}
+
+const assetsSrc = join(root, 'assets');
+const assetsDest = join(deploy, 'assets');
+if (existsSync(assetsSrc)) {
+    cpSync(assetsSrc, assetsDest, { recursive: true });
 }
 
 console.log('Build complete: deploy/');

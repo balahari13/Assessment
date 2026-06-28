@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none" role="img" aria-label="India delivery">
+  <rect width="120" height="120" rx="24" fill="#ECFDF5"/>
+  <path d="M60 18c-10 14-24 24-24 40 0 18 16 32 24 36 8-4 24-18 24-36 0-16-14-26-24-40z" fill="#10B981" opacity=".25"/>
+  <path d="M60 28c-7 10-16 18-16 30 0 12 10 22 16 26 6-4 16-14 16-26 0-12-9-20-16-30z" fill="#059669"/>
+  <circle cx="60" cy="54" r="6" fill="#F59E0B"/>
+  <path d="M24 92h72" stroke="#047857" stroke-width="4" stroke-linecap="round"/>
+</svg>
