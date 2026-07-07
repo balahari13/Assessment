@@ -399,6 +399,116 @@
         });
     }
 
+    const VOICE_FAQ = [
+        { keys: ['service', 'support', 'bpo', 'outsource', 'offer'], reply: 'Trinitas delivers customer support, finance & accounting, HR, IT help desk, sales, and back-office operations — all from a 100% work-from-home model in India.' },
+        { keys: ['career', 'job', 'apply', 'assessment', 'hiring', 'work from home'], reply: 'Visit our Careers page to register and complete the preliminary skills assessment. Shortlisted candidates may receive a Second Attempt with advanced questions.' },
+        { keys: ['contact', 'email', 'proposal', 'reach', 'inquiry'], reply: 'Email info@trinitasnxt.in or use the contact form on this page. Our team responds within one business day and prepares proposals within 48 hours.' },
+        { keys: ['india', 'remote', 'location', 'where'], reply: 'We are an India-based BPO with a fully remote delivery model — secure, SLA-driven, and built to scale.' },
+        { keys: ['hello', 'hi', 'hey', 'good morning', 'good afternoon'], reply: 'Hello! I am the Trinitas assistant. Ask me about our services, careers, or how to get in touch.' }
+    ];
+
+    function matchVoiceReply(text) {
+        const lower = text.toLowerCase();
+        for (const item of VOICE_FAQ) {
+            if (item.keys.some(k => lower.includes(k))) return item.reply;
+        }
+        return 'I can help with Trinitas services, careers and assessments, or contact details. Try asking about customer support, applying for a job, or how to request a proposal.';
+    }
+
+    function initVoiceAgent() {
+        const fab = document.getElementById('voice-agent-fab');
+        const panel = document.getElementById('voice-agent');
+        const closeBtn = document.getElementById('voice-agent-close');
+        const form = document.getElementById('voice-agent-form');
+        const input = document.getElementById('voice-agent-text');
+        const micBtn = document.getElementById('voice-agent-mic');
+        const messages = document.getElementById('voice-agent-messages');
+        if (!fab || !panel) return;
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition = null;
+        let listening = false;
+
+        function speak(text) {
+            if (!window.speechSynthesis) return;
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.rate = 1;
+            utter.pitch = 1;
+            window.speechSynthesis.speak(utter);
+        }
+
+        function addMessage(text, role) {
+            const el = document.createElement('div');
+            el.className = `voice-agent-msg voice-agent-msg--${role}`;
+            el.textContent = text;
+            messages.appendChild(el);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function respond(userText) {
+            const reply = matchVoiceReply(userText);
+            addMessage(reply, 'bot');
+            speak(reply);
+        }
+
+        function setOpen(open) {
+            panel.hidden = !open;
+            fab.setAttribute('aria-expanded', String(open));
+            if (open && messages.childElementCount === 0) {
+                const welcome = 'Hi! I am the Trinitas voice assistant. Ask about our BPO services, careers, or how to contact us.';
+                addMessage(welcome, 'bot');
+            }
+            if (open) input.focus();
+        }
+
+        fab.addEventListener('click', () => setOpen(panel.hidden));
+        closeBtn.addEventListener('click', () => setOpen(false));
+
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            const text = input.value.trim();
+            if (!text) return;
+            addMessage(text, 'user');
+            input.value = '';
+            respond(text);
+        });
+
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'en-IN';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+            recognition.onresult = e => {
+                const text = e.results[0][0].transcript.trim();
+                if (text) {
+                    addMessage(text, 'user');
+                    respond(text);
+                }
+            };
+            recognition.onend = () => {
+                listening = false;
+                micBtn.classList.remove('voice-agent-mic--active');
+            };
+            recognition.onerror = () => {
+                listening = false;
+                micBtn.classList.remove('voice-agent-mic--active');
+            };
+            micBtn.addEventListener('click', () => {
+                if (listening) {
+                    recognition.stop();
+                    return;
+                }
+                listening = true;
+                micBtn.classList.add('voice-agent-mic--active');
+                recognition.start();
+            });
+        } else {
+            micBtn.disabled = true;
+            micBtn.title = 'Voice input not supported in this browser';
+        }
+    }
+
     function init() {
         initPreloader();
         initHeroVideo();
@@ -412,6 +522,7 @@
         if (document.getElementById('service-modal')) initServiceModal();
         if (document.querySelector('.accordion')) initAccordion();
         if (document.getElementById('contact-form')) initForm();
+        if (document.getElementById('voice-agent')) initVoiceAgent();
         initBackToTop();
         initSmoothScroll();
     }

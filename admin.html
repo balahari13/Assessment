@@ -63,25 +63,40 @@
                 </div>
 
                 <div class="results-table-wrap">
-                    <table class="results-table">
+                    <table class="results-table results-table--detailed">
                         <thead>
                             <tr>
                                 <th>Name</th>
                                 <th>Email</th>
-                                <th>Phone</th>
-                                <th>Attempt 1</th>
-                                <th>Attempt 2</th>
-                                <th>2nd Enabled</th>
-                                <th>Last Activity</th>
+                                <th>Overall</th>
+                                <th>English</th>
+                                <th>MCQ</th>
+                                <th>Fill</th>
+                                <th>Reading</th>
+                                <th>Workplace</th>
+                                <th>Typing</th>
+                                <th>Acc%</th>
+                                <th>Voice</th>
+                                <th>Att.2</th>
+                                <th>Enabled</th>
+                                <th>View</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="results-body">
-                            <tr><td colspan="8">Loading...</td></tr>
+                            <tr><td colspan="15">Loading...</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div class="admin-modal" id="detail-modal" role="dialog" aria-modal="true" aria-hidden="true" hidden>
+        <div class="admin-modal-backdrop" id="detail-modal-backdrop"></div>
+        <div class="admin-modal-panel">
+            <button type="button" class="admin-modal-close" id="detail-modal-close" aria-label="Close">&times;</button>
+            <div id="detail-modal-content"></div>
         </div>
     </div>
 

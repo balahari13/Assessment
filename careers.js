@@ -93,8 +93,34 @@
         if (form2) form2.addEventListener('submit', e => handleSubmit(e, 2));
     }
 
+    function initAttempt2Nav() {
+        const section = document.getElementById('attempt2');
+        const registerSection = document.getElementById('register');
+        if (!section) return;
+
+        function showAttempt2(show) {
+            section.hidden = !show;
+            if (registerSection) registerSection.hidden = show;
+            if (show) {
+                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                const first = section.querySelector('input');
+                if (first) setTimeout(() => first.focus(), 400);
+            } else if (registerSection) {
+                registerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        function syncHash() {
+            showAttempt2(window.location.hash === '#attempt2');
+        }
+
+        window.addEventListener('hashchange', syncHash);
+        syncHash();
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         initNav();
         initRegistration();
+        initAttempt2Nav();
     });
 })();

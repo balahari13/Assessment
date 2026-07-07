@@ -98,6 +98,147 @@
         return mcq;
     }
 
+    function scorePill(val, suffix) {
+        if (val === null || val === undefined || val === '') return '—';
+        const n = Number(val);
+        if (Number.isNaN(n)) return '—';
+        const sfx = suffix || '%';
+        return `<span class="score-pill ${scoreClass(n)}">${n}${sfx}</span>`;
+    }
+
+    function getAssessmentData(attemptNumber) {
+        return attemptNumber === 2 ? window.ASSESSMENT_DATA_ATTEMPT2 : window.ASSESSMENT_DATA;
+    }
+
+    function normalizeFill(s) {
+        return String(s || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    }
+
+    function mcqRow(item, userIdx, label) {
+        const correct = item.options[item.answer] || '—';
+        const user = userIdx !== null && userIdx !== undefined ? (item.options[userIdx] || '—') : '—';
+        const ok = userIdx === item.answer;
+        const miss = userIdx === null || userIdx === undefined;
+        const cls = miss ? 'admin-ans-row--na' : ok ? 'admin-ans-row--ok' : 'admin-ans-row--bad';
+        return `<li class="admin-ans-row ${cls}"><span class="admin-ans-q">${label}</span><span class="admin-ans-user">Answer: ${user}</span> <span class="${ok ? 'admin-ans-correct' : 'admin-ans-miss'}">Correct: ${correct}</span></li>`;
+    }
+
+    function renderAttemptDetail(submission, attemptNumber) {
+        if (!submission) return '<p class="section-desc">No submission for this attempt.</p>';
+        const data = getAssessmentData(attemptNumber);
+        if (!data) return '<p class="section-desc">Answer key not loaded.</p>';
+
+        const mcqHtml = data.grammarQuestions.map((item, i) =>
+            mcqRow(item, submission.grammar?.answers?.[i], `Q${i + 1}. ${item.q}`)
+        ).join('');
+
+        const fillHtml = data.fillBlankQuestions.map((item, i) => {
+            const user = submission.fillBlank?.answers?.[i] || '—';
+            const accepted = (item.answers || []).map(normalizeFill);
+            const ok = accepted.includes(normalizeFill(user));
+            const cls = !user || user === '—' ? 'admin-ans-row--na' : ok ? 'admin-ans-row--ok' : 'admin-ans-row--bad';
+            const correct = (item.answers || []).join(' / ');
+            return `<li class="admin-ans-row ${cls}"><span class="admin-ans-q">F${i + 1}. ${item.q}</span><span class="admin-ans-user">Answer: ${user}</span> <span class="${ok ? 'admin-ans-correct' : 'admin-ans-miss'}">Accepted: ${correct}</span></li>`;
+        }).join('');
+
+        let flat = 0;
+        const readingHtml = (data.readingPassages || []).map((passage, pIdx) => {
+            const rows = passage.questions.map((item, qIdx) => {
+                const row = mcqRow(item, submission.reading?.answers?.[flat], `P${pIdx + 1} Q${qIdx + 1}. ${item.q}`);
+                flat += 1;
+                return row;
+            }).join('');
+            return `<h4 style="font-size:0.85rem;margin:0.5rem 0">${passage.title}</h4><ul class="admin-ans-list">${rows}</ul>`;
+        }).join('');
+
+        const workplaceHtml = (data.workplaceQuestions || []).map((item, i) =>
+            mcqRow(item, submission.workplace?.answers?.[i], `W${i + 1}. ${item.q}`)
+        ).join('');
+
+        const typed = submission.typing?.rounds?.[0]?.typedText || '—';
+        const voiceHtml = (submission.voice?.prompts || data.voicePrompts.map((p, i) => ({ text: p.text, type: p.type, completed: false }))).map((p, i) => {
+            const done = p.completed ? 'Completed' : 'Not completed';
+            const cls = p.completed ? 'admin-ans-row--ok' : 'admin-ans-row--na';
+            return `<li class="admin-ans-row ${cls}"><span class="admin-ans-q">V${i + 1}. [${p.type || 'prompt'}]</span>${p.text || ''} <span class="admin-ans-user"> — ${done}${p.durationSec ? ` (${p.durationSec}s)` : ''}</span></li>`;
+        }).join('');
+
+        const s = submission;
+        return `
+            <div class="admin-section-scores">
+                <div class="admin-section-score"><strong>${s.overallScore || 0}%</strong><span>Overall</span></div>
+                <div class="admin-section-score"><strong>${getEnglishPercent(s)}%</strong><span>English</span></div>
+                <div class="admin-section-score"><strong>${s.grammar?.percent || 0}%</strong><span>MCQ</span></div>
+                <div class="admin-section-score"><strong>${s.fillBlank?.percent || 0}%</strong><span>Fill</span></div>
+                <div class="admin-section-score"><strong>${s.reading?.percent || 0}%</strong><span>Reading</span></div>
+                <div class="admin-section-score"><strong>${s.workplace?.percent || 0}%</strong><span>Workplace</span></div>
+                <div class="admin-section-score"><strong>${s.typing?.bestWpm || 0}</strong><span>WPM</span></div>
+                <div class="admin-section-score"><strong>${s.typing?.bestAccuracy || 0}%</strong><span>Accuracy</span></div>
+                <div class="admin-section-score"><strong>${s.voice?.completionPercent || 0}%</strong><span>Voice</span></div>
+            </div>
+            <div class="admin-detail-block"><h3>Multiple Choice (${s.grammar?.score || 0}/${data.grammarQuestions.length})</h3><ul class="admin-ans-list">${mcqHtml}</ul></div>
+            <div class="admin-detail-block"><h3>Fill in the Blanks (${s.fillBlank?.score || 0}/${data.fillBlankQuestions.length})</h3><ul class="admin-ans-list">${fillHtml}</ul></div>
+            <div class="admin-detail-block"><h3>Reading (${s.reading?.score || 0}/${data.readingPassages?.reduce((n, p) => n + p.questions.length, 0) || 0})</h3>${readingHtml}</div>
+            <div class="admin-detail-block"><h3>Workplace (${s.workplace?.score || 0}/${data.workplaceQuestions?.length || 0})</h3><ul class="admin-ans-list">${workplaceHtml}</ul></div>
+            <div class="admin-detail-block"><h3>Typing — ${s.typing?.bestWpm || 0} WPM, ${s.typing?.bestAccuracy || 0}% accuracy</h3><pre class="admin-typed-preview">${typed}</pre></div>
+            <div class="admin-detail-block"><h3>Voice (${s.voice?.completionPercent || 0}%)</h3><ul class="admin-ans-list">${voiceHtml}</ul></div>
+        `;
+    }
+
+    let detailEmail = null;
+    let detailAttempt = 1;
+
+    function openDetailModal(email) {
+        const raw = cachedResults.find(r => (normalizeCandidate(r)?.email || r.email) === email);
+        const candidate = normalizeCandidate(raw);
+        if (!candidate) return;
+        detailEmail = email;
+        detailAttempt = candidate.attempt1 ? 1 : 2;
+        renderDetailModal(candidate);
+        const modal = document.getElementById('detail-modal');
+        modal.hidden = false;
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeDetailModal() {
+        const modal = document.getElementById('detail-modal');
+        modal.hidden = true;
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+    }
+
+    function renderDetailModal(candidate) {
+        const container = document.getElementById('detail-modal-content');
+        const a1 = getSubmission(candidate, 1);
+        const a2 = getSubmission(candidate, 2);
+        const active = detailAttempt === 2 && a2 ? 2 : 1;
+        const sub = active === 2 ? a2 : a1;
+
+        container.innerHTML = `
+            <div class="admin-detail-header">
+                <h2>${candidate.fullName || sub?.fullName || 'Candidate'}</h2>
+                <div class="admin-detail-meta">
+                    <span>${candidate.email}</span>
+                    <span>${candidate.phone || sub?.phone || ''}</span>
+                    <span>Completed: ${formatDate(sub?.completedAt)}</span>
+                    <span>Duration: ${sub?.durationMinutes || '—'} min</span>
+                </div>
+            </div>
+            <div class="admin-attempt-tabs">
+                <button type="button" class="admin-attempt-tab ${active === 1 ? 'admin-attempt-tab--active' : ''}" data-attempt="1" ${!a1 ? 'disabled' : ''}>Attempt 1</button>
+                <button type="button" class="admin-attempt-tab ${active === 2 ? 'admin-attempt-tab--active' : ''}" data-attempt="2" ${!a2 ? 'disabled' : ''}>Attempt 2</button>
+            </div>
+            ${renderAttemptDetail(sub, active)}
+        `;
+
+        container.querySelectorAll('[data-attempt]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                detailAttempt = parseInt(btn.dataset.attempt, 10);
+                renderDetailModal(candidate);
+            });
+        });
+    }
+
     function renderAnswerKey() {
         const data = window.ASSESSMENT_DATA;
         const container = document.getElementById('answer-key-content');
@@ -197,7 +338,7 @@
         const tbody = document.getElementById('results-body');
         cachedResults = results;
         if (!results.length) {
-            tbody.innerHTML = '<tr><td colspan="8">No assessment submissions yet.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="15">No assessment submissions yet.</td></tr>';
             return;
         }
 
@@ -206,21 +347,27 @@
             const email = r.email || '';
             const a1 = getSubmission(r, 1);
             const a2 = getSubmission(r, 2);
-            const lastDate = a2?.completedAt || a1?.completedAt || r.updatedAt;
             return `
             <tr data-email="${email}">
                 <td>${r.fullName || a1?.fullName || '—'}</td>
                 <td>${email || '—'}</td>
-                <td>${r.phone || a1?.phone || '—'}</td>
-                <td>${a1 ? `<span class="score-pill ${scoreClass(a1.overallScore || 0)}">${a1.overallScore || 0}%</span>` : '—'}</td>
-                <td>${a2 ? `<span class="score-pill ${scoreClass(a2.overallScore || 0)}">${a2.overallScore || 0}%</span>` : '—'}</td>
+                <td>${scorePill(a1?.overallScore)}</td>
+                <td>${scorePill(getEnglishPercent(a1))}</td>
+                <td>${scorePill(a1?.grammar?.percent)}</td>
+                <td>${scorePill(a1?.fillBlank?.percent)}</td>
+                <td>${scorePill(a1?.reading?.percent)}</td>
+                <td>${scorePill(a1?.workplace?.percent)}</td>
+                <td>${a1?.typing?.bestWpm ? `${a1.typing.bestWpm}` : '—'}</td>
+                <td>${scorePill(a1?.typing?.bestAccuracy)}</td>
+                <td>${scorePill(a1?.voice?.completionPercent)}</td>
+                <td>${scorePill(a2?.overallScore)}</td>
                 <td>${r.attempt2Enabled ? '<span class="score-pill score-pill--high">Yes</span>' : 'No'}</td>
-                <td>${formatDate(lastDate)}</td>
+                <td><button type="button" class="btn-admin" data-action="view" data-email="${email}" ${!a1 && !a2 ? 'disabled' : ''}>View</button></td>
                 <td>
                     <div class="admin-actions">
-                        <button type="button" class="btn-admin btn-admin--attempt2" data-action="enable2" data-email="${email}" ${!a1 || r.attempt2Enabled ? 'disabled' : ''}>Enable Attempt 2</button>
+                        <button type="button" class="btn-admin btn-admin--attempt2" data-action="enable2" data-email="${email}" ${!a1 || r.attempt2Enabled ? 'disabled' : ''}>Enable Att.2</button>
                         <button type="button" class="btn-admin btn-admin--delete" data-action="delete" data-email="${email}">Delete</button>
-                        <button type="button" class="btn-admin btn-admin--reattempt" data-action="reattempt" data-email="${email}">Reset All</button>
+                        <button type="button" class="btn-admin btn-admin--reattempt" data-action="reattempt" data-email="${email}">Reset</button>
                     </div>
                 </td>
             </tr>
@@ -230,7 +377,8 @@
         tbody.querySelectorAll('[data-action]').forEach(btn => {
             btn.addEventListener('click', () => {
                 const email = btn.dataset.email;
-                if (btn.dataset.action === 'delete') handleDelete(email);
+                if (btn.dataset.action === 'view') openDetailModal(email);
+                else if (btn.dataset.action === 'delete') handleDelete(email);
                 else if (btn.dataset.action === 'enable2') handleEnableAttempt2(email);
                 else handleReattempt(email);
             });
@@ -247,7 +395,11 @@
     }
 
     function exportCsv(results) {
-        const headers = ['Name', 'Email', 'Phone', 'Attempt1 Overall %', 'Attempt2 Overall %', 'Attempt2 Enabled', 'Attempt1 Completed', 'Attempt2 Completed'];
+        const headers = [
+            'Name', 'Email', 'Phone', 'Overall %', 'English %', 'MCQ %', 'Fill %', 'Reading %',
+            'Workplace %', 'Typing WPM', 'Typing Acc %', 'Voice %', 'Attempt2 Overall %',
+            'Attempt2 Enabled', 'Attempt1 Completed', 'Attempt2 Completed'
+        ];
         const rows = results.map(raw => {
             const r = normalizeCandidate(raw);
             const a1 = getSubmission(r, 1);
@@ -257,6 +409,14 @@
                 r.email,
                 r.phone || a1?.phone,
                 a1?.overallScore || '',
+                getEnglishPercent(a1) || '',
+                a1?.grammar?.percent || '',
+                a1?.fillBlank?.percent || '',
+                a1?.reading?.percent || '',
+                a1?.workplace?.percent || '',
+                a1?.typing?.bestWpm || '',
+                a1?.typing?.bestAccuracy || '',
+                a1?.voice?.completionPercent || '',
                 a2?.overallScore || '',
                 r.attempt2Enabled ? 'Yes' : 'No',
                 a1?.completedAt || '',
@@ -332,8 +492,19 @@
         });
     }
 
+    function initDetailModal() {
+        const closeBtn = document.getElementById('detail-modal-close');
+        const backdrop = document.getElementById('detail-modal-backdrop');
+        if (closeBtn) closeBtn.addEventListener('click', closeDetailModal);
+        if (backdrop) backdrop.addEventListener('click', closeDetailModal);
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && !document.getElementById('detail-modal').hidden) closeDetailModal();
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         initLogin();
+        initDetailModal();
         if (sessionStorage.getItem(TOKEN_KEY)) {
             showDashboard();
         } else {
