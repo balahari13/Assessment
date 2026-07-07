@@ -401,7 +401,7 @@
 
     const VOICE_FAQ = [
         { keys: ['service', 'support', 'bpo', 'outsource', 'offer'], reply: 'Trinitas delivers customer support, finance & accounting, HR, IT help desk, sales, and back-office operations — all from a 100% work-from-home model in India.' },
-        { keys: ['career', 'job', 'apply', 'assessment', 'hiring', 'work from home'], reply: 'Visit our Careers page to register and complete the preliminary skills assessment. Shortlisted candidates may receive a Second Attempt with advanced questions.' },
+        { keys: ['career', 'job', 'apply', 'assessment', 'hiring', 'work from home'], reply: 'Visit our Careers page to register and complete the preliminary skills assessment. A Second Attempt with advanced questions may be available for your email after Attempt 1.' },
         { keys: ['contact', 'email', 'proposal', 'reach', 'inquiry'], reply: 'Email info@trinitasnxt.in or use the contact form on this page. Our team responds within one business day and prepares proposals within 48 hours.' },
         { keys: ['india', 'remote', 'location', 'where'], reply: 'We are an India-based BPO with a fully remote delivery model — secure, SLA-driven, and built to scale.' },
         { keys: ['hello', 'hi', 'hey', 'good morning', 'good afternoon'], reply: 'Hello! I am the Trinitas assistant. Ask me about our services, careers, or how to get in touch.' }

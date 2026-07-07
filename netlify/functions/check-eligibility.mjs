@@ -53,7 +53,7 @@ export default async (req, context) => {
                     blocked: true,
                     attemptNumber: 2,
                     attempt2Enabled: false,
-                    message: 'Second attempt is not enabled for your email yet. Please wait for recruitment to approve it.'
+                    message: 'Attempt 2 is not enabled for your email yet. Please check back later.'
                 });
             }
             if (candidate.attempt2) {
