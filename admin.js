@@ -171,6 +171,7 @@
                 <div class="admin-section-score"><strong>${s.fillBlank?.percent || 0}%</strong><span>Fill</span></div>
                 <div class="admin-section-score"><strong>${s.reading?.percent || 0}%</strong><span>Reading</span></div>
                 <div class="admin-section-score"><strong>${s.workplace?.percent || 0}%</strong><span>Workplace</span></div>
+                <div class="admin-section-score"><strong>${s.email?.percent || 0}%</strong><span>Email</span></div>
                 <div class="admin-section-score"><strong>${s.typing?.bestWpm || 0}</strong><span>WPM</span></div>
                 <div class="admin-section-score"><strong>${s.typing?.bestAccuracy || 0}%</strong><span>Accuracy</span></div>
                 <div class="admin-section-score"><strong>${s.voice?.completionPercent || 0}%</strong><span>Voice</span></div>
@@ -179,9 +180,39 @@
             <div class="admin-detail-block"><h3>Fill in the Blanks (${s.fillBlank?.score || 0}/${data.fillBlankQuestions.length})</h3><ul class="admin-ans-list">${fillHtml}</ul></div>
             <div class="admin-detail-block"><h3>Reading (${s.reading?.score || 0}/${data.readingPassages?.reduce((n, p) => n + p.questions.length, 0) || 0})</h3>${readingHtml}</div>
             <div class="admin-detail-block"><h3>Workplace (${s.workplace?.score || 0}/${data.workplaceQuestions?.length || 0})</h3><ul class="admin-ans-list">${workplaceHtml}</ul></div>
+            <div class="admin-detail-block"><h3>Email Writing (${s.email?.percent || 0}%)</h3>${renderEmailDetail(s.email)}</div>
             <div class="admin-detail-block"><h3>Typing — ${s.typing?.bestWpm || 0} WPM, ${s.typing?.bestAccuracy || 0}% accuracy</h3><pre class="admin-typed-preview">${typed}</pre></div>
-            <div class="admin-detail-block"><h3>Voice (${s.voice?.completionPercent || 0}%)</h3><ul class="admin-ans-list">${voiceHtml}</ul></div>
+            <div class="admin-detail-block"><h3>Voice (${s.voice?.completionPercent || 0}%${s.voice?.validCount != null ? `, ${s.voice.validCount} valid` : ''})</h3><ul class="admin-ans-list">${voiceHtml}</ul></div>
         `;
+    }
+
+    function renderEmailDetail(email) {
+        if (!email || !email.topics || !email.topics.length) {
+            return '<p class="section-desc">No email responses recorded.</p>';
+        }
+        return email.topics.map((t, i) => {
+            const score = email.scores?.[i] ?? '—';
+            const words = email.wordCounts?.[i] ?? countWordsAdmin(email.responses?.[i]);
+            const body = email.responses?.[i] || '—';
+            return `
+                <div style="margin-bottom:0.85rem">
+                    <h4 style="font-size:0.85rem;margin:0 0 0.35rem">Email ${i + 1}: ${t.title || 'Topic'} — Score ${score}% · ${words} words</h4>
+                    <p style="font-size:0.78rem;color:var(--text-muted);margin:0 0 0.35rem">${t.scenario || ''}</p>
+                    <pre class="admin-typed-preview">${escapeHtml(body)}</pre>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function countWordsAdmin(text) {
+        return String(text || '').trim().split(/\s+/).filter(Boolean).length;
+    }
+
+    function escapeHtml(str) {
+        return String(str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
     }
 
     let detailEmail = null;
@@ -338,7 +369,7 @@
         const tbody = document.getElementById('results-body');
         cachedResults = results;
         if (!results.length) {
-            tbody.innerHTML = '<tr><td colspan="15">No assessment submissions yet.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="16">No assessment submissions yet.</td></tr>';
             return;
         }
 
@@ -357,6 +388,7 @@
                 <td>${scorePill(a1?.fillBlank?.percent)}</td>
                 <td>${scorePill(a1?.reading?.percent)}</td>
                 <td>${scorePill(a1?.workplace?.percent)}</td>
+                <td>${scorePill(a1?.email?.percent)}</td>
                 <td>${a1?.typing?.bestWpm ? `${a1.typing.bestWpm}` : '—'}</td>
                 <td>${scorePill(a1?.typing?.bestAccuracy)}</td>
                 <td>${scorePill(a1?.voice?.completionPercent)}</td>
@@ -397,7 +429,7 @@
     function exportCsv(results) {
         const headers = [
             'Name', 'Email', 'Phone', 'Overall %', 'English %', 'MCQ %', 'Fill %', 'Reading %',
-            'Workplace %', 'Typing WPM', 'Typing Acc %', 'Voice %', 'Attempt2 Overall %',
+            'Workplace %', 'Email Writing %', 'Typing WPM', 'Typing Acc %', 'Voice %', 'Attempt2 Overall %',
             'Attempt2 Enabled', 'Attempt1 Completed', 'Attempt2 Completed'
         ];
         const rows = results.map(raw => {
@@ -414,6 +446,7 @@
                 a1?.fillBlank?.percent || '',
                 a1?.reading?.percent || '',
                 a1?.workplace?.percent || '',
+                a1?.email?.percent || '',
                 a1?.typing?.bestWpm || '',
                 a1?.typing?.bestAccuracy || '',
                 a1?.voice?.completionPercent || '',

@@ -1,50 +1,52 @@
 window.ASSESSMENT_DATA = {
+    attemptLabel: 'Attempt 1',
     totalMinutes: 60,
     sections: [
-        { id: 'grammar', label: 'Basic English', minutes: 20, weight: 0.18 },
-        { id: 'reading', label: 'Reading Comprehension', minutes: 10, weight: 0.10 },
-        { id: 'workplace', label: 'Workplace & Psychology', minutes: 15, weight: 0.22 },
-        { id: 'typing', label: 'Typing Speed', minutes: 3, weight: 0.20 },
-        { id: 'voice', label: 'Voice Assessment', minutes: 12, weight: 0.30 }
+        { id: 'grammar', label: 'Basic English', minutes: 14, weight: 0.14 },
+        { id: 'reading', label: 'Reading Comprehension', minutes: 8, weight: 0.08 },
+        { id: 'workplace', label: 'Workplace & Psychology', minutes: 10, weight: 0.14 },
+        { id: 'email', label: 'Email Writing', minutes: 12, weight: 0.14 },
+        { id: 'typing', label: 'Typing Speed', minutes: 3, weight: 0.15 },
+        { id: 'voice', label: 'Voice Assessment', minutes: 13, weight: 0.35 }
     ],
     grammarQuestions: [
-        { q: 'What is the past tense of "go"?', options: ['goed', 'went', 'gone', 'going'], answer: 1 },
-        { q: 'Choose the correct spelling.', options: ['recieve', 'receive', 'receve', 'receeve'], answer: 1 },
-        { q: 'What is the opposite of "hot"?', options: ['warm', 'cold', 'cool', 'heat'], answer: 1 },
-        { q: 'Which word is a noun?', options: ['run', 'quickly', 'table', 'happy'], answer: 2 },
-        { q: 'Fill in the blank: I ate ___ apple.', options: ['a', 'an', 'the', 'no article'], answer: 1 },
-        { q: 'What is the plural of "child"?', options: ['childs', 'childes', 'children', 'childrens'], answer: 2 },
-        { q: 'Which word means the same as "happy"?', options: ['sad', 'angry', 'joyful', 'tired'], answer: 2 },
-        { q: 'He ___ to work every day.', options: ['go', 'goes', 'going', 'gone'], answer: 1 },
-        { q: 'Which sentence is correct?', options: ['She are my friend.', 'She is my friend.', 'She am my friend.', 'She be my friend.'], answer: 1 },
-        { q: 'Which sentence uses capital letters correctly?', options: ['i live in india.', 'I live in india.', 'I live in India.', 'i Live In India.'], answer: 2 },
-        { q: 'What is the opposite of "big"?', options: ['large', 'small', 'tall', 'wide'], answer: 1 },
-        { q: 'Choose the correct word: ___ going to the store.', options: ['Their', 'There', "They're", 'They'], answer: 2 },
-        { q: 'Which word is a verb?', options: ['beautiful', 'quickly', 'write', 'table'], answer: 2 },
-        { q: 'She ___ cooking dinner right now.', options: ['is', 'are', 'am', 'be'], answer: 0 },
-        { q: 'How many vowels are in the word "education"?', options: ['3', '4', '5', '6'], answer: 2 },
-        { q: 'What is the past tense of "eat"?', options: ['eated', 'eaten', 'ate', 'eating'], answer: 2 },
-        { q: 'Which sentence has correct punctuation?', options: ['what is your name', 'What is your name?', 'What is your name.', 'What is your name,'], answer: 1 },
-        { q: 'Which word describes a noun?', options: ['run', 'beautiful', 'quickly', 'jump'], answer: 1 },
-        { q: 'They ___ playing in the park.', options: ['is', 'am', 'are', 'was'], answer: 2 },
-        { q: 'Choose the correct contraction: ___ raining outside.', options: ['Its', "It's", 'Its\'', 'It'], answer: 1 },
-        { q: 'The book is ___ the table.', options: ['in', 'on', 'at', 'by'], answer: 1 },
-        { q: 'What is the comparative form of "good"?', options: ['gooder', 'more good', 'better', 'best'], answer: 2 },
-        { q: 'Which sentence is correct?', options: ["He don't like tea.", "He doesn't like tea.", "He doesn't likes tea.", "He don't likes tea."], answer: 1 },
-        { q: 'What is the opposite of "early"?', options: ['soon', 'late', 'fast', 'quick'], answer: 1 },
-        { q: 'Thank you ___ your help.', options: ['to', 'for', 'with', 'at'], answer: 1 }
+        { q: 'Choose the correct sentence.', options: ['She have completed the report.', 'She has completed the report.', 'She having completed the report.', 'She is complete the report.'], answer: 1 },
+        { q: 'Which sentence uses the correct article?', options: ['Please send me a update.', 'Please send me an update.', 'Please send me the updates immediately one.', 'Please send me update.'], answer: 1 },
+        { q: 'Select the correct preposition: The meeting is scheduled ___ Monday morning.', options: ['in', 'on', 'at', 'by'], answer: 1 },
+        { q: 'Which word is closest in meaning to "assist"?', options: ['ignore', 'help', 'delay', 'cancel'], answer: 1 },
+        { q: 'Choose the correct past form: Yesterday we _____ the client about the delay.', options: ['inform', 'informed', 'informing', 'informs'], answer: 1 },
+        { q: 'Which sentence is grammatically correct?', options: ['There is many tickets open today.', 'There are many tickets open today.', 'There be many tickets open today.', 'There was many tickets open today.'], answer: 1 },
+        { q: 'Select the best synonym for "urgent".', options: ['optional', 'immediate', 'casual', 'delayed'], answer: 1 },
+        { q: 'Fill in: If the customer is unavailable, I _____ leave a clear voicemail.', options: ['will', 'would to', 'am', 'was'], answer: 0 },
+        { q: 'Which sentence has correct subject–verb agreement?', options: ['The team are working on it. (US formal)', 'The list of issues are long.', 'Each agent need a headset.', 'The quality of calls is improving.'], answer: 3 },
+        { q: 'Choose the correct spelling.', options: ['accomodation', 'accommodation', 'acommodation', 'accommadation'], answer: 1 },
+        { q: 'Which is the most professional sentence?', options: ['Your order messed up, sorry.', 'We regret the inconvenience and have corrected the billing error.', 'Not our fault, check again.', 'Why you complaining now?'], answer: 1 },
+        { q: 'Select the correct comparative form.', options: ['This queue is more busier than yesterday.', 'This queue is busier than yesterday.', 'This queue is most busy than yesterday.', 'This queue is busyer than yesterday.'], answer: 1 },
+        { q: 'Choose the correct word: Please _____ your account number for verification.', options: ['confirm', 'conform', 'confine', 'confuse'], answer: 0 },
+        { q: 'Which sentence uses punctuation correctly?', options: ['Could you please hold while I check?', 'Could you please hold while I check.', 'Could you please hold while I check', 'Could you please, hold while I check?'], answer: 0 },
+        { q: 'Select the correct modal verb: Agents _____ follow data-protection rules at all times.', options: ['might', 'must', 'maybe', 'ought maybe'], answer: 1 },
+        { q: 'Which word means the opposite of "temporary"?', options: ['brief', 'permanent', 'short', 'occasional'], answer: 1 },
+        { q: 'Choose the correct tense: Right now the customer _____ on hold.', options: ['wait', 'waits', 'is waiting', 'waited'], answer: 2 },
+        { q: 'Which sentence is clear and concise for email?', options: ['I am writing this email in order for the purpose of requesting.', 'I am writing to request an update on ticket #4521.', 'As per my previous mail again again please do the needful ASAP ASAP.', 'Kindly revert back on the same.'], answer: 1 },
+        { q: 'Select the correct form: Neither the lead nor the agents _____ available at 3 p.m.', options: ['was', 'were', 'is', 'be'], answer: 1 },
+        { q: 'Choose the correct collocation: We need to _____ a complaint with the vendor.', options: ['do', 'make', 'create make', 'put'], answer: 1 },
+        { q: 'Which sentence uses "affect" / "effect" correctly?', options: ['The outage will effect response times.', 'The outage will affect response times.', 'The outage will affects response times.', 'The outage will affection response times.'], answer: 1 },
+        { q: 'Select the best transition word: The system is down; _____, callbacks will be delayed.', options: ['however nonsense', 'therefore', 'although', 'despite'], answer: 1 },
+        { q: 'Which is correct?', options: ["Its a busy day for the team.", "It's a busy day for the team.", "Its' a busy day for the team.", "It a busy day for the team."], answer: 1 },
+        { q: 'Choose the correct passive form: The refund _____ yesterday.', options: ['process', 'was processed', 'were processed', 'processing'], answer: 1 },
+        { q: 'Select the most appropriate closing for a business email.', options: ['Later!', 'Best regards,', 'Bye bye', 'See ya'], answer: 1 }
     ],
     fillBlankQuestions: [
-        { q: 'The sun rises in the _____.', answers: ['east'] },
-        { q: 'Water freezes at _____ degrees Celsius.', answers: ['zero', '0'] },
-        { q: 'A person who flies an airplane is called a _____.', answers: ['pilot'] },
-        { q: 'The past tense of "write" is _____.', answers: ['wrote'] },
-        { q: 'We use our _____ to hear sounds.', answers: ['ears'] },
-        { q: 'Mumbai is a major city in _____.', answers: ['india'] },
-        { q: 'The opposite of "expensive" is _____.', answers: ['cheap'] },
-        { q: 'There are _____ days in a week.', answers: ['seven', '7'] },
-        { q: 'She bought a _____ of bread from the store.', answers: ['loaf'] },
-        { q: 'Please close the door _____ you leave.', answers: ['when', 'before'] }
+        { q: 'Please find the report _____ for your review.', answers: ['attached', 'enclosed'] },
+        { q: 'I will follow _____ with the customer after the update.', answers: ['up'] },
+        { q: 'We apologize for the _____ caused by the delay.', answers: ['inconvenience', 'inconvenience caused'] },
+        { q: 'Kindly provide your registered _____ number for verification.', answers: ['account', 'phone', 'mobile'] },
+        { q: 'The ticket has been _____ to the technical team.', answers: ['escalated', 'assigned', 'forwarded'] },
+        { q: 'Please remain _____ the line while I check the system.', answers: ['on'] },
+        { q: 'A confirmation email will be sent _____ 24 hours.', answers: ['within', 'in'] },
+        { q: 'Agents must maintain customer _____ at all times.', answers: ['confidentiality', 'privacy'] },
+        { q: 'The shift _____ at 9:00 a.m. every weekday.', answers: ['starts', 'begins'] },
+        { q: 'Document every interaction _____ in the CRM.', answers: ['accurately', 'clearly', 'properly'] }
     ],
     readingPassages: [
         {
@@ -422,6 +424,68 @@ window.ASSESSMENT_DATA = {
             answer: 1
         }
     ],
+    emailTopics: [
+        {
+            title: 'Delayed order apology',
+            scenario: 'Write a professional email to a customer whose order is delayed by three days. Apologize, give a brief reason, and state the new delivery date plus one goodwill action.',
+            minWords: 70
+        },
+        {
+            title: 'Password reset guidance',
+            scenario: 'A customer cannot log in. Write a clear support email with step-by-step password reset instructions and a note on what to do if the email does not arrive.',
+            minWords: 70
+        },
+        {
+            title: 'Billing clarification',
+            scenario: 'A customer asks why their invoice is higher this month. Write a polite email explaining a plan upgrade charge and offering a call if they need more help.',
+            minWords: 70
+        },
+        {
+            title: 'Meeting reschedule',
+            scenario: 'Write an internal email to your team lead requesting to reschedule a coaching session due to a high call volume day. Propose two alternative times.',
+            minWords: 60
+        },
+        {
+            title: 'Service outage update',
+            scenario: 'Write a short customer update email about a temporary service outage, expected resolution window, and where they can check status.',
+            minWords: 65
+        },
+        {
+            title: 'Refund confirmation',
+            scenario: 'Confirm a refund of ₹1,200 for a cancelled subscription. Include the refund method, expected timeline, and a polite closing.',
+            minWords: 65
+        },
+        {
+            title: 'Document request',
+            scenario: 'Write to a client requesting updated KYC documents required to continue account access. List what is needed and a clear due date.',
+            minWords: 70
+        },
+        {
+            title: 'Shift swap request',
+            scenario: 'Write a professional email to your supervisor requesting a one-time shift swap next Friday. Explain briefly and confirm coverage with a named colleague.',
+            minWords: 60
+        },
+        {
+            title: 'Follow-up after ticket',
+            scenario: 'Write a follow-up email to a customer after resolving a technical issue. Summarize what was fixed and invite them to reply if problems continue.',
+            minWords: 65
+        },
+        {
+            title: 'Welcome email for new client contact',
+            scenario: 'Write a welcome email to a new client contact introducing yourself as their support point of contact, response hours, and how to raise a ticket.',
+            minWords: 70
+        },
+        {
+            title: 'Escalation acknowledgment',
+            scenario: 'A customer escalated yesterday. Write an acknowledgment email confirming ownership of the case, next steps, and when they will hear from you next.',
+            minWords: 70
+        },
+        {
+            title: 'Policy change notice',
+            scenario: 'Inform customers that support chat hours are changing next month. Keep the tone clear and helpful, and mention where to find the new schedule.',
+            minWords: 65
+        }
+    ],
     typingPassage: `A healthy environment supports every form of life on our shared planet.
 Trees absorb carbon dioxide and release the oxygen that humans and animals need daily.
 Rivers and lakes provide fresh water for communities, farms, and natural wildlife habitats.
@@ -429,15 +493,15 @@ Recycling plastic and paper reduces waste that would otherwise pollute land and 
 Solar panels and wind turbines generate clean energy without burning harmful fossil fuels.
 Simple habits like saving water and planting trees protect nature for future generations.`,
     voicePrompts: [
-        { type: 'word', text: 'Hello', minDuration: 1 },
-        { type: 'word', text: 'Support', minDuration: 1 },
-        { type: 'word', text: 'Resolve', minDuration: 1 },
-        { type: 'phrase', text: 'Thank you for waiting.', minDuration: 3 },
-        { type: 'phrase', text: 'I understand your concern.', minDuration: 3 },
-        { type: 'phrase', text: 'Let me verify the details.', minDuration: 3 },
-        { type: 'sentence', text: 'I will review your ticket and provide an update within the agreed timeline.', minDuration: 6 },
-        { type: 'sentence', text: 'Please confirm your registered email address so I can locate your account securely.', minDuration: 6 },
-        { type: 'sentence', text: 'I apologize for the inconvenience and appreciate your patience while we complete this review.', minDuration: 7 },
-        { type: 'long', text: 'Thank you for contacting Trinitas support. Today, my name is your dedicated agent. I will review your ticket details, service history, and escalation notes carefully before sharing a clear resolution plan within our agreed service-level timeline.', minDuration: 12 }
+        { type: 'word', text: 'Hello', minDuration: 2, minBytes: 2500 },
+        { type: 'word', text: 'Accountability', minDuration: 2, minBytes: 2800 },
+        { type: 'word', text: 'Resolution', minDuration: 2, minBytes: 2800 },
+        { type: 'phrase', text: 'Thank you for waiting patiently.', minDuration: 4, minBytes: 6000 },
+        { type: 'phrase', text: 'I understand your concern completely.', minDuration: 4, minBytes: 6000 },
+        { type: 'phrase', text: 'Let me verify those details carefully.', minDuration: 4, minBytes: 6000 },
+        { type: 'sentence', text: 'I will review your ticket thoroughly and provide a clear update within the agreed service timeline.', minDuration: 8, minBytes: 12000 },
+        { type: 'sentence', text: 'Please confirm your registered email address so I can locate your account securely and proceed.', minDuration: 8, minBytes: 12000 },
+        { type: 'sentence', text: 'I apologize for the inconvenience and genuinely appreciate your patience while we complete this review.', minDuration: 9, minBytes: 14000 },
+        { type: 'long', text: 'Thank you for contacting Trinitas support. My name is your dedicated agent for this call. I will carefully review your ticket details, service history, and any prior notes before sharing a clear resolution plan that aligns with our service-level commitments and keeps you informed at every step.', minDuration: 16, minBytes: 24000 }
     ]
 };

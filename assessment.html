@@ -14,25 +14,32 @@
     <link rel="stylesheet" href="careers.css">
 </head>
 <body class="assessment-shell">
-    <div class="assessment-topbar">
+    <header class="assessment-topbar">
         <div class="container assessment-topbar-inner">
-            <div>
-                <strong style="font-family:var(--font-display);color:var(--navy)">Trinitas Preliminary Assessment</strong>
-                <div class="assessment-meta">
-                    <span>Candidate: <strong id="candidate-name">—</strong></span>
-                    <span>Email: <strong id="candidate-email">—</strong></span>
-                    <span>Section: <strong id="section-name">—</strong></span>
-                </div>
-                <div class="assessment-progress"><div class="assessment-progress-fill" id="progress-fill"></div></div>
-                <div class="assessment-meta" style="margin-top:0.35rem">
-                    <span id="progress-label">Section 1 of 3</span>
+            <div class="assessment-brand">
+                <img src="logo-icon.png" alt="" class="assessment-brand-logo" width="36" height="36">
+                <div>
+                    <strong class="assessment-brand-title">Trinitas Assessment</strong>
+                    <span class="assessment-attempt-badge" id="attempt-badge">Attempt 1</span>
                 </div>
             </div>
-            <div class="assessment-timer">
-                Time left: <span id="global-timer">60:00</span>
+            <div class="assessment-topbar-center">
+                <div class="assessment-meta">
+                    <span><span class="meta-label">Candidate</span> <strong id="candidate-name">—</strong></span>
+                    <span><span class="meta-label">Email</span> <strong id="candidate-email">—</strong></span>
+                    <span><span class="meta-label">Section</span> <strong id="section-name">—</strong></span>
+                </div>
+                <div class="assessment-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress-bar">
+                    <div class="assessment-progress-fill" id="progress-fill"></div>
+                </div>
+                <div class="assessment-progress-label" id="progress-label">Section 1 of 6</div>
+            </div>
+            <div class="assessment-timer-wrap">
+                <span class="assessment-timer-label">Time remaining</span>
+                <span class="assessment-timer" id="global-timer">60:00</span>
             </div>
         </div>
-    </div>
+    </header>
 
     <div class="tab-warning" id="tab-warning" hidden>
         <div class="container tab-warning-inner">
@@ -40,13 +47,13 @@
         </div>
     </div>
 
-    <div class="assessment-body">
+    <main class="assessment-body">
         <div class="container">
             <div class="assessment-panel" id="assessment-content">
-                <p>Loading assessment...</p>
+                <p class="section-desc">Loading assessment…</p>
             </div>
         </div>
-    </div>
+    </main>
 
     <script src="assessment-data.js"></script>
     <script src="assessment-data-attempt2.js"></script>

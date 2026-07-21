@@ -26,9 +26,14 @@
         fillBlank: { answers: [], score: 0, percent: 0 },
         reading: { answers: [], score: 0, percent: 0 },
         workplace: { answers: [], score: 0, percent: 0 },
+        email: { topics: [], responses: [], scores: [], percent: 0, wordCounts: [] },
         typing: { rounds: [], bestWpm: 0, bestAccuracy: 0 },
-        voice: { recordings: [], completionPercent: 0 }
+        voice: { recordings: [], completionPercent: 0, validCount: 0 }
     };
+
+    let emailTopicIndex = 0;
+    let voiceRecordTimer = null;
+    let voiceRecordSeconds = 0;
 
     function resolveAssessmentData(attemptNumber) {
         if (Number(attemptNumber) === 2 && window.ASSESSMENT_DATA_ATTEMPT2) {
@@ -83,9 +88,170 @@
     function updateProgress() {
         const fill = document.getElementById('progress-fill');
         const label = document.getElementById('progress-label');
-        const pct = Math.round(((sectionIndex) / data.sections.length) * 100);
+        const bar = document.getElementById('progress-bar');
+        const pct = Math.round((sectionIndex / data.sections.length) * 100);
         if (fill) fill.style.width = `${pct}%`;
         if (label) label.textContent = `Section ${sectionIndex + 1} of ${data.sections.length}`;
+        if (bar) bar.setAttribute('aria-valuenow', String(pct));
+    }
+
+    function hashSeed(str) {
+        let h = 2166136261;
+        const s = String(str || '');
+        for (let i = 0; i < s.length; i++) {
+            h ^= s.charCodeAt(i);
+            h = Math.imul(h, 16777619);
+        }
+        return Math.abs(h) || 1;
+    }
+
+    function seededShuffle(array, seed) {
+        const arr = array.slice();
+        let s = seed;
+        for (let i = arr.length - 1; i > 0; i--) {
+            s = (Math.imul(s, 1103515245) + 12345) >>> 0;
+            const j = s % (i + 1);
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    function initEmailTopics() {
+        const pool = data.emailTopics || [];
+        if (!pool.length) {
+            state.email.topics = [];
+            return;
+        }
+        const seed = hashSeed((session.email || '') + '|' + (session.attemptNumber || 1) + '|' + (session.fullName || ''));
+        state.email.topics = seededShuffle(pool, seed).slice(0, 3).map((t, i) => ({
+            index: i + 1,
+            title: t.title,
+            scenario: t.scenario,
+            minWords: t.minWords || 70
+        }));
+        state.email.responses = new Array(3).fill('');
+        state.email.scores = new Array(3).fill(0);
+        state.email.wordCounts = new Array(3).fill(0);
+        emailTopicIndex = 0;
+    }
+
+    function countWords(text) {
+        return String(text || '').trim().split(/\s+/).filter(Boolean).length;
+    }
+
+    function scoreEmailResponse(text, topic) {
+        const trimmed = String(text || '').trim();
+        const words = countWords(trimmed);
+        const minW = topic.minWords || 70;
+        let score = 0;
+
+        if (words >= minW) score += 35;
+        else if (words >= Math.floor(minW * 0.6)) score += 18;
+        else if (words >= 25) score += 8;
+
+        if (/^(dear|hi\b|hello\b|good\s+(morning|afternoon|evening)|to\s+whom)/im.test(trimmed)) score += 12;
+        if (/(regards|sincerely|thank you|best wishes|yours\s+(truly|faithfully|sincerely)|warm regards)/i.test(trimmed)) score += 12;
+        if ((trimmed.match(/[.!?]/g) || []).length >= 3) score += 12;
+        if (/\n\s*\n/.test(trimmed) || trimmed.split('\n').filter(l => l.trim()).length >= 3) score += 10;
+        if (words >= minW + 30) score += 10;
+        if (words >= minW && !/(asap asap|do the needful|revert back|pls|plz)/i.test(trimmed)) score += 9;
+
+        return Math.min(100, score);
+    }
+
+    function finalizeEmailScores() {
+        if (!state.email.topics.length) {
+            state.email.percent = 0;
+            return;
+        }
+        state.email.scores = state.email.topics.map((topic, i) =>
+            scoreEmailResponse(state.email.responses[i], topic)
+        );
+        state.email.wordCounts = state.email.responses.map(countWords);
+        const avg = state.email.scores.reduce((a, b) => a + b, 0) / state.email.scores.length;
+        state.email.percent = Math.round(avg);
+    }
+
+    function saveCurrentEmailResponse() {
+        const ta = document.getElementById('email-compose');
+        if (!ta || !state.email.topics.length) return;
+        state.email.responses[emailTopicIndex] = ta.value;
+        state.email.wordCounts[emailTopicIndex] = countWords(ta.value);
+    }
+
+    function renderEmailWriting() {
+        setPanelCompact(false);
+        const panel = document.getElementById('assessment-content');
+        const section = data.sections[sectionIndex];
+        if (!state.email.topics.length) initEmailTopics();
+        const topic = state.email.topics[emailTopicIndex];
+        if (!topic) {
+            panel.innerHTML = '<p class="section-desc">Email topics unavailable.</p>';
+            return;
+        }
+        const existing = state.email.responses[emailTopicIndex] || '';
+        const isLast = emailTopicIndex >= state.email.topics.length - 1;
+        const words = countWords(existing);
+
+        panel.innerHTML = `
+            <div class="section-intro">
+                <h2>Email Writing</h2>
+                <p class="section-desc">Write a professional email for each scenario. You will complete <strong>3 topics</strong> assigned to your session. Aim for clear structure: greeting, purpose, details, and closing.</p>
+                <span class="section-timer">Section time remaining: <span id="section-timer">${formatTime(sectionSecondsLeft || section.minutes * 60)}</span></span>
+            </div>
+            <div class="grammar-pagination">
+                <span>Email <strong>${emailTopicIndex + 1}</strong> of <strong>${state.email.topics.length}</strong></span>
+            </div>
+            <div class="email-topic-card">
+                <h3>${topic.title}</h3>
+                <p>${topic.scenario}</p>
+            </div>
+            <div class="email-meta-row">
+                <span>Suggested minimum: <strong>${topic.minWords} words</strong></span>
+                <span>Word count: <strong id="email-word-count">${words}</strong></span>
+            </div>
+            <textarea class="email-compose" id="email-compose" placeholder="Write your full email here…" spellcheck="true"></textarea>
+            <div class="assessment-actions">
+                <button type="button" class="btn btn-secondary" id="email-prev" ${emailTopicIndex === 0 ? 'hidden' : ''}>Previous</button>
+                <button type="button" class="btn btn-primary" id="email-next">${isLast ? 'Continue to Typing' : 'Next Email'}</button>
+            </div>
+        `;
+
+        const ta = document.getElementById('email-compose');
+        const wc = document.getElementById('email-word-count');
+        ta.value = existing;
+        ta.addEventListener('input', () => {
+            wc.textContent = String(countWords(ta.value));
+        });
+        ta.focus();
+
+        document.getElementById('email-next').addEventListener('click', () => {
+            saveCurrentEmailResponse();
+            const text = state.email.responses[emailTopicIndex] || '';
+            if (countWords(text) < 25) {
+                ta.reportValidity?.();
+                ta.setCustomValidity('Please write a fuller professional email (at least ~25 words).');
+                ta.reportValidity();
+                ta.setCustomValidity('');
+                return;
+            }
+            if (isLast) {
+                finalizeEmailScores();
+                goNextSection();
+                return;
+            }
+            emailTopicIndex += 1;
+            renderEmailWriting();
+        });
+
+        const prev = document.getElementById('email-prev');
+        if (prev) {
+            prev.addEventListener('click', () => {
+                saveCurrentEmailResponse();
+                emailTopicIndex = Math.max(0, emailTopicIndex - 1);
+                renderEmailWriting();
+            });
+        }
     }
 
     function ensureGrammarAnswers() {
@@ -528,7 +694,7 @@
             </fieldset>
             <div class="assessment-actions">
                 <button type="button" class="btn btn-secondary" id="workplace-prev" ${i === 0 ? 'hidden' : ''}>Previous</button>
-                <button type="button" class="btn btn-primary" id="workplace-next">${isLast ? 'Continue to Typing' : 'Next Question'}</button>
+                <button type="button" class="btn btn-primary" id="workplace-next">${isLast ? 'Continue to Email Writing' : 'Next Question'}</button>
             </div>
         `;
 
@@ -698,31 +864,55 @@
     let mediaRecorder = null;
     let audioChunks = [];
 
+    function isVoiceValid(rec, promptItem) {
+        if (!rec) return false;
+        const minDur = promptItem.minDuration || 3;
+        const minBytes = promptItem.minBytes || (minDur * 1200);
+        return rec.durationSec >= minDur && (rec.byteSize || 0) >= minBytes;
+    }
+
+    function clearVoiceRecordTimer() {
+        if (voiceRecordTimer) {
+            clearInterval(voiceRecordTimer);
+            voiceRecordTimer = null;
+        }
+        voiceRecordSeconds = 0;
+    }
+
     async function renderVoice() {
         setPanelCompact(false);
+        clearVoiceRecordTimer();
         const panel = document.getElementById('assessment-content');
         const section = data.sections[sectionIndex];
         const promptItem = data.voicePrompts[voiceRound];
         const prompt = promptItem.text;
-        const promptLabel = { word: 'Word', phrase: 'Phrase', sentence: 'Sentence', long: 'Extended sentence' }[promptItem.type] || 'Prompt';
+        const promptLabel = { word: 'Word', phrase: 'Phrase', sentence: 'Sentence', long: 'Extended passage' }[promptItem.type] || 'Prompt';
         const existing = state.voice.recordings[voiceRound];
+        const minDur = promptItem.minDuration || 3;
+        const validExisting = isVoiceValid(existing, promptItem);
 
         panel.innerHTML = `
             <div class="section-intro">
                 <h2>Voice Assessment</h2>
-                <p class="section-desc">${promptLabel} ${voiceRound + 1} of ${data.voicePrompts.length}. Read clearly at a professional pace. Allow microphone access when prompted.</p>
+                <p class="section-desc">${promptLabel} <strong>${voiceRound + 1}</strong> of <strong>${data.voicePrompts.length}</strong>. Read the prompt aloud clearly. Recordings shorter than the minimum time, or without sufficient audio, will not be accepted.</p>
                 <span class="section-timer">Section time remaining: <span id="section-timer">${formatTime(sectionSecondsLeft)}</span></span>
+            </div>
+            <div class="voice-req">
+                <span class="voice-req-chip">Min. ${minDur}s recording</span>
+                <span class="voice-req-chip">Audible speech required</span>
+                <span class="voice-req-chip ${validExisting ? 'voice-req-chip--ok' : 'voice-req-chip--warn'}" id="voice-valid-chip">${validExisting ? 'Accepted' : 'Not yet accepted'}</span>
             </div>
             <div class="voice-prompt-box voice-prompt-box--${promptItem.type}">${prompt}</div>
             <div class="voice-controls">
                 <button type="button" class="btn btn-primary" id="voice-record">${existing ? 'Re-record' : 'Start Recording'}</button>
                 <button type="button" class="btn btn-secondary" id="voice-stop" disabled>Stop</button>
-                <span class="voice-status" id="voice-status">${existing ? 'Recording saved' : 'Ready'}</span>
+                <span class="voice-live-timer" id="voice-live-timer" hidden>0s</span>
+                <span class="voice-status" id="voice-status">${validExisting ? `Accepted (${existing.durationSec}s)` : existing ? 'Too short / weak audio — re-record' : 'Ready'}</span>
             </div>
-            <audio class="voice-playback" id="voice-playback" controls ${existing ? '' : 'hidden'}></audio>
+            <audio class="voice-playback" id="voice-playback" controls ${existing && existing.url ? '' : 'hidden'}></audio>
             <div class="assessment-actions">
                 <button type="button" class="btn btn-secondary" id="voice-back" ${voiceRound === 0 ? 'hidden' : ''}>Previous Prompt</button>
-                <button type="button" class="btn btn-primary" id="voice-next" ${existing ? '' : 'disabled'}>${voiceRound >= data.voicePrompts.length - 1 ? 'Submit Assessment' : 'Next Prompt'}</button>
+                <button type="button" class="btn btn-primary" id="voice-next" ${validExisting ? '' : 'disabled'}>${voiceRound >= data.voicePrompts.length - 1 ? 'Submit Assessment' : 'Next Prompt'}</button>
             </div>
         `;
 
@@ -731,63 +921,109 @@
         const recordBtn = document.getElementById('voice-record');
         const stopBtn = document.getElementById('voice-stop');
         const nextBtn = document.getElementById('voice-next');
+        const liveTimer = document.getElementById('voice-live-timer');
+        const validChip = document.getElementById('voice-valid-chip');
 
         if (existing && existing.url) {
             playback.src = existing.url;
             playback.hidden = false;
-            statusEl.textContent = `Recorded (${existing.durationSec}s)`;
-            statusEl.className = 'voice-status done';
         }
 
         recordBtn.addEventListener('click', async () => {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: { echoCancellation: true, noiseSuppression: true }
+                });
                 audioChunks = [];
-                mediaRecorder = new MediaRecorder(stream);
+                const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+                    ? 'audio/webm;codecs=opus'
+                    : MediaRecorder.isTypeSupported('audio/webm')
+                        ? 'audio/webm'
+                        : '';
+                mediaRecorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
                 const startTime = Date.now();
+                clearVoiceRecordTimer();
+                voiceRecordSeconds = 0;
+                liveTimer.hidden = false;
+                liveTimer.textContent = '0s';
+                voiceRecordTimer = setInterval(() => {
+                    voiceRecordSeconds += 1;
+                    liveTimer.textContent = `${voiceRecordSeconds}s`;
+                    if (voiceRecordSeconds >= minDur) liveTimer.style.color = '#047857';
+                }, 1000);
 
-                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                mediaRecorder.ondataavailable = e => {
+                    if (e.data && e.data.size > 0) audioChunks.push(e.data);
+                };
                 mediaRecorder.onstop = () => {
-                    const blob = new Blob(audioChunks, { type: 'audio/webm' });
+                    clearVoiceRecordTimer();
+                    liveTimer.hidden = true;
+                    liveTimer.style.color = '';
+                    const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
                     const url = URL.createObjectURL(blob);
-                    const durationSec = Math.round((Date.now() - startTime) / 1000);
-                    state.voice.recordings[voiceRound] = {
+                    const durationSec = Math.max(1, Math.round((Date.now() - startTime) / 1000));
+                    const rec = {
                         prompt: voiceRound + 1,
                         type: promptItem.type,
                         text: prompt,
                         durationSec,
+                        byteSize: blob.size,
                         url,
-                        completed: durationSec >= promptItem.minDuration
+                        completed: false
                     };
+                    rec.completed = isVoiceValid(rec, promptItem);
+                    state.voice.recordings[voiceRound] = rec;
                     playback.src = url;
                     playback.hidden = false;
-                    statusEl.textContent = `Recorded (${durationSec}s)`;
-                    statusEl.className = 'voice-status done';
-                    nextBtn.disabled = false;
+
+                    if (rec.completed) {
+                        statusEl.textContent = `Accepted (${durationSec}s)`;
+                        statusEl.className = 'voice-status done';
+                        validChip.textContent = 'Accepted';
+                        validChip.className = 'voice-req-chip voice-req-chip--ok';
+                        nextBtn.disabled = false;
+                    } else {
+                        const reasons = [];
+                        if (durationSec < minDur) reasons.push(`need ≥ ${minDur}s (got ${durationSec}s)`);
+                        if ((rec.byteSize || 0) < (promptItem.minBytes || minDur * 1200)) reasons.push('audio too weak/silent');
+                        statusEl.textContent = `Not accepted: ${reasons.join('; ')}. Re-record.`;
+                        statusEl.className = 'voice-status';
+                        validChip.textContent = 'Not yet accepted';
+                        validChip.className = 'voice-req-chip voice-req-chip--warn';
+                        nextBtn.disabled = true;
+                    }
                     stream.getTracks().forEach(t => t.stop());
+                    recordBtn.disabled = false;
+                    stopBtn.disabled = true;
                 };
 
-                mediaRecorder.start();
-                statusEl.textContent = 'Recording...';
+                mediaRecorder.start(250);
+                statusEl.textContent = 'Recording… speak clearly';
                 statusEl.className = 'voice-status recording';
                 recordBtn.disabled = true;
                 stopBtn.disabled = false;
+                nextBtn.disabled = true;
             } catch {
-                statusEl.textContent = 'Microphone access denied';
+                clearVoiceRecordTimer();
+                statusEl.textContent = 'Microphone access denied — enable mic permissions and try again';
                 statusEl.className = 'voice-status';
             }
         });
 
         stopBtn.addEventListener('click', () => {
             if (mediaRecorder && mediaRecorder.state === 'recording') {
+                if (voiceRecordSeconds < minDur) {
+                    statusEl.textContent = `Keep speaking — minimum ${minDur}s required (${voiceRecordSeconds}s so far)`;
+                    statusEl.className = 'voice-status recording';
+                    return;
+                }
                 mediaRecorder.stop();
-                recordBtn.disabled = false;
-                stopBtn.disabled = true;
             }
         });
 
         nextBtn.addEventListener('click', () => {
-            if (!state.voice.recordings[voiceRound]) return;
+            const rec = state.voice.recordings[voiceRound];
+            if (!isVoiceValid(rec, promptItem)) return;
             voiceRound += 1;
             if (voiceRound < data.voicePrompts.length) {
                 renderVoice();
@@ -799,6 +1035,8 @@
         const backBtn = document.getElementById('voice-back');
         if (backBtn) {
             backBtn.addEventListener('click', () => {
+                clearVoiceRecordTimer();
+                if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
                 voiceRound = Math.max(0, voiceRound - 1);
                 renderVoice();
             });
@@ -813,6 +1051,7 @@
         if (section.id === 'grammar') renderGrammar();
         else if (section.id === 'reading') { readingPassageIndex = 0; readingQuestionIndex = 0; renderReading(); }
         else if (section.id === 'workplace') renderWorkplace();
+        else if (section.id === 'email') { emailTopicIndex = 0; renderEmailWriting(); }
         else if (section.id === 'typing') renderTyping();
         else if (section.id === 'voice') { voiceRound = 0; renderVoice(); }
         startTimers(section.minutes);
@@ -822,6 +1061,7 @@
         if (sessionEnded || isSubmitting) return;
         if (!force && sectionIndex >= data.sections.length - 1) return;
         clearInterval(sectionTimer);
+        clearVoiceRecordTimer();
 
         const currentSection = data.sections[sectionIndex];
         if (currentSection.id === 'grammar') {
@@ -833,6 +1073,9 @@
         } else if (currentSection.id === 'workplace') {
             saveCurrentWorkplaceAnswer();
             finalizeWorkplaceScores();
+        } else if (currentSection.id === 'email') {
+            saveCurrentEmailResponse();
+            finalizeEmailScores();
         } else if (currentSection.id === 'typing') {
             saveTypingProgress();
         }
@@ -849,10 +1092,31 @@
         if (sectionId === 'grammar') return getEnglishPercent();
         if (sectionId === 'reading') return state.reading.percent || 0;
         if (sectionId === 'workplace') return state.workplace.percent || 0;
-        if (sectionId === 'typing') return Math.min(100, Math.round((state.typing.bestWpm / 60) * 100));
+        if (sectionId === 'email') {
+            finalizeEmailScores();
+            return state.email.percent || 0;
+        }
+        if (sectionId === 'typing') {
+            const wpmScore = Math.min(100, Math.round((state.typing.bestWpm / 55) * 100));
+            const acc = state.typing.bestAccuracy || 0;
+            return Math.round(wpmScore * 0.65 + acc * 0.35);
+        }
         if (sectionId === 'voice') {
-            const completedVoice = state.voice.recordings.filter(r => r && r.completed).length;
-            state.voice.completionPercent = Math.round((completedVoice / data.voicePrompts.length) * 100);
+            const total = data.voicePrompts.length || 1;
+            let points = 0;
+            data.voicePrompts.forEach((p, i) => {
+                const rec = state.voice.recordings[i];
+                if (!rec) return;
+                if (isVoiceValid(rec, p)) {
+                    points += 1;
+                    if (rec.durationSec >= (p.minDuration || 0) + 2) points += 0.15;
+                } else if (rec.durationSec > 0) {
+                    points += 0.15;
+                }
+            });
+            const maxPoints = total * 1.15;
+            state.voice.validCount = state.voice.recordings.filter((r, i) => isVoiceValid(r, data.voicePrompts[i])).length;
+            state.voice.completionPercent = Math.round(Math.min(100, (points / maxPoints) * 100));
             return state.voice.completionPercent;
         }
         return 0;
@@ -862,6 +1126,7 @@
         finalizeEnglishScores();
         finalizeReadingScores();
         finalizeWorkplaceScores();
+        finalizeEmailScores();
         return Math.round(
             data.sections.reduce((sum, s) => sum + getSectionScore(s.id) * s.weight, 0)
         );
@@ -890,6 +1155,9 @@
         } else if (currentSection?.id === 'workplace') {
             saveCurrentWorkplaceAnswer();
             finalizeWorkplaceScores();
+        } else if (currentSection?.id === 'email') {
+            saveCurrentEmailResponse();
+            finalizeEmailScores();
         } else if (currentSection?.id === 'typing') {
             saveTypingProgress();
         }
@@ -910,6 +1178,13 @@
             englishPercent: getEnglishPercent(),
             reading: state.reading,
             workplace: state.workplace,
+            email: {
+                percent: state.email.percent,
+                topics: state.email.topics,
+                responses: state.email.responses,
+                scores: state.email.scores,
+                wordCounts: state.email.wordCounts
+            },
             typing: {
                 bestWpm: state.typing.bestWpm,
                 bestAccuracy: state.typing.bestAccuracy,
@@ -920,12 +1195,14 @@
             },
             voice: {
                 completionPercent: state.voice.completionPercent,
+                validCount: state.voice.validCount,
                 prompts: state.voice.recordings.map(r => ({
                     prompt: r.prompt,
                     type: r.type,
                     text: r.text,
                     durationSec: r.durationSec,
-                    completed: r.completed
+                    byteSize: r.byteSize || 0,
+                    completed: !!r.completed
                 }))
             }
         };
@@ -975,10 +1252,9 @@
         document.getElementById('candidate-name').textContent = session.fullName;
         document.getElementById('candidate-email').textContent = session.email;
         const attemptLabel = data.attemptLabel || (session.attemptNumber === 2 ? 'Attempt 2' : 'Attempt 1');
-        const sectionNameEl = document.getElementById('section-name');
-        if (sectionNameEl && session.attemptNumber === 2) {
-            sectionNameEl.textContent = `${attemptLabel}`;
-        }
+        const badge = document.getElementById('attempt-badge');
+        if (badge) badge.textContent = attemptLabel;
+        initEmailTopics();
         startedAt = Date.now();
         globalSecondsLeft = data.totalMinutes * 60;
         updateTimers();

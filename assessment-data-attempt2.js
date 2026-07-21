@@ -2,11 +2,12 @@ window.ASSESSMENT_DATA_ATTEMPT2 = {
     attemptLabel: 'Attempt 2 — Advanced',
     totalMinutes: 60,
     sections: [
-        { id: 'grammar', label: 'Basic English', minutes: 20, weight: 0.18 },
-        { id: 'reading', label: 'Reading Comprehension', minutes: 10, weight: 0.10 },
-        { id: 'workplace', label: 'Workplace & Psychology', minutes: 15, weight: 0.22 },
-        { id: 'typing', label: 'Typing Speed', minutes: 3, weight: 0.20 },
-        { id: 'voice', label: 'Voice Assessment', minutes: 12, weight: 0.30 }
+        { id: 'grammar', label: 'Advanced English', minutes: 14, weight: 0.14 },
+        { id: 'reading', label: 'Reading Comprehension', minutes: 8, weight: 0.08 },
+        { id: 'workplace', label: 'Workplace & Psychology', minutes: 10, weight: 0.14 },
+        { id: 'email', label: 'Email Writing', minutes: 12, weight: 0.14 },
+        { id: 'typing', label: 'Typing Speed', minutes: 3, weight: 0.15 },
+        { id: 'voice', label: 'Voice Assessment', minutes: 13, weight: 0.35 }
     ],
     grammarQuestions: [
         {
@@ -623,21 +624,84 @@ window.ASSESSMENT_DATA_ATTEMPT2 = {
             answer: 1
         }
     ],
+    emailTopics: [
+        {
+            title: 'SLA breach client communication',
+            scenario: 'As team lead, write a formal B2B email acknowledging a missed SLA, summarizing root cause without blame-shifting, outlining remediation, and committing to a precise next update time.',
+            minWords: 110
+        },
+        {
+            title: 'Partial refund with policy nuance',
+            scenario: 'A premium client requests a full refund outside the standard window. Write a diplomatic email explaining partial goodwill credit per policy, alternative options, and escalation path—without over-promising.',
+            minWords: 110
+        },
+        {
+            title: 'Cross-functional incident report',
+            scenario: 'Write an email to Product and Engineering summarizing a multi-hour authentication outage impact on support volume, customer sentiment themes, and three operational recommendations.',
+            minWords: 120
+        },
+        {
+            title: 'Coaching follow-up after calibration',
+            scenario: 'After a calibration session, write a constructive email to a senior agent citing two specific behaviors to sustain and one improvement area, with measurable expectations for the next week.',
+            minWords: 100
+        },
+        {
+            title: 'Vendor non-compliance notice',
+            scenario: 'Draft a firm but professional email to an external vendor about repeated incomplete ticket handovers, citing examples generically, required corrective actions, and a deadline for process confirmation.',
+            minWords: 110
+        },
+        {
+            title: 'Executive summary for leadership',
+            scenario: 'Write a concise email to operations leadership summarizing weekly quality trends: CSAT, handle time trade-offs, and one risk requiring decision. Use structured, native-level business English.',
+            minWords: 100
+        },
+        {
+            title: 'Sensitive data-handling clarification',
+            scenario: 'A client asks agents to share screenshots containing personal data via personal chat apps. Write a policy-aligned refusal that educates, offers compliant alternatives, and preserves the relationship.',
+            minWords: 110
+        },
+        {
+            title: 'Scope change negotiation',
+            scenario: 'A client wants after-hours coverage without a contract amendment. Write an email clarifying scope, commercial implications at a high level, and proposing next steps for formal review.',
+            minWords: 110
+        },
+        {
+            title: 'Post-mortem customer restoration',
+            scenario: 'Following a prolonged billing error affecting multiple invoices, write a carefully worded restoration email covering apology, correction plan, verification steps, and single point of contact.',
+            minWords: 120
+        },
+        {
+            title: 'Mentorship capacity boundary',
+            scenario: 'You are asked to mentor three new hires while retaining full queue ownership. Write to your manager proposing a sustainable mentoring model with priorities and capacity constraints clearly stated.',
+            minWords: 100
+        },
+        {
+            title: 'Ambiguous process change challenge',
+            scenario: 'A new CRM field is mandatory but poorly defined. Write a constructive email to process excellence requesting clarification, examples of correct usage, and interim guidance for agents.',
+            minWords: 100
+        },
+        {
+            title: 'Multilingual customer preference',
+            scenario: 'A customer insists on continuing in a language your queue does not support. Write an email offering transfer options, expectation setting, and interim assistance without appearing dismissive.',
+            minWords: 100
+        }
+    ],
     typingPassage: `Effective communication in a contact center requires clarity, empathy, and disciplined adherence to established procedures.
 Agents must document each interaction accurately so that subsequent representatives can continue resolving the case without unnecessary repetition.
 When service disruptions occur, transparent updates reduce customer anxiety and prevent misunderstandings about resolution timelines.
 Professional tone should remain steady even when callers express frustration, sarcasm, or urgency that exceeds normal expectations.
-Continuous improvement depends on constructive feedback, calibration sessions, and a willingness to refine communication habits over time.`,
+Continuous improvement depends on constructive feedback, calibration sessions, and a willingness to refine communication habits over time.
+Native-level phrasing, precise vocabulary, and concise structure distinguish high-performing agents under operational pressure.`,
     voicePrompts: [
-        { type: 'word', text: 'Hello', minDuration: 1 },
-        { type: 'word', text: 'Support', minDuration: 1 },
-        { type: 'word', text: 'Resolve', minDuration: 1 },
-        { type: 'phrase', text: 'Thank you for waiting.', minDuration: 3 },
-        { type: 'phrase', text: 'I understand your concern.', minDuration: 3 },
-        { type: 'phrase', text: 'Let me verify the details.', minDuration: 3 },
-        { type: 'sentence', text: 'I will review your ticket and provide an update within the agreed timeline.', minDuration: 6 },
-        { type: 'sentence', text: 'Please confirm your registered email address so I can locate your account securely.', minDuration: 6 },
-        { type: 'sentence', text: 'I apologize for the inconvenience and appreciate your patience while we complete this review.', minDuration: 7 },
-        { type: 'long', text: 'Thank you for contacting Trinitas support. Today, my name is your dedicated agent. I will review your ticket details, service history, and escalation notes carefully before sharing a clear resolution plan within our agreed service-level timeline.', minDuration: 12 }
+        { type: 'word', text: 'Accountability', minDuration: 3, minBytes: 3500 },
+        { type: 'word', text: 'Prioritization', minDuration: 3, minBytes: 3500 },
+        { type: 'word', text: 'Reconciliation', minDuration: 3, minBytes: 3500 },
+        { type: 'phrase', text: 'I appreciate your patience while we investigate thoroughly.', minDuration: 5, minBytes: 8000 },
+        { type: 'phrase', text: 'Let me restate the issue to confirm I understand correctly.', minDuration: 5, minBytes: 8000 },
+        { type: 'phrase', text: 'I will escalate this with complete documentation and context.', minDuration: 5, minBytes: 8000 },
+        { type: 'sentence', text: 'Based on our review, the discrepancy originated from a delayed system reconciliation rather than an incorrect charge on your account.', minDuration: 10, minBytes: 16000 },
+        { type: 'sentence', text: 'I will coordinate with the specialist team, document every action taken, and provide you with a confirmed resolution window before the end of this interaction.', minDuration: 11, minBytes: 17000 },
+        { type: 'sentence', text: 'While I cannot override the contractual limitation you mentioned, I can outline compliant alternatives and ensure a senior reviewer validates the proposed exception path.', minDuration: 12, minBytes: 18000 },
+        { type: 'long', text: 'Thank you for contacting Trinitas enterprise support. I am your dedicated specialist for this case. I will examine your account history, prior escalations, and service-level obligations in detail, then present a structured resolution plan that addresses both the immediate issue and any residual risk, keeping you informed with clear timelines and ownership at each stage.', minDuration: 20, minBytes: 30000 }
     ]
 };
