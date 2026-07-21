@@ -211,8 +211,9 @@
                 <span>Word count: <strong id="email-word-count">${words}</strong></span>
             </div>
             <textarea class="email-compose" id="email-compose" placeholder="Write your full email here…" spellcheck="true"></textarea>
-            <div class="assessment-actions">
+            <div class="assessment-actions assessment-actions--triple">
                 <button type="button" class="btn btn-secondary" id="email-prev" ${emailTopicIndex === 0 ? 'hidden' : ''}>Previous</button>
+                <button type="button" class="btn btn-secondary" id="email-skip">Skip</button>
                 <button type="button" class="btn btn-primary" id="email-next">${isLast ? 'Continue to Typing' : 'Next Email'}</button>
             </div>
         `;
@@ -225,16 +226,8 @@
         });
         ta.focus();
 
-        document.getElementById('email-next').addEventListener('click', () => {
+        function advanceEmail() {
             saveCurrentEmailResponse();
-            const text = state.email.responses[emailTopicIndex] || '';
-            if (countWords(text) < 25) {
-                ta.reportValidity?.();
-                ta.setCustomValidity('Please write a fuller professional email (at least ~25 words).');
-                ta.reportValidity();
-                ta.setCustomValidity('');
-                return;
-            }
             if (isLast) {
                 finalizeEmailScores();
                 goNextSection();
@@ -242,7 +235,11 @@
             }
             emailTopicIndex += 1;
             renderEmailWriting();
-        });
+        }
+
+        document.getElementById('email-next').addEventListener('click', advanceEmail);
+        const skipEmail = document.getElementById('email-skip');
+        if (skipEmail) skipEmail.addEventListener('click', advanceEmail);
 
         const prev = document.getElementById('email-prev');
         if (prev) {
@@ -355,7 +352,7 @@
                     <div class="grammar-options">
                         ${item.options.map((opt, j) => `
                             <label>
-                                <input type="radio" name="grammar-q" value="${j}" ${state.grammar.answers[i] === j ? 'checked' : ''} required>
+                                <input type="radio" name="grammar-q" value="${j}" ${state.grammar.answers[i] === j ? 'checked' : ''}>
                                 <span>${opt}</span>
                             </label>
                         `).join('')}
@@ -365,7 +362,7 @@
             : `
                 <fieldset class="grammar-q fill-blank-q">
                     <legend>${item.q}</legend>
-                    <input type="text" class="fill-blank-input" id="fill-blank-input" value="${state.fillBlank.answers[i] || ''}" placeholder="Type your answer" autocomplete="off" spellcheck="false" required>
+                    <input type="text" class="fill-blank-input" id="fill-blank-input" value="${state.fillBlank.answers[i] || ''}" placeholder="Type your answer (optional — you may skip)" autocomplete="off" spellcheck="false">
                 </fieldset>
             `;
 
@@ -378,7 +375,7 @@
         panel.innerHTML = `
             <div class="section-intro">
                 <h2>Basic English Assessment</h2>
-                <p class="section-desc">${phaseLabel} — one question per page. You have ${section.minutes} minutes for this section. Do not switch tabs — 3 tab switches will end your session.</p>
+                <p class="section-desc">${phaseLabel} — one question per page. Questions are optional; you may skip any item. You have ${section.minutes} minutes for this section. Do not switch tabs — 3 tab switches will end your session.</p>
                 <span class="section-timer">Section time remaining: <span id="section-timer">${formatTime(sectionSecondsLeft || section.minutes * 60)}</span></span>
             </div>
             <div class="grammar-pagination">
@@ -386,8 +383,9 @@
                 <div class="grammar-progress-dots">${dots}</div>
             </div>
             ${questionBody}
-            <div class="assessment-actions">
+            <div class="assessment-actions assessment-actions--triple">
                 <button type="button" class="btn btn-secondary" id="english-prev" ${i === 0 && isMcq ? 'hidden' : ''}>Previous</button>
+                <button type="button" class="btn btn-secondary" id="english-skip">Skip</button>
                 <button type="button" class="btn btn-primary" id="english-next">${nextLabel}</button>
             </div>
         `;
@@ -397,15 +395,9 @@
             fillInput.focus();
         }
 
-        document.getElementById('english-next').addEventListener('click', () => {
+        function advanceEnglish() {
+            saveCurrentEnglishAnswer();
             if (isMcq) {
-                const checked = document.querySelector('input[name="grammar-q"]:checked');
-                if (!checked) {
-                    const firstRadio = document.querySelector('input[name="grammar-q"]');
-                    if (firstRadio) firstRadio.reportValidity();
-                    return;
-                }
-                saveCurrentEnglishAnswer();
                 if (isLastEnglish) {
                     englishPhase = 'fill';
                     englishQuestionIndex = 0;
@@ -416,13 +408,6 @@
                 renderEnglishQuestion();
                 return;
             }
-
-            const fillInput = document.getElementById('fill-blank-input');
-            if (!fillInput.value.trim()) {
-                fillInput.reportValidity();
-                return;
-            }
-            saveCurrentEnglishAnswer();
             if (isLastFill) {
                 finalizeEnglishScores();
                 goNextSection();
@@ -430,7 +415,10 @@
             }
             englishQuestionIndex += 1;
             renderEnglishQuestion();
-        });
+        }
+
+        document.getElementById('english-next').addEventListener('click', advanceEnglish);
+        document.getElementById('english-skip').addEventListener('click', advanceEnglish);
 
         const prevBtn = document.getElementById('english-prev');
         if (prevBtn) {
@@ -576,25 +564,20 @@
                 <div class="grammar-options">
                     ${item.options.map((opt, j) => `
                         <label>
-                            <input type="radio" name="reading-q" value="${j}" ${selected === j ? 'checked' : ''} required>
+                            <input type="radio" name="reading-q" value="${j}" ${selected === j ? 'checked' : ''}>
                             <span>${opt}</span>
                         </label>
                     `).join('')}
                 </div>
             </fieldset>
-            <div class="assessment-actions">
+            <div class="assessment-actions assessment-actions--triple">
                 <button type="button" class="btn btn-secondary" id="reading-prev" ${readingPassageIndex === 0 && readingQuestionIndex === 0 ? 'hidden' : ''}>Previous</button>
+                <button type="button" class="btn btn-secondary" id="reading-skip">Skip</button>
                 <button type="button" class="btn btn-primary" id="reading-next">${nextLabel}</button>
             </div>
         `;
 
-        document.getElementById('reading-next').addEventListener('click', () => {
-            const checked = document.querySelector('input[name="reading-q"]:checked');
-            if (!checked) {
-                const firstRadio = document.querySelector('input[name="reading-q"]');
-                if (firstRadio) firstRadio.reportValidity();
-                return;
-            }
+        function advanceReading() {
             saveCurrentReadingAnswer();
             if (isLastPassage && isLastQuestion) {
                 finalizeReadingScores();
@@ -608,7 +591,10 @@
                 readingQuestionIndex = 0;
             }
             renderReadingQuestion();
-        });
+        }
+
+        document.getElementById('reading-next').addEventListener('click', advanceReading);
+        document.getElementById('reading-skip').addEventListener('click', advanceReading);
 
         const prevBtn = document.getElementById('reading-prev');
         if (prevBtn) {
@@ -686,25 +672,20 @@
                 <div class="grammar-options">
                     ${item.options.map((opt, j) => `
                         <label>
-                            <input type="radio" name="workplace-q" value="${j}" ${selected === j ? 'checked' : ''} required>
+                            <input type="radio" name="workplace-q" value="${j}" ${selected === j ? 'checked' : ''}>
                             <span>${opt}</span>
                         </label>
                     `).join('')}
                 </div>
             </fieldset>
-            <div class="assessment-actions">
+            <div class="assessment-actions assessment-actions--triple">
                 <button type="button" class="btn btn-secondary" id="workplace-prev" ${i === 0 ? 'hidden' : ''}>Previous</button>
+                <button type="button" class="btn btn-secondary" id="workplace-skip">Skip</button>
                 <button type="button" class="btn btn-primary" id="workplace-next">${isLast ? 'Continue to Email Writing' : 'Next Question'}</button>
             </div>
         `;
 
-        document.getElementById('workplace-next').addEventListener('click', () => {
-            const checked = document.querySelector('input[name="workplace-q"]:checked');
-            if (!checked) {
-                const firstRadio = document.querySelector('input[name="workplace-q"]');
-                if (firstRadio) firstRadio.reportValidity();
-                return;
-            }
+        function advanceWorkplace() {
             saveCurrentWorkplaceAnswer();
             if (isLast) {
                 finalizeWorkplaceScores();
@@ -713,7 +694,10 @@
             }
             workplaceQuestionIndex += 1;
             renderWorkplaceQuestion();
-        });
+        }
+
+        document.getElementById('workplace-next').addEventListener('click', advanceWorkplace);
+        document.getElementById('workplace-skip').addEventListener('click', advanceWorkplace);
 
         const prevBtn = document.getElementById('workplace-prev');
         if (prevBtn) {
@@ -910,9 +894,10 @@
                 <span class="voice-status" id="voice-status">${validExisting ? `Accepted (${existing.durationSec}s)` : existing ? 'Too short / weak audio — re-record' : 'Ready'}</span>
             </div>
             <audio class="voice-playback" id="voice-playback" controls ${existing && existing.url ? '' : 'hidden'}></audio>
-            <div class="assessment-actions">
+            <div class="assessment-actions assessment-actions--triple">
                 <button type="button" class="btn btn-secondary" id="voice-back" ${voiceRound === 0 ? 'hidden' : ''}>Previous Prompt</button>
-                <button type="button" class="btn btn-primary" id="voice-next" ${validExisting ? '' : 'disabled'}>${voiceRound >= data.voicePrompts.length - 1 ? 'Submit Assessment' : 'Next Prompt'}</button>
+                <button type="button" class="btn btn-secondary" id="voice-skip">Skip</button>
+                <button type="button" class="btn btn-primary" id="voice-next">${voiceRound >= data.voicePrompts.length - 1 ? 'Submit Assessment' : 'Next Prompt'}</button>
             </div>
         `;
 
@@ -1021,22 +1006,30 @@
             }
         });
 
-        nextBtn.addEventListener('click', () => {
-            const rec = state.voice.recordings[voiceRound];
-            if (!isVoiceValid(rec, promptItem)) return;
+        function advanceVoice() {
+            clearVoiceRecordTimer();
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                try { mediaRecorder.stop(); } catch { /* ignore */ }
+            }
             voiceRound += 1;
             if (voiceRound < data.voicePrompts.length) {
                 renderVoice();
             } else {
                 finishAssessment();
             }
-        });
+        }
+
+        nextBtn.addEventListener('click', advanceVoice);
+        const skipBtn = document.getElementById('voice-skip');
+        if (skipBtn) skipBtn.addEventListener('click', advanceVoice);
 
         const backBtn = document.getElementById('voice-back');
         if (backBtn) {
             backBtn.addEventListener('click', () => {
                 clearVoiceRecordTimer();
-                if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+                if (mediaRecorder && mediaRecorder.state === 'recording') {
+                    try { mediaRecorder.stop(); } catch { /* ignore */ }
+                }
                 voiceRound = Math.max(0, voiceRound - 1);
                 renderVoice();
             });
@@ -1139,35 +1132,49 @@
 
         clearInterval(globalTimer);
         clearInterval(sectionTimer);
+        clearVoiceRecordTimer();
 
         const panel = document.getElementById('assessment-content');
         if (!terminatedReason) {
-            panel.innerHTML = `<p class="section-desc">Submitting your assessment...</p>`;
+            panel.innerHTML = `<p class="section-desc">Submitting your assessment…</p>`;
         }
 
-        const currentSection = data.sections[sectionIndex];
-        if (currentSection?.id === 'grammar') {
-            saveCurrentEnglishAnswer();
-            finalizeEnglishScores();
-        } else if (currentSection?.id === 'reading') {
-            saveCurrentReadingAnswer();
-            finalizeReadingScores();
-        } else if (currentSection?.id === 'workplace') {
-            saveCurrentWorkplaceAnswer();
-            finalizeWorkplaceScores();
-        } else if (currentSection?.id === 'email') {
-            saveCurrentEmailResponse();
-            finalizeEmailScores();
-        } else if (currentSection?.id === 'typing') {
-            saveTypingProgress();
+        try {
+            const currentSection = data.sections[sectionIndex];
+            if (currentSection?.id === 'grammar') {
+                saveCurrentEnglishAnswer();
+                finalizeEnglishScores();
+            } else if (currentSection?.id === 'reading') {
+                saveCurrentReadingAnswer();
+                finalizeReadingScores();
+            } else if (currentSection?.id === 'workplace') {
+                saveCurrentWorkplaceAnswer();
+                finalizeWorkplaceScores();
+            } else if (currentSection?.id === 'email') {
+                saveCurrentEmailResponse();
+                finalizeEmailScores();
+            } else if (currentSection?.id === 'typing') {
+                saveTypingProgress();
+            }
+        } catch {
+            /* continue with partial state */
         }
 
-        const overallScore = computeOverall();
+        let overallScore = 0;
+        try {
+            overallScore = computeOverall();
+        } catch {
+            overallScore = 0;
+        }
         const durationMinutes = Math.round((Date.now() - startedAt) / 60000);
 
         const payload = {
-            ...session,
-            attemptNumber: session.attemptNumber || 1,
+            fullName: session.fullName,
+            candidateEmail: session.email,
+            email: session.email,
+            phone: session.phone,
+            registeredAt: session.registeredAt || null,
+            attemptNumber: Number(session.attemptNumber) || 1,
             durationMinutes,
             timedOut: !!timedOut,
             terminatedReason: terminatedReason || null,
@@ -1178,7 +1185,7 @@
             englishPercent: getEnglishPercent(),
             reading: state.reading,
             workplace: state.workplace,
-            email: {
+            emailWriting: {
                 percent: state.email.percent,
                 topics: state.email.topics,
                 responses: state.email.responses,
@@ -1196,7 +1203,7 @@
             voice: {
                 completionPercent: state.voice.completionPercent,
                 validCount: state.voice.validCount,
-                prompts: state.voice.recordings.map(r => ({
+                prompts: (state.voice.recordings || []).filter(Boolean).map(r => ({
                     prompt: r.prompt,
                     type: r.type,
                     text: r.text,
@@ -1207,7 +1214,16 @@
             }
         };
 
-        const { ok, data: res } = await window.TrinitasAPI.submitAssessment(payload);
+        let ok = false;
+        let res = {};
+        try {
+            const result = await window.TrinitasAPI.submitAssessment(payload);
+            ok = result.ok;
+            res = result.data || {};
+        } catch (err) {
+            ok = false;
+            res = { message: err.message || 'Submission failed.' };
+        }
 
         if (!ok) {
             isSubmitting = false;

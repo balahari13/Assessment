@@ -1,8 +1,8 @@
 window.ASSESSMENT_DATA_ATTEMPT2 = {
-    attemptLabel: 'Attempt 2 — Advanced',
+    attemptLabel: 'Attempt 2',
     totalMinutes: 60,
     sections: [
-        { id: 'grammar', label: 'Advanced English', minutes: 14, weight: 0.14 },
+        { id: 'grammar', label: 'English', minutes: 14, weight: 0.14 },
         { id: 'reading', label: 'Reading Comprehension', minutes: 8, weight: 0.08 },
         { id: 'workplace', label: 'Workplace & Psychology', minutes: 10, weight: 0.14 },
         { id: 'email', label: 'Email Writing', minutes: 12, weight: 0.14 },

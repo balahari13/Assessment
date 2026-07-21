@@ -16,15 +16,8 @@
     }
 
     function showToast(message, type) {
-        let toast = document.getElementById('admin-toast');
-        if (!toast) {
-            toast = document.createElement('div');
-            toast.id = 'admin-toast';
-            document.getElementById('admin-dashboard').insertBefore(
-                toast,
-                document.querySelector('.admin-stats')
-            );
-        }
+        const toast = document.getElementById('admin-toast');
+        if (!toast) return;
         toast.className = `admin-toast admin-toast--${type}`;
         toast.textContent = message;
         toast.hidden = false;
@@ -56,7 +49,7 @@
     }
 
     async function handleEnableAttempt2(email) {
-        if (!confirm(`Enable Attempt 2 (Advanced) for ${email}?`)) return;
+        if (!confirm(`Enable Attempt 2 for ${email}?`)) return;
         const token = sessionStorage.getItem(TOKEN_KEY);
         const { ok, data } = await window.TrinitasAPI.adminEnableAttempt2(token, email);
         if (!ok) {
@@ -228,14 +221,14 @@
         const modal = document.getElementById('detail-modal');
         modal.hidden = false;
         modal.setAttribute('aria-hidden', 'false');
-        document.body.style.overflow = 'hidden';
+        document.body.classList.add('admin-modal-open');
     }
 
     function closeDetailModal() {
         const modal = document.getElementById('detail-modal');
         modal.hidden = true;
         modal.setAttribute('aria-hidden', 'true');
-        document.body.style.overflow = '';
+        document.body.classList.remove('admin-modal-open');
     }
 
     function renderDetailModal(candidate) {
@@ -309,12 +302,12 @@
         ).join('');
 
         const attempt2 = window.ASSESSMENT_DATA_ATTEMPT2;
-        const attempt2Section = attempt2 ? renderAnswerKeyForData(attempt2, 'Attempt 2 — Advanced') : '';
+        const attempt2Section = attempt2 ? renderAnswerKeyForData(attempt2, 'Attempt 2') : '';
 
         container.innerHTML = `
             <div class="answer-key-grid">
                 <section class="answer-key-section answer-key-section--full">
-                    <h3>Attempt 1 — Standard</h3>
+                    <h3>Attempt 1</h3>
                 </section>
                 <section class="answer-key-section">
                     <h3>Multiple Choice (${data.grammarQuestions.length})</h3>

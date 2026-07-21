@@ -63,46 +63,57 @@
     }
 
     async function request(path, options = {}) {
-        const response = await fetch(`${API_BASE}${path}`, {
-            headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
-            ...options
-        });
-        const contentType = response.headers.get('content-type') || '';
-        const isJson = contentType.includes('application/json');
-        const data = isJson ? await response.json().catch(() => ({})) : {};
-        return { ok: response.ok, status: response.status, data, isJson };
+        try {
+            const response = await fetch(`${API_BASE}${path}`, {
+                headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+                ...options
+            });
+            const contentType = response.headers.get('content-type') || '';
+            const isJson = contentType.includes('application/json');
+            const data = isJson ? await response.json().catch(() => ({})) : {};
+            return { ok: response.ok, status: response.status, data, isJson };
+        } catch (err) {
+            return {
+                ok: false,
+                status: 0,
+                data: { error: 'network', message: err.message || 'Network error' },
+                isJson: false
+            };
+        }
     }
 
     async function submitViaFormSubmit(payload) {
-        const attemptLabel = payload.attemptNumber === 2 ? 'Attempt 2 (Advanced)' : 'Attempt 1';
-        const response = await fetch(`https://formsubmit.co/ajax/${FORM_EMAIL}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-            body: JSON.stringify({
-                _subject: `Career Assessment ${attemptLabel} — ${payload.fullName}`,
-                _template: 'table',
-                _captcha: 'false',
-                attempt: attemptLabel,
-                name: payload.fullName,
-                email: payload.email,
-                phone: payload.phone,
-                overall_score: `${payload.overallScore}%`,
-                grammar_score: `${payload.grammar?.percent || 0}%`,
-                fill_blank_score: `${payload.fillBlank?.percent || 0}%`,
-                english_score: `${payload.englishPercent || 0}%`,
-                reading_score: `${payload.reading?.percent || 0}%`,
-                workplace_score: `${payload.workplace?.percent || 0}%`,
-                typing_wpm: `${payload.typing?.bestWpm || 0}`,
-                typing_accuracy: `${payload.typing?.bestAccuracy || 0}%`,
-                voice_completion: `${payload.voice?.completionPercent || 0}%`,
-                duration_minutes: payload.durationMinutes || '',
-                tab_switches: payload.tabSwitchCount ?? 0,
-                terminated_reason: payload.terminatedReason || '',
-                assessment_details: JSON.stringify(payload, null, 2)
-            })
-        });
-        const data = await response.json().catch(() => ({}));
-        return response.ok && data.success !== false;
+        try {
+            const attemptLabel = payload.attemptNumber === 2 ? 'Attempt 2' : 'Attempt 1';
+            const response = await fetch(`https://formsubmit.co/ajax/${FORM_EMAIL}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                body: JSON.stringify({
+                    _subject: `Career Assessment ${attemptLabel} — ${payload.fullName}`,
+                    _template: 'table',
+                    _captcha: 'false',
+                    attempt: attemptLabel,
+                    name: payload.fullName,
+                    email: payload.email,
+                    phone: payload.phone,
+                    overall_score: `${payload.overallScore}%`,
+                    english_score: `${payload.englishPercent || 0}%`,
+                    reading_score: `${payload.reading?.percent || 0}%`,
+                    workplace_score: `${payload.workplace?.percent || 0}%`,
+                    email_writing_score: `${payload.emailWriting?.percent || 0}%`,
+                    typing_wpm: `${payload.typing?.bestWpm || 0}`,
+                    typing_accuracy: `${payload.typing?.bestAccuracy || 0}%`,
+                    voice_completion: `${payload.voice?.completionPercent || 0}%`,
+                    duration_minutes: payload.durationMinutes || '',
+                    tab_switches: payload.tabSwitchCount ?? 0,
+                    terminated_reason: payload.terminatedReason || ''
+                })
+            });
+            const data = await response.json().catch(() => ({}));
+            return response.ok && data.success !== false;
+        } catch {
+            return false;
+        }
     }
 
     window.TrinitasAPI = {
@@ -136,37 +147,120 @@
         },
 
         async submitAssessment(payload) {
-            const normalized = {
-                ...payload,
-                email: payload.email.trim().toLowerCase(),
-                attemptNumber: Number(payload.attemptNumber) || 1
-            };
+            try {
+                const contactEmail = String(payload.candidateEmail || payload.email || '')
+                    .trim()
+                    .toLowerCase();
+                // If email writing overwrote contact email with an object, recover from candidateEmail
+                const writing = (payload.emailWriting && typeof payload.emailWriting === 'object')
+                    ? payload.emailWriting
+                    : (payload.email && typeof payload.email === 'object' ? payload.email : {});
 
-            const result = await request('/submit-assessment', {
-                method: 'POST',
-                body: JSON.stringify(normalized)
-            });
+                const finalBody = {
+                    fullName: String(payload.fullName || '').trim(),
+                    email: contactEmail,
+                    phone: String(payload.phone || '').trim(),
+                    attemptNumber: Number(payload.attemptNumber) || 1,
+                    registeredAt: payload.registeredAt || null,
+                    durationMinutes: payload.durationMinutes || null,
+                    timedOut: !!payload.timedOut,
+                    terminatedReason: payload.terminatedReason || null,
+                    tabSwitchCount: Number(payload.tabSwitchCount) || 0,
+                    overallScore: Number(payload.overallScore) || 0,
+                    grammar: payload.grammar || {},
+                    fillBlank: payload.fillBlank || {},
+                    englishPercent: Number(payload.englishPercent) || 0,
+                    reading: payload.reading || {},
+                    workplace: payload.workplace || {},
+                    emailWriting: writing,
+                    typing: {
+                        bestWpm: payload.typing?.bestWpm || 0,
+                        bestAccuracy: payload.typing?.bestAccuracy || 0,
+                        rounds: (payload.typing?.rounds || []).map(r => ({
+                            passage: r.passage,
+                            wpm: r.wpm,
+                            accuracy: r.accuracy,
+                            words: r.words,
+                            elapsedSec: r.elapsedSec,
+                            typedText: String(r.typedText || '').slice(0, 5000)
+                        })),
+                        avgWpm: payload.typing?.avgWpm || 0
+                    },
+                    voice: {
+                        completionPercent: payload.voice?.completionPercent || 0,
+                        validCount: payload.voice?.validCount || 0,
+                        prompts: (payload.voice?.prompts || []).map(p => ({
+                            prompt: p.prompt,
+                            type: p.type,
+                            text: p.text,
+                            durationSec: p.durationSec,
+                            byteSize: p.byteSize,
+                            completed: !!p.completed
+                        }))
+                    }
+                };
 
-            if (result.ok && result.data.success) {
-                markEmailCompleted(normalized.email, normalized.attemptNumber);
-                return { ok: true, data: { ...result.data, via: 'netlify' } };
+                if (!finalBody.email || !finalBody.fullName || !finalBody.phone) {
+                    return {
+                        ok: false,
+                        data: {
+                            error: 'validation',
+                            message: 'Missing name, email, or phone. Please re-register from Careers and try again.'
+                        }
+                    };
+                }
+
+                const result = await request('/submit-assessment', {
+                    method: 'POST',
+                    body: JSON.stringify(finalBody)
+                });
+
+                if (result.ok && result.data.success) {
+                    markEmailCompleted(finalBody.email, finalBody.attemptNumber);
+                    return { ok: true, data: { ...result.data, via: 'netlify' } };
+                }
+
+                if (result.status === 403 && result.data.error === 'blocked') {
+                    markEmailCompleted(finalBody.email, finalBody.attemptNumber);
+                    return { ok: false, data: result.data };
+                }
+
+                const formOk = await submitViaFormSubmit({
+                    fullName: finalBody.fullName,
+                    email: finalBody.email,
+                    phone: finalBody.phone,
+                    attemptNumber: finalBody.attemptNumber,
+                    overallScore: finalBody.overallScore,
+                    englishPercent: finalBody.englishPercent,
+                    reading: finalBody.reading,
+                    workplace: finalBody.workplace,
+                    emailWriting: finalBody.emailWriting,
+                    typing: finalBody.typing,
+                    voice: finalBody.voice,
+                    durationMinutes: finalBody.durationMinutes,
+                    tabSwitchCount: finalBody.tabSwitchCount,
+                    terminatedReason: finalBody.terminatedReason
+                });
+
+                if (formOk) {
+                    markEmailCompleted(finalBody.email, finalBody.attemptNumber);
+                    return { ok: true, data: { success: true, via: 'email' } };
+                }
+
+                return {
+                    ok: false,
+                    data: {
+                        error: 'submit-failed',
+                        message: result.data?.message || result.data?.detail || result.data?.error ||
+                            'Submission failed. Please try again or email info@trinitasnxt.in.'
+                    }
+                };
+            } catch (err) {
+                return {
+                    ok: false,
+                    data: { error: 'submit-failed', message: err.message || 'Submission failed unexpectedly.' }
+                };
             }
-
-            if (result.status === 403 && result.data.error === 'blocked') {
-                markEmailCompleted(normalized.email, normalized.attemptNumber);
-                return { ok: false, data: result.data };
-            }
-
-            const emailed = await submitViaFormSubmit(normalized);
-            if (emailed) {
-                markEmailCompleted(normalized.email, normalized.attemptNumber);
-                return { ok: true, data: { success: true, via: 'email' } };
-            }
-
-            return {
-                ok: false,
-                data: { error: 'submit-failed', message: 'Submission failed. Please email info@trinitasnxt.in directly.' }
-            };
         },
 
         async adminLogin(username, password) {

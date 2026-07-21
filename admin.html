@@ -13,55 +13,67 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="careers.css">
 </head>
-<body>
+<body class="admin-body">
     <div class="admin-page">
-        <div class="container">
-            <div class="admin-login-card" id="admin-login">
-                <p class="eyebrow">Trinitas Admin</p>
-                <h1 style="font-size:1.5rem;margin-bottom:0.5rem">Assessment Dashboard</h1>
-                <p class="section-desc" style="margin-bottom:1.5rem">Sign in to view candidate assessment results.</p>
-                <form id="admin-login-form">
-                    <div class="form-field">
-                        <label for="username">Admin ID</label>
-                        <input type="text" id="username" name="username" required autocomplete="username">
-                    </div>
-                    <div class="form-field">
-                        <label for="password">Password</label>
-                        <input type="password" id="password" name="password" required autocomplete="current-password">
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-full">Sign In</button>
-                </form>
-                <div id="admin-error" class="form-alert form-alert--error" style="margin-top:1rem" hidden></div>
+        <div class="admin-login-card" id="admin-login">
+            <div class="admin-login-brand">
+                <img src="logo-icon.png" alt="" width="40" height="40">
+                <div>
+                    <p class="eyebrow">Trinitas Admin</p>
+                    <h1>Assessment Dashboard</h1>
+                </div>
             </div>
+            <p class="section-desc admin-login-desc">Sign in to review candidate submissions and section scores.</p>
+            <form id="admin-login-form">
+                <div class="form-field">
+                    <label for="username">Admin ID</label>
+                    <input type="text" id="username" name="username" required autocomplete="username">
+                </div>
+                <div class="form-field">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Sign In</button>
+            </form>
+            <div id="admin-error" class="form-alert form-alert--error" hidden></div>
+        </div>
 
-            <div class="admin-dashboard" id="admin-dashboard" hidden>
-                <div class="admin-toolbar">
+        <div class="admin-dashboard" id="admin-dashboard" hidden>
+            <header class="admin-header">
+                <div class="admin-header-left">
+                    <img src="logo-icon.png" alt="" class="admin-header-logo" width="32" height="32">
                     <div>
-                        <h1 style="font-size:1.5rem">Assessment Results</h1>
-                        <p class="section-desc">All preliminary assessment submissions</p>
-                    </div>
-                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
-                        <button type="button" class="btn btn-secondary" id="toggle-answer-key">Answer Key</button>
-                        <button type="button" class="btn btn-secondary" id="admin-refresh">Refresh</button>
-                        <button type="button" class="btn btn-primary" id="export-csv">Export CSV</button>
-                        <button type="button" class="btn btn-secondary" id="admin-logout">Logout</button>
+                        <h1>Assessment Results</h1>
+                        <p>Candidate submissions and section-level performance</p>
                     </div>
                 </div>
-
-                <div class="admin-stats">
-                    <div class="admin-stat"><strong id="stat-total">—</strong><span>Candidates</span></div>
-                    <div class="admin-stat"><strong id="stat-grammar">—</strong><span>Avg English (Att. 1)</span></div>
-                    <div class="admin-stat"><strong id="stat-reading">—</strong><span>Avg Reading</span></div>
-                    <div class="admin-stat"><strong id="stat-workplace">—</strong><span>Avg Workplace</span></div>
-                    <div class="admin-stat"><strong id="stat-typing">—</strong><span>Avg Typing WPM</span></div>
-                    <div class="admin-stat"><strong id="stat-voice">—</strong><span>Avg Voice</span></div>
+                <div class="admin-header-actions">
+                    <button type="button" class="btn btn-secondary btn-sm" id="toggle-answer-key">Answer Key</button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="admin-refresh">Refresh</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="export-csv">Export CSV</button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="admin-logout">Logout</button>
                 </div>
+            </header>
 
-                <div class="answer-key-panel" id="answer-key-panel" hidden>
-                    <h2 style="font-size:1.15rem;margin-bottom:0.75rem">Assessment Answer Key</h2>
-                    <div id="answer-key-content"></div>
+            <div id="admin-toast" class="admin-toast" hidden></div>
+
+            <section class="admin-stats" aria-label="Summary statistics">
+                <div class="admin-stat"><strong id="stat-total">—</strong><span>Candidates</span></div>
+                <div class="admin-stat"><strong id="stat-grammar">—</strong><span>Avg English</span></div>
+                <div class="admin-stat"><strong id="stat-reading">—</strong><span>Avg Reading</span></div>
+                <div class="admin-stat"><strong id="stat-workplace">—</strong><span>Avg Workplace</span></div>
+                <div class="admin-stat"><strong id="stat-typing">—</strong><span>Avg Typing WPM</span></div>
+                <div class="admin-stat"><strong id="stat-voice">—</strong><span>Avg Voice</span></div>
+            </section>
+
+            <section class="answer-key-panel" id="answer-key-panel" hidden>
+                <div class="answer-key-panel-head">
+                    <h2>Assessment Answer Key</h2>
                 </div>
+                <div id="answer-key-content"></div>
+            </section>
 
+            <section class="admin-table-card">
                 <div class="results-table-wrap">
                     <table class="results-table results-table--detailed">
                         <thead>
@@ -85,17 +97,17 @@
                             </tr>
                         </thead>
                         <tbody id="results-body">
-                            <tr><td colspan="16">Loading...</td></tr>
+                            <tr><td colspan="16">Loading…</td></tr>
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </section>
         </div>
     </div>
 
     <div class="admin-modal" id="detail-modal" role="dialog" aria-modal="true" aria-hidden="true" hidden>
         <div class="admin-modal-backdrop" id="detail-modal-backdrop"></div>
-        <div class="admin-modal-panel">
+        <div class="admin-modal-panel" role="document">
             <button type="button" class="admin-modal-close" id="detail-modal-close" aria-label="Close">&times;</button>
             <div id="detail-modal-content"></div>
         </div>
