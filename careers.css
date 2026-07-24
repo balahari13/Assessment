@@ -98,10 +98,19 @@
 }
 .healthcare-id-card {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
     margin: 1.25rem 0 1.5rem;
 }
+.healthcare-alert--equipment {
+    background: rgba(37, 99, 235, 0.08);
+    border-color: rgba(37, 99, 235, 0.3);
+    border-left-color: var(--blue);
+}
+.healthcare-alert--equipment h3 { color: var(--navy); }
+.healthcare-alert--equipment p,
+.healthcare-alert--equipment ul,
+.healthcare-alert--equipment li { color: var(--text-muted); }
 .healthcare-id-card > div {
     background: var(--white);
     border: 1px solid var(--border);
@@ -214,6 +223,9 @@
 @media (max-width: 900px) {
     .healthcare-layout { grid-template-columns: 1fr; }
     .healthcare-id-card { grid-template-columns: 1fr; }
+}
+@media (max-width: 1100px) and (min-width: 901px) {
+    .healthcare-id-card { grid-template-columns: 1fr 1fr; }
 }
 .consent-label {
     display: flex;
