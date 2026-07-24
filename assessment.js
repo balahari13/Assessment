@@ -122,23 +122,36 @@
 
     function shapeSvg(spec) {
         const t = spec.t || 'c';
-        const fill = spec.o ? 'none' : (spec.f || '#2563eb');
-        const stroke = spec.f || '#2563eb';
-        const sw = spec.o ? 3.5 : 2;
+        const ink = '#111111';
+        const fill = spec.o ? 'none' : (spec.f === '#ffffff' || spec.f === '#fff' ? '#ffffff' : ink);
+        const stroke = ink;
+        const sw = spec.o ? 3.5 : 2.25;
         const rot = spec.rot || 0;
         const scale = spec.sz || 1;
         let inner = '';
-        if (t === 'c') inner = `<circle cx="40" cy="40" r="22" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
-        else if (t === 's') inner = `<rect x="16" y="16" width="48" height="48" rx="4" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
-        else if (t === 't') inner = `<polygon points="40,12 68,64 12,64" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>`;
-        else if (t === 'd') inner = `<polygon points="40,10 68,40 40,70 12,40" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>`;
-        else if (t === 'h') inner = `<polygon points="40,10 62,22 62,50 40,62 18,50 18,22" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>`;
-        else if (t === 'p') inner = `<polygon points="40,10 66,28 56,58 24,58 14,28" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>`;
-        else if (t === 'r') inner = `<circle cx="40" cy="40" r="22" fill="none" stroke="${stroke}" stroke-width="5"/>`;
-        else if (t === 'w') inner = `<polygon points="40,8 46,28 68,28 50,40 56,62 40,48 24,62 30,40 12,28 34,28" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>`;
-        else if (t === 'm') inner = `<path d="M14 48 A26 26 0 0 1 66 48 L14 48 Z" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
-        else inner = `<circle cx="40" cy="40" r="22" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
-        return `<svg class="oddman-svg" viewBox="0 0 80 80" width="72" height="72" aria-hidden="true" style="transform:rotate(${rot}deg) scale(${scale})">${inner}</svg>`;
+        if (t === 'c') inner = `<circle cx="40" cy="40" r="20" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
+        else if (t === 's') inner = `<rect x="18" y="18" width="44" height="44" rx="2" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
+        else if (t === 't') inner = `<polygon points="40,14 66,62 14,62" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>`;
+        else if (t === 'd') inner = `<polygon points="40,12 66,40 40,68 14,40" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>`;
+        else if (t === 'h') inner = `<polygon points="40,12 60,24 60,48 40,60 20,48 20,24" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>`;
+        else if (t === 'p') inner = `<polygon points="40,12 64,28 55,56 25,56 16,28" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>`;
+        else if (t === 'r') inner = `<circle cx="40" cy="40" r="20" fill="none" stroke="${stroke}" stroke-width="4.5"/>`;
+        else if (t === 'w') inner = `<polygon points="40,10 45,28 64,28 48,40 54,60 40,48 26,60 32,40 16,28 35,28" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>`;
+        else if (t === 'm') inner = `<path d="M16 46 A24 24 0 0 1 64 46 L16 46 Z" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
+        else if (t === 'lh') inner = `<line x1="12" y1="40" x2="68" y2="40" stroke="${stroke}" stroke-width="4" stroke-linecap="round"/>`;
+        else if (t === 'lv') inner = `<line x1="40" y1="12" x2="40" y2="68" stroke="${stroke}" stroke-width="4" stroke-linecap="round"/>`;
+        else if (t === 'ld') inner = `<line x1="16" y1="16" x2="64" y2="64" stroke="${stroke}" stroke-width="4" stroke-linecap="round"/>`;
+        else if (t === 'ldd') inner = `<line x1="64" y1="16" x2="16" y2="64" stroke="${stroke}" stroke-width="4" stroke-linecap="round"/>`;
+        else if (t === 'lx') inner = `<line x1="18" y1="18" x2="62" y2="62" stroke="${stroke}" stroke-width="3.5" stroke-linecap="round"/><line x1="62" y1="18" x2="18" y2="62" stroke="${stroke}" stroke-width="3.5" stroke-linecap="round"/>`;
+        else if (t === 'lpar') inner = `<line x1="14" y1="30" x2="66" y2="30" stroke="${stroke}" stroke-width="3.5" stroke-linecap="round"/><line x1="14" y1="50" x2="66" y2="50" stroke="${stroke}" stroke-width="3.5" stroke-linecap="round"/>`;
+        else if (t === 'lparv') inner = `<line x1="30" y1="14" x2="30" y2="66" stroke="${stroke}" stroke-width="3.5" stroke-linecap="round"/><line x1="50" y1="14" x2="50" y2="66" stroke="${stroke}" stroke-width="3.5" stroke-linecap="round"/>`;
+        else if (t === 'l3') inner = `<line x1="14" y1="24" x2="66" y2="24" stroke="${stroke}" stroke-width="3" stroke-linecap="round"/><line x1="14" y1="40" x2="66" y2="40" stroke="${stroke}" stroke-width="3" stroke-linecap="round"/><line x1="14" y1="56" x2="66" y2="56" stroke="${stroke}" stroke-width="3" stroke-linecap="round"/>`;
+        else if (t === '2c') inner = `<circle cx="26" cy="40" r="12" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/><circle cx="54" cy="40" r="12" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
+        else if (t === 'cs') inner = `<rect x="16" y="16" width="48" height="48" rx="2" fill="none" stroke="${stroke}" stroke-width="${sw}"/><circle cx="40" cy="40" r="14" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
+        else if (t === '3d') inner = `<circle cx="22" cy="40" r="7" fill="${fill}" stroke="${stroke}" stroke-width="2"/><circle cx="40" cy="40" r="7" fill="${fill}" stroke="${stroke}" stroke-width="2"/><circle cx="58" cy="40" r="7" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
+        else if (t === 'grid') inner = `<rect x="16" y="16" width="20" height="20" fill="${fill}" stroke="${stroke}" stroke-width="2"/><rect x="44" y="16" width="20" height="20" fill="${fill}" stroke="${stroke}" stroke-width="2"/><rect x="16" y="44" width="20" height="20" fill="${fill}" stroke="${stroke}" stroke-width="2"/><rect x="44" y="44" width="20" height="20" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
+        else inner = `<circle cx="40" cy="40" r="20" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
+        return `<svg class="oddman-svg" viewBox="0 0 80 80" width="76" height="76" aria-hidden="true" style="transform:rotate(${rot}deg) scale(${scale})">${inner}</svg>`;
     }
 
     function ensureOddmanAnswers() {
@@ -176,8 +189,8 @@
 
         panel.innerHTML = `
             <div class="section-intro">
-                <h2>Odd Man Out — Shape Aptitude</h2>
-                <p class="section-desc">Choose the shape that does <strong>not</strong> belong with the others. Questions are optional; you may skip. Time for this section: <strong>${section.minutes} minutes</strong>.</p>
+                <h2>Logical Reasoning</h2>
+                <p class="section-desc">Choose the figure that does <strong>not</strong> belong with the others (shapes and lines). Questions are optional; you may skip. Time for this section: <strong>${section.minutes} minutes</strong>.</p>
                 <span class="section-timer">Section time remaining: <span id="section-timer">${formatTime(sectionSecondsLeft || section.minutes * 60)}</span></span>
             </div>
             <div class="grammar-pagination">
