@@ -1743,7 +1743,7 @@
         if (session.isAdminPractice) {
             alert('Admin practice sessions can be closed anytime. Pause/OTP is for candidate sessions.');
         }
-        if (!confirm('Pause this assessment? An OTP will be sent to your registered email so you can resume later.')) {
+        if (!confirm('Pause this assessment? Your progress will be saved and your email will appear in the Admin portal. Recruitment will generate an OTP when you are ready to resume.')) {
             return;
         }
 
@@ -1781,10 +1781,10 @@
             panel.innerHTML = `
                 <div class="form-alert form-alert--success" style="display:block">
                     <h2 style="margin-bottom:0.5rem">Session paused</h2>
-                    <p>${res.message || 'OTP sent to your email.'}</p>
-                    <p style="margin-top:0.65rem;font-size:0.9rem">Go to the Careers page → <strong>Resume assessment</strong>, enter your email and the 6-digit OTP.</p>
+                    <p>${res.message || 'Your progress is saved.'}</p>
+                    <p style="margin-top:0.65rem;font-size:0.9rem">When you are ready to continue, contact recruitment. They will generate an OTP for <strong>${session.email}</strong> from the Admin portal. Then open Careers → <strong>Resume assessment</strong> and enter that OTP.</p>
                 </div>
-                <a href="careers.html#resume" class="btn btn-primary" style="margin-top:1.25rem">Open Careers to resume</a>
+                <a href="careers.html#resume" class="btn btn-primary" style="margin-top:1.25rem">Open Careers (resume later)</a>
             `;
         } catch (err) {
             panel.innerHTML = `

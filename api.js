@@ -337,6 +337,21 @@
                 headers: { Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ email })
             });
+        },
+
+        async adminPaused(token) {
+            return request('/admin-paused', {
+                method: 'GET',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+        },
+
+        async adminGenerateOtp(token, email) {
+            return request('/admin-generate-otp', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ email })
+            });
         }
     };
 })();

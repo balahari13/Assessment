@@ -6,6 +6,8 @@ import {
     normalizeEmail
 } from './lib/shared.mjs';
 
+const PAUSE_INDEX = 'pause-index';
+
 function pauseKey(email) {
     return `pause:${normalizeEmail(email)}`;
 }
@@ -23,6 +25,13 @@ function safeEqualHex(a, b) {
     } catch {
         return false;
     }
+}
+
+async function removeFromIndex(store, email) {
+    const raw = await store.get(PAUSE_INDEX, { type: 'text' });
+    if (!raw) return;
+    const index = JSON.parse(raw).filter(e => normalizeEmail(e) !== normalizeEmail(email));
+    await store.set(PAUSE_INDEX, JSON.stringify(index));
 }
 
 export default async (req, context) => {
@@ -50,30 +59,44 @@ export default async (req, context) => {
         if (!raw) {
             return jsonResponse(404, {
                 error: 'not_found',
-                message: 'No paused session found for this email. Start a new assessment or check the email address.'
+                message: 'No paused session found for this email. Ask admin to confirm your pause, or start a new assessment.'
             });
         }
 
         const record = JSON.parse(raw);
-        if (Date.now() > Number(record.expiresAt || 0)) {
+        if (Date.now() > Number(record.snapshotExpiresAt || 0)) {
             await store.delete(pauseKey(email));
+            await removeFromIndex(store, email);
             return jsonResponse(410, {
                 error: 'expired',
-                message: 'This OTP has expired. Please start a new assessment or pause again if still in progress.'
+                message: 'This paused session has expired. Please start a new assessment.'
             });
         }
 
-        const expected = record.otpHash;
+        if (!record.otpHash) {
+            return jsonResponse(403, {
+                error: 'otp_not_ready',
+                message: 'An OTP has not been generated yet. Contact recruitment so they can generate your resume OTP from the Admin portal.'
+            });
+        }
+
+        if (Date.now() > Number(record.otpExpiresAt || 0)) {
+            return jsonResponse(410, {
+                error: 'otp_expired',
+                message: 'This OTP has expired. Ask admin to generate a new OTP for your email.'
+            });
+        }
+
         const actual = hashOtp(otp, email);
-        if (!safeEqualHex(expected, actual)) {
+        if (!safeEqualHex(record.otpHash, actual)) {
             return jsonResponse(403, {
                 error: 'invalid_otp',
-                message: 'Incorrect OTP. Check the code emailed to you and try again.'
+                message: 'Incorrect OTP. Check the code provided by recruitment and try again.'
             });
         }
 
-        // One-time use: delete after successful verify
         await store.delete(pauseKey(email));
+        await removeFromIndex(store, email);
 
         return jsonResponse(200, {
             success: true,

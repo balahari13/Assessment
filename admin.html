@@ -74,7 +74,35 @@
                 <div id="answer-key-content"></div>
             </section>
 
+            <section class="admin-table-card admin-paused-card">
+                <div class="admin-section-title-row">
+                    <h2 class="admin-section-title">Paused assessments</h2>
+                    <button type="button" class="btn btn-secondary btn-sm" id="refresh-paused">Refresh paused</button>
+                </div>
+                <p class="section-desc admin-paused-desc">Candidates who paused mid-test. Generate an OTP, then share it with them (or confirm email delivery) so they can resume on Careers.</p>
+                <div class="results-table-wrap">
+                    <table class="results-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Paused at</th>
+                                <th>Status</th>
+                                <th>OTP</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paused-body">
+                            <tr><td colspan="6">No paused sessions.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
             <section class="admin-table-card">
+                <div class="admin-section-title-row">
+                    <h2 class="admin-section-title">Submitted results</h2>
+                </div>
                 <div class="results-table-wrap">
                     <table class="results-table results-table--detailed">
                         <thead>

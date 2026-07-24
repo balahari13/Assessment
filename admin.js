@@ -476,6 +476,73 @@
         renderSummary(data.summary);
         renderTable(data.results);
         document.getElementById('export-csv').onclick = () => exportCsv(data.results);
+        loadPaused();
+    }
+
+    function formatPausedDate(iso) {
+        if (!iso) return '—';
+        try {
+            return new Date(iso).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+        } catch {
+            return iso;
+        }
+    }
+
+    async function handleGenerateOtp(email) {
+        const token = sessionStorage.getItem(TOKEN_KEY);
+        if (!confirm(`Generate resume OTP for ${email}?`)) return;
+        const { ok, data } = await window.TrinitasAPI.adminGenerateOtp(token, email);
+        if (!ok) {
+            showToast(data.message || data.error || 'Could not generate OTP.', 'error');
+            return;
+        }
+        const otp = data.otp || '—';
+        showToast(`OTP for ${email}: ${otp}${data.emailed ? ' (emailed)' : ' (share manually)'}`, 'success');
+        // Keep toast longer for OTP readability
+        const toast = document.getElementById('admin-toast');
+        if (toast) {
+            toast.innerHTML = `OTP for <strong>${email}</strong>: <span class="otp-code-display">${otp}</span>${data.emailed ? ' · emailed' : ' · share with candidate'}`;
+        }
+        loadPaused();
+    }
+
+    function renderPaused(sessions) {
+        const tbody = document.getElementById('paused-body');
+        if (!tbody) return;
+        if (!sessions || !sessions.length) {
+            tbody.innerHTML = '<tr><td colspan="6">No paused sessions.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = sessions.map(s => `
+            <tr>
+                <td>${s.fullName || '—'}</td>
+                <td>${s.email || '—'}</td>
+                <td>${s.phone || '—'}</td>
+                <td>${formatPausedDate(s.pausedAt)}</td>
+                <td>${s.status === 'otp_ready'
+                    ? '<span class="score-pill score-pill--high">OTP ready</span>'
+                    : '<span class="score-pill score-pill--mid">Awaiting OTP</span>'}</td>
+                <td>
+                    <button type="button" class="btn-admin btn-admin--attempt2" data-pause-otp="${s.email}">Generate OTP</button>
+                </td>
+            </tr>
+        `).join('');
+
+        tbody.querySelectorAll('[data-pause-otp]').forEach(btn => {
+            btn.addEventListener('click', () => handleGenerateOtp(btn.dataset.pauseOtp));
+        });
+    }
+
+    async function loadPaused() {
+        const token = sessionStorage.getItem(TOKEN_KEY);
+        const tbody = document.getElementById('paused-body');
+        if (!tbody) return;
+        const { ok, data } = await window.TrinitasAPI.adminPaused(token);
+        if (!ok) {
+            tbody.innerHTML = '<tr><td colspan="6">Could not load paused sessions.</td></tr>';
+            return;
+        }
+        renderPaused(data.sessions || []);
     }
 
     function showLogin() {
@@ -516,6 +583,8 @@
         });
 
         document.getElementById('admin-refresh').addEventListener('click', loadResults);
+        const refreshPaused = document.getElementById('refresh-paused');
+        if (refreshPaused) refreshPaused.addEventListener('click', loadPaused);
 
         const practiceBtn = document.getElementById('admin-practice');
         if (practiceBtn) {

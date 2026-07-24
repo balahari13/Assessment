@@ -1,4 +1,3 @@
-import { createHash, randomInt } from 'crypto';
 import {
     corsHeaders,
     jsonResponse,
@@ -6,43 +5,21 @@ import {
     normalizeEmail
 } from './lib/shared.mjs';
 
-const OTP_TTL_MS = 24 * 60 * 60 * 1000;
-const FORM_EMAIL = 'info@trinitasnxt.in';
+const SNAPSHOT_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const PAUSE_INDEX = 'pause-index';
 
 function pauseKey(email) {
     return `pause:${normalizeEmail(email)}`;
 }
 
-function hashOtp(otp, email) {
-    return createHash('sha256').update(`${otp}:${normalizeEmail(email)}:trinitas-pause`).digest('hex');
-}
-
-async function sendOtpEmail(toEmail, fullName, otp) {
-    const targets = [toEmail, FORM_EMAIL];
-    let anyOk = false;
-    for (const target of targets) {
-        try {
-            const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(target)}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-                body: JSON.stringify({
-                    _subject: `Trinitas Assessment OTP — resume your session`,
-                    _template: 'table',
-                    _captcha: 'false',
-                    name: fullName || 'Candidate',
-                    email: toEmail,
-                    message: `Your one-time code to resume the Trinitas assessment is: ${otp}. It is valid for 24 hours. If you did not pause an assessment, ignore this email.`,
-                    otp_code: otp,
-                    candidate_email: toEmail
-                })
-            });
-            const data = await response.json().catch(() => ({}));
-            if (response.ok && data.success !== false) anyOk = true;
-        } catch {
-            /* try next */
-        }
+async function upsertPauseIndex(store, email) {
+    const raw = await store.get(PAUSE_INDEX, { type: 'text' });
+    const index = raw ? JSON.parse(raw) : [];
+    const normalized = normalizeEmail(email);
+    if (!index.includes(normalized)) {
+        index.push(normalized);
+        await store.set(PAUSE_INDEX, JSON.stringify(index));
     }
-    return anyOk;
 }
 
 export default async (req, context) => {
@@ -57,6 +34,7 @@ export default async (req, context) => {
         const body = await req.json();
         const email = normalizeEmail(body.email);
         const fullName = String(body.fullName || '').trim();
+        const phone = String(body.phone || body.snapshot?.session?.phone || '').trim();
         const snapshot = body.snapshot;
 
         if (!email || !email.includes('@') || !snapshot || typeof snapshot !== 'object') {
@@ -66,7 +44,6 @@ export default async (req, context) => {
             });
         }
 
-        // Strip non-serializable / huge fields
         if (snapshot.state?.voice?.recordings) {
             snapshot.state.voice.recordings = (snapshot.state.voice.recordings || []).map(r => {
                 if (!r) return null;
@@ -75,28 +52,27 @@ export default async (req, context) => {
             });
         }
 
-        const otp = String(randomInt(100000, 999999));
         const store = getAssessmentStore(context);
         const record = {
             email,
             fullName,
-            otpHash: hashOtp(otp, email),
+            phone,
             snapshot,
-            createdAt: new Date().toISOString(),
-            expiresAt: Date.now() + OTP_TTL_MS
+            pausedAt: new Date().toISOString(),
+            snapshotExpiresAt: Date.now() + SNAPSHOT_TTL_MS,
+            // OTP is created later by admin
+            otpHash: null,
+            otpExpiresAt: null,
+            otpGeneratedAt: null,
+            status: 'paused'
         };
 
         await store.set(pauseKey(email), JSON.stringify(record));
-        const emailed = await sendOtpEmail(email, fullName, otp);
+        await upsertPauseIndex(store, email);
 
         return jsonResponse(200, {
             success: true,
-            emailed,
-            message: emailed
-                ? `A 6-digit OTP was sent to ${email}. Use it on the Careers page to resume.`
-                : `Session paused. If you do not receive the OTP email, contact info@trinitasnxt.in with your registered email.`,
-            // Never return OTP in production responses to non-admin — only if email failed for support debugging on owner copy
-            hint: emailed ? null : 'Check spam folder; recruitment inbox also received a copy when email routing allows.'
+            message: `Session paused for ${email}. Your progress is saved. Contact recruitment so they can generate your resume OTP from the Admin portal. Then use Careers → Resume assessment with that OTP.`
         });
     } catch (err) {
         console.error('pause-assessment error:', err);
