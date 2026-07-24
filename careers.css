@@ -96,11 +96,89 @@
     gap: 2rem;
     align-items: start;
 }
+.wizard-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem 1.6rem 1.35rem;
+    box-shadow: 0 8px 28px rgba(15, 23, 42, 0.06);
+    margin-bottom: 1.25rem;
+}
+.wizard-progress { margin-bottom: 1.25rem; }
+.wizard-progress-track {
+    height: 6px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+}
+.wizard-progress-fill {
+    height: 100%;
+    width: 11%;
+    background: var(--gradient-brand);
+    border-radius: 99px;
+    transition: width 0.35s ease;
+}
+.wizard-step-label {
+    margin: 0.45rem 0 0;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.wizard-step h2 {
+    font-size: 1.35rem;
+    margin: 0.25rem 0 0.65rem;
+    color: var(--navy);
+}
+.wizard-step .section-desc { margin-bottom: 0.85rem; }
+.wizard-step .btn { margin-top: 0.35rem; }
+.wizard-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+    padding-top: 1.15rem;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+}
+.wizard-nav .btn-primary { margin-left: auto; }
+.wizard-help {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.25rem 1.35rem;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+}
+.wizard-help h3 {
+    font-size: 1.05rem;
+    margin: 0 0 0.5rem;
+    color: var(--navy);
+}
+.wizard-help p {
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--text-muted);
+    margin: 0 0 1rem;
+}
+.wizard-help-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.wizard-help-note {
+    margin: 0.85rem 0 0 !important;
+    font-size: 0.8rem !important;
+}
 .healthcare-id-card {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
     margin: 1.25rem 0 1.5rem;
+}
+.healthcare-id-card--compact {
+    grid-template-columns: 1fr 1fr;
+    margin: 1rem 0;
 }
 .healthcare-alert--equipment {
     background: rgba(37, 99, 235, 0.08);
