@@ -90,6 +90,8 @@ export default async (req, context) => {
             timedOut: !!body.timedOut,
             terminatedReason: body.terminatedReason || null,
             tabSwitchCount: Number(body.tabSwitchCount) || 0,
+            oddman: asObject(body.oddman),
+            scenarios: asObject(body.scenarios),
             grammar: asObject(body.grammar),
             fillBlank: asObject(body.fillBlank),
             englishPercent: Number(body.englishPercent) || 0,

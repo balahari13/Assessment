@@ -159,6 +159,8 @@
         return `
             <div class="admin-section-scores">
                 <div class="admin-section-score"><strong>${s.overallScore || 0}%</strong><span>Overall</span></div>
+                <div class="admin-section-score"><strong>${s.oddman?.percent || 0}%</strong><span>Odd Man</span></div>
+                <div class="admin-section-score"><strong>${s.scenarios?.percent || 0}%</strong><span>Scenarios</span></div>
                 <div class="admin-section-score"><strong>${getEnglishPercent(s)}%</strong><span>English</span></div>
                 <div class="admin-section-score"><strong>${s.grammar?.percent || 0}%</strong><span>MCQ</span></div>
                 <div class="admin-section-score"><strong>${s.fillBlank?.percent || 0}%</strong><span>Fill</span></div>
@@ -168,6 +170,12 @@
                 <div class="admin-section-score"><strong>${s.typing?.bestWpm || 0}</strong><span>WPM</span></div>
                 <div class="admin-section-score"><strong>${s.typing?.bestAccuracy || 0}%</strong><span>Accuracy</span></div>
                 <div class="admin-section-score"><strong>${s.voice?.completionPercent || 0}%</strong><span>Voice</span></div>
+            </div>
+            <div class="admin-detail-block"><h3>Odd Man Out (${s.oddman?.score || 0}/${(data.oddManOutQuestions || []).length || 25}) — ${s.oddman?.percent || 0}%</h3></div>
+            <div class="admin-detail-block"><h3>Customer Response Ranking (${s.scenarios?.score || 0} pts) — ${s.scenarios?.percent || 0}%</h3>
+                <ul class="admin-ans-list">${(s.scenarios?.rankings || []).map((r, i) =>
+                    `<li class="admin-ans-row admin-ans-row--na"><span class="admin-ans-q">Scenario ${i + 1}</span> Best: ${r?.best ?? '—'} · Neutral: ${r?.neutral ?? '—'} · Worst: ${r?.worst ?? '—'}</li>`
+                ).join('') || '<li class="admin-ans-row admin-ans-row--na">No rankings saved</li>'}</ul>
             </div>
             <div class="admin-detail-block"><h3>Multiple Choice (${s.grammar?.score || 0}/${data.grammarQuestions.length})</h3><ul class="admin-ans-list">${mcqHtml}</ul></div>
             <div class="admin-detail-block"><h3>Fill in the Blanks (${s.fillBlank?.score || 0}/${data.fillBlankQuestions.length})</h3><ul class="admin-ans-list">${fillHtml}</ul></div>

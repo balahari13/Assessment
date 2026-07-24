@@ -186,6 +186,8 @@
                     terminatedReason: payload.terminatedReason || null,
                     tabSwitchCount: Number(payload.tabSwitchCount) || 0,
                     overallScore: Number(payload.overallScore) || 0,
+                    oddman: payload.oddman || {},
+                    scenarios: payload.scenarios || {},
                     grammar: payload.grammar || {},
                     fillBlank: payload.fillBlank || {},
                     englishPercent: Number(payload.englishPercent) || 0,

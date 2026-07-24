@@ -123,6 +123,8 @@ export async function saveSubmission(store, submission) {
         terminatedReason: submission.terminatedReason || null,
         tabSwitchCount: Number(submission.tabSwitchCount) || 0,
         overallScore: Number(submission.overallScore) || 0,
+        oddman: submission.oddman || {},
+        scenarios: submission.scenarios || {},
         grammar: submission.grammar || {},
         fillBlank: submission.fillBlank || {},
         englishPercent: Number(submission.englishPercent) || 0,

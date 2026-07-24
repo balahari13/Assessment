@@ -8,7 +8,7 @@ const siteFiles = [
     'index.html', 'about.html', 'careers.html', 'healthcare.html', 'assessment.html', 'admin.html',
     '404.html', 'thank-you.html',
     'styles.css', 'careers.css', 'main.js', 'api.js', 'careers.js',
-    'assessment.js', 'assessment-data.js', 'assessment-data-attempt2.js', 'admin.js',
+    'assessment.js', 'assessment-aptitude.js', 'assessment-data.js', 'assessment-data-attempt2.js', 'admin.js',
     'logo-icon.png', 'logo-full.png', 'logo-wordmark.png'
 ];
 

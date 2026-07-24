@@ -22,6 +22,8 @@
     let isSubmitting = false;
 
     const state = {
+        oddman: { answers: [], score: 0, percent: 0 },
+        scenarios: { rankings: [], score: 0, percent: 0 },
         grammar: { answers: [], score: 0, percent: 0 },
         fillBlank: { answers: [], score: 0, percent: 0 },
         reading: { answers: [], score: 0, percent: 0 },
@@ -31,6 +33,8 @@
         voice: { recordings: [], completionPercent: 0, validCount: 0 }
     };
 
+    let oddmanIndex = 0;
+    let scenarioIndex = 0;
     let emailTopicIndex = 0;
     let voiceRecordTimer = null;
     let voiceRecordSeconds = 0;
@@ -114,6 +118,243 @@
             [arr[i], arr[j]] = [arr[j], arr[i]];
         }
         return arr;
+    }
+
+    function shapeSvg(spec) {
+        const t = spec.t || 'c';
+        const fill = spec.o ? 'none' : (spec.f || '#2563eb');
+        const stroke = spec.f || '#2563eb';
+        const sw = spec.o ? 3.5 : 2;
+        const rot = spec.rot || 0;
+        const scale = spec.sz || 1;
+        let inner = '';
+        if (t === 'c') inner = `<circle cx="40" cy="40" r="22" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
+        else if (t === 's') inner = `<rect x="16" y="16" width="48" height="48" rx="4" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
+        else if (t === 't') inner = `<polygon points="40,12 68,64 12,64" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>`;
+        else if (t === 'd') inner = `<polygon points="40,10 68,40 40,70 12,40" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>`;
+        else if (t === 'h') inner = `<polygon points="40,10 62,22 62,50 40,62 18,50 18,22" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>`;
+        else if (t === 'p') inner = `<polygon points="40,10 66,28 56,58 24,58 14,28" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>`;
+        else if (t === 'r') inner = `<circle cx="40" cy="40" r="22" fill="none" stroke="${stroke}" stroke-width="5"/>`;
+        else if (t === 'w') inner = `<polygon points="40,8 46,28 68,28 50,40 56,62 40,48 24,62 30,40 12,28 34,28" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>`;
+        else if (t === 'm') inner = `<path d="M14 48 A26 26 0 0 1 66 48 L14 48 Z" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
+        else inner = `<circle cx="40" cy="40" r="22" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
+        return `<svg class="oddman-svg" viewBox="0 0 80 80" width="72" height="72" aria-hidden="true" style="transform:rotate(${rot}deg) scale(${scale})">${inner}</svg>`;
+    }
+
+    function ensureOddmanAnswers() {
+        const n = (data.oddManOutQuestions || []).length;
+        if (state.oddman.answers.length !== n) {
+            state.oddman.answers = new Array(n).fill(null);
+        }
+    }
+
+    function finalizeOddmanScores() {
+        ensureOddmanAnswers();
+        const qs = data.oddManOutQuestions || [];
+        let score = 0;
+        qs.forEach((item, i) => {
+            if (state.oddman.answers[i] === item.answer) score += 1;
+        });
+        state.oddman.score = score;
+        state.oddman.percent = qs.length ? Math.round((score / qs.length) * 100) : 0;
+    }
+
+    function renderOddManOut() {
+        setPanelCompact(false);
+        ensureOddmanAnswers();
+        const panel = document.getElementById('assessment-content');
+        const section = data.sections[sectionIndex];
+        const qs = data.oddManOutQuestions || [];
+        const i = oddmanIndex;
+        const item = qs[i];
+        if (!item) {
+            panel.innerHTML = '<p class="section-desc">No questions available.</p>';
+            return;
+        }
+        const isLast = i >= qs.length - 1;
+        const selected = state.oddman.answers[i];
+
+        panel.innerHTML = `
+            <div class="section-intro">
+                <h2>Odd Man Out — Shape Aptitude</h2>
+                <p class="section-desc">Choose the shape that does <strong>not</strong> belong with the others. Questions are optional; you may skip. Time for this section: <strong>${section.minutes} minutes</strong>.</p>
+                <span class="section-timer">Section time remaining: <span id="section-timer">${formatTime(sectionSecondsLeft || section.minutes * 60)}</span></span>
+            </div>
+            <div class="grammar-pagination">
+                <span>Question <strong>${i + 1}</strong> of <strong>${qs.length}</strong></span>
+            </div>
+            <div class="oddman-grid" role="listbox" aria-label="Shape options">
+                ${item.shapes.map((shape, j) => `
+                    <button type="button" class="oddman-option ${selected === j ? 'oddman-option--selected' : ''}" data-idx="${j}" aria-pressed="${selected === j}">
+                        <span class="oddman-option-label">${String.fromCharCode(65 + j)}</span>
+                        ${shapeSvg(shape)}
+                    </button>
+                `).join('')}
+            </div>
+            <div class="assessment-actions assessment-actions--triple">
+                <button type="button" class="btn btn-secondary" id="oddman-prev" ${i === 0 ? 'hidden' : ''}>Previous</button>
+                <button type="button" class="btn btn-secondary" id="oddman-skip">Skip</button>
+                <button type="button" class="btn btn-primary" id="oddman-next">${isLast ? 'Continue to Customer Response' : 'Next Question'}</button>
+            </div>
+        `;
+
+        panel.querySelectorAll('.oddman-option').forEach(btn => {
+            btn.addEventListener('click', () => {
+                state.oddman.answers[i] = parseInt(btn.dataset.idx, 10);
+                renderOddManOut();
+            });
+        });
+
+        function advance() {
+            if (isLast) {
+                finalizeOddmanScores();
+                goNextSection();
+                return;
+            }
+            oddmanIndex += 1;
+            renderOddManOut();
+        }
+
+        document.getElementById('oddman-next').addEventListener('click', advance);
+        document.getElementById('oddman-skip').addEventListener('click', advance);
+        const prev = document.getElementById('oddman-prev');
+        if (prev) {
+            prev.addEventListener('click', () => {
+                oddmanIndex = Math.max(0, oddmanIndex - 1);
+                renderOddManOut();
+            });
+        }
+    }
+
+    function ensureScenarioRankings() {
+        const n = (data.responseScenarios || []).length;
+        if (state.scenarios.rankings.length !== n) {
+            state.scenarios.rankings = new Array(n).fill(null).map(() => ({ best: null, neutral: null, worst: null }));
+        }
+    }
+
+    function finalizeScenarioScores() {
+        ensureScenarioRankings();
+        const qs = data.responseScenarios || [];
+        let points = 0;
+        const max = qs.length * 3;
+        qs.forEach((item, i) => {
+            const r = state.scenarios.rankings[i] || {};
+            if (r.best === item.best) points += 1;
+            if (r.neutral === item.neutral) points += 1;
+            if (r.worst === item.worst) points += 1;
+        });
+        state.scenarios.score = points;
+        state.scenarios.percent = max ? Math.round((points / max) * 100) : 0;
+    }
+
+    function renderScenarios() {
+        setPanelCompact(false);
+        ensureScenarioRankings();
+        const panel = document.getElementById('assessment-content');
+        const section = data.sections[sectionIndex];
+        const qs = data.responseScenarios || [];
+        const i = scenarioIndex;
+        const item = qs[i];
+        if (!item) {
+            panel.innerHTML = '<p class="section-desc">No scenarios available.</p>';
+            return;
+        }
+        const isLast = i >= qs.length - 1;
+        const ranking = state.scenarios.rankings[i] || { best: null, neutral: null, worst: null };
+
+        function roleFor(idx) {
+            if (ranking.best === idx) return 'best';
+            if (ranking.neutral === idx) return 'neutral';
+            if (ranking.worst === idx) return 'worst';
+            return '';
+        }
+
+        panel.innerHTML = `
+            <div class="section-intro">
+                <h2>Customer Response Ranking</h2>
+                <p class="section-desc">For each scenario, mark <strong>one Best</strong>, <strong>one Neutral</strong>, and <strong>one Worst</strong> response. Each label may be used only once per scenario. You may skip. Time: <strong>${section.minutes} minutes</strong>.</p>
+                <span class="section-timer">Section time remaining: <span id="section-timer">${formatTime(sectionSecondsLeft || section.minutes * 60)}</span></span>
+            </div>
+            <div class="grammar-pagination">
+                <span>Scenario <strong>${i + 1}</strong> of <strong>${qs.length}</strong></span>
+            </div>
+            <div class="scenario-card">
+                <h3>${item.title}</h3>
+                <p class="scenario-situation">${item.situation}</p>
+                <div class="scenario-responses">
+                    ${item.responses.map((text, j) => `
+                        <div class="scenario-response ${roleFor(j) ? 'scenario-response--' + roleFor(j) : ''}" data-resp="${j}">
+                            <p class="scenario-response-text"><strong>${String.fromCharCode(65 + j)}.</strong> ${text}</p>
+                            <div class="scenario-role-btns">
+                                <button type="button" class="scenario-role ${ranking.best === j ? 'is-active is-best' : ''}" data-role="best" data-resp="${j}">Best</button>
+                                <button type="button" class="scenario-role ${ranking.neutral === j ? 'is-active is-neutral' : ''}" data-role="neutral" data-resp="${j}">Neutral</button>
+                                <button type="button" class="scenario-role ${ranking.worst === j ? 'is-active is-worst' : ''}" data-role="worst" data-resp="${j}">Worst</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                <p class="scenario-hint" id="scenario-hint"></p>
+            </div>
+            <div class="assessment-actions assessment-actions--triple">
+                <button type="button" class="btn btn-secondary" id="scenario-prev" ${i === 0 ? 'hidden' : ''}>Previous</button>
+                <button type="button" class="btn btn-secondary" id="scenario-skip">Skip</button>
+                <button type="button" class="btn btn-primary" id="scenario-next">${isLast ? 'Continue to English' : 'Next Scenario'}</button>
+            </div>
+        `;
+
+        const hint = document.getElementById('scenario-hint');
+        function updateHint() {
+            const r = state.scenarios.rankings[i];
+            const set = [r.best, r.neutral, r.worst].filter(v => v !== null && v !== undefined);
+            if (set.length === 3 && new Set(set).size === 3) {
+                hint.textContent = 'All three labels assigned.';
+                hint.className = 'scenario-hint scenario-hint--ok';
+            } else {
+                hint.textContent = 'Assign Best, Neutral, and Worst to three different responses (or skip).';
+                hint.className = 'scenario-hint';
+            }
+        }
+        updateHint();
+
+        panel.querySelectorAll('.scenario-role').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const role = btn.dataset.role;
+                const resp = parseInt(btn.dataset.resp, 10);
+                const r = state.scenarios.rankings[i];
+                // Clear this role from other responses
+                if (r[role] === resp) {
+                    r[role] = null;
+                } else {
+                    // If this response already has another role, clear that role
+                    ['best', 'neutral', 'worst'].forEach(k => {
+                        if (r[k] === resp) r[k] = null;
+                    });
+                    r[role] = resp;
+                }
+                renderScenarios();
+            });
+        });
+
+        function advance() {
+            if (isLast) {
+                finalizeScenarioScores();
+                goNextSection();
+                return;
+            }
+            scenarioIndex += 1;
+            renderScenarios();
+        }
+
+        document.getElementById('scenario-next').addEventListener('click', advance);
+        document.getElementById('scenario-skip').addEventListener('click', advance);
+        const prev = document.getElementById('scenario-prev');
+        if (prev) {
+            prev.addEventListener('click', () => {
+                scenarioIndex = Math.max(0, scenarioIndex - 1);
+                renderScenarios();
+            });
+        }
     }
 
     function initEmailTopics() {
@@ -1041,7 +1282,9 @@
         const section = data.sections[sectionIndex];
         document.getElementById('section-name').textContent = section.label;
 
-        if (section.id === 'grammar') renderGrammar();
+        if (section.id === 'oddman') { oddmanIndex = 0; renderOddManOut(); }
+        else if (section.id === 'scenarios') { scenarioIndex = 0; renderScenarios(); }
+        else if (section.id === 'grammar') renderGrammar();
         else if (section.id === 'reading') { readingPassageIndex = 0; readingQuestionIndex = 0; renderReading(); }
         else if (section.id === 'workplace') renderWorkplace();
         else if (section.id === 'email') { emailTopicIndex = 0; renderEmailWriting(); }
@@ -1057,7 +1300,11 @@
         clearVoiceRecordTimer();
 
         const currentSection = data.sections[sectionIndex];
-        if (currentSection.id === 'grammar') {
+        if (currentSection.id === 'oddman') {
+            finalizeOddmanScores();
+        } else if (currentSection.id === 'scenarios') {
+            finalizeScenarioScores();
+        } else if (currentSection.id === 'grammar') {
             saveCurrentEnglishAnswer();
             finalizeEnglishScores();
         } else if (currentSection.id === 'reading') {
@@ -1082,6 +1329,14 @@
     }
 
     function getSectionScore(sectionId) {
+        if (sectionId === 'oddman') {
+            finalizeOddmanScores();
+            return state.oddman.percent || 0;
+        }
+        if (sectionId === 'scenarios') {
+            finalizeScenarioScores();
+            return state.scenarios.percent || 0;
+        }
         if (sectionId === 'grammar') return getEnglishPercent();
         if (sectionId === 'reading') return state.reading.percent || 0;
         if (sectionId === 'workplace') return state.workplace.percent || 0;
@@ -1116,6 +1371,8 @@
     }
 
     function computeOverall() {
+        finalizeOddmanScores();
+        finalizeScenarioScores();
         finalizeEnglishScores();
         finalizeReadingScores();
         finalizeWorkplaceScores();
@@ -1141,7 +1398,11 @@
 
         try {
             const currentSection = data.sections[sectionIndex];
-            if (currentSection?.id === 'grammar') {
+            if (currentSection?.id === 'oddman') {
+                finalizeOddmanScores();
+            } else if (currentSection?.id === 'scenarios') {
+                finalizeScenarioScores();
+            } else if (currentSection?.id === 'grammar') {
                 saveCurrentEnglishAnswer();
                 finalizeEnglishScores();
             } else if (currentSection?.id === 'reading') {
@@ -1182,6 +1443,16 @@
             terminatedReason: terminatedReason || null,
             tabSwitchCount,
             overallScore,
+            oddman: {
+                answers: state.oddman.answers || [],
+                score: state.oddman.score || 0,
+                percent: state.oddman.percent || 0
+            },
+            scenarios: {
+                rankings: state.scenarios.rankings || [],
+                score: state.scenarios.score || 0,
+                percent: state.scenarios.percent || 0
+            },
             grammar: {
                 answers: state.grammar.answers || [],
                 score: state.grammar.score || 0,
