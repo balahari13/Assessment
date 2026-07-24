@@ -9,72 +9,77 @@
     // Lines: lh horizontal, lv vertical, ld diagonal \, ldd diagonal /, lx cross, lpar two H lines, lparv two V lines, l3 three H lines
     // Multi: 2c two circles, cs circle in square, 3d three dots, grid 4 small squares
     // f: #111 black fill, #fff white fill; o:1 outline only (black stroke)
-    function q(answer, shapes) {
-        return { answer, shapes };
-    }
     function sh(t, f, o, rot, sz) {
         return { t: t, f: f || '#111111', o: o ? 1 : 0, rot: rot || 0, sz: sz || 1 };
+    }
+    /** Pattern: complete the series (series → ?, pick from options). */
+    function p(answer, series, options) {
+        return { mode: 'pattern', answer, series, options };
+    }
+    /** Classic odd-one-out among 4 figures. */
+    function o(answer, shapes) {
+        return { mode: 'odd', answer, shapes };
     }
 
     const BK = '#111111';
     const WH = '#ffffff';
 
-    /* Attempt 1 — 25 logical reasoning items (B&W shapes + lines) */
+    /* Attempt 1 — complex B&W patterns + mixed odd-one-out */
     window.ASSESSMENT_ODD_MAN_OUT_1 = [
-        q(2, [sh('c', BK), sh('c', BK), sh('s', BK), sh('c', BK)]),
-        q(1, [sh('t', BK), sh('c', BK), sh('t', BK), sh('t', BK)]),
-        q(3, [sh('lh', BK), sh('lh', BK), sh('lh', BK), sh('lv', BK)]),
-        q(0, [sh('lx', BK), sh('lh', BK), sh('lh', BK), sh('lh', BK)]),
-        q(2, [sh('c', BK, 1), sh('c', BK, 1), sh('c', BK, 0), sh('c', BK, 1)]),
-        q(1, [sh('lpar', BK), sh('lparv', BK), sh('lpar', BK), sh('lpar', BK)]),
-        q(3, [sh('s', BK), sh('s', BK), sh('s', BK), sh('s', BK, 0, 45)]),
-        q(0, [sh('2c', BK), sh('c', BK), sh('c', BK), sh('c', BK)]),
-        q(2, [sh('ld', BK), sh('ld', BK), sh('ldd', BK), sh('ld', BK)]),
-        q(1, [sh('cs', BK), sh('s', BK), sh('cs', BK), sh('cs', BK)]),
-        q(3, [sh('t', BK), sh('t', BK), sh('t', BK), sh('d', BK)]),
-        q(0, [sh('l3', BK), sh('lpar', BK), sh('lpar', BK), sh('lpar', BK)]),
-        q(2, [sh('r', BK), sh('r', BK), sh('c', BK), sh('r', BK)]),
-        q(1, [sh('s', BK, 1), sh('s', BK, 0), sh('s', BK, 1), sh('s', BK, 1)]),
-        q(3, [sh('h', BK), sh('h', BK), sh('h', BK), sh('p', BK)]),
-        q(0, [sh('m', BK), sh('c', BK), sh('c', BK), sh('c', BK)]),
-        q(2, [sh('3d', BK), sh('3d', BK), sh('2c', BK), sh('3d', BK)]),
-        q(1, [sh('lv', BK), sh('lh', BK), sh('lv', BK), sh('lv', BK)]),
-        q(3, [sh('d', BK, 1), sh('d', BK, 1), sh('d', BK, 1), sh('d', BK, 0)]),
-        q(0, [sh('grid', BK), sh('s', BK), sh('s', BK), sh('s', BK)]),
-        q(2, [sh('t', BK, 0, 0), sh('t', BK, 0, 0), sh('t', BK, 0, 180), sh('t', BK, 0, 0)]),
-        q(1, [sh('w', BK), sh('p', BK), sh('w', BK), sh('w', BK)]),
-        q(3, [sh('cs', BK), sh('cs', BK), sh('cs', BK), sh('2c', BK)]),
-        q(0, [sh('lx', BK), sh('ld', BK), sh('ld', BK), sh('ld', BK)]),
-        q(2, [sh('c', WH, 1), sh('c', WH, 1), sh('s', WH, 1), sh('c', WH, 1)])
+        p(1, [sh('c', BK), sh('c', BK), sh('c', BK)], [sh('s', BK), sh('c', BK), sh('t', BK), sh('d', BK)]),
+        p(2, [sh('lh', BK), sh('lpar', BK), sh('l3', BK)], [sh('lv', BK), sh('lx', BK), sh('lpar', BK), sh('c', BK)]),
+        p(0, [sh('s', BK), sh('s', BK, 0, 45), sh('s', BK)], [sh('s', BK, 0, 45), sh('s', BK), sh('c', BK), sh('d', BK)]),
+        p(3, [sh('c', BK, 1), sh('c', BK, 0), sh('c', BK, 1)], [sh('c', BK, 1), sh('s', BK, 1), sh('c', BK, 0), sh('c', BK, 0)]),
+        p(1, [sh('t', BK), sh('t', BK, 0, 180), sh('t', BK)], [sh('t', BK), sh('t', BK, 0, 180), sh('s', BK), sh('d', BK)]),
+        p(2, [sh('lv', BK), sh('lh', BK), sh('lv', BK)], [sh('lv', BK), sh('ld', BK), sh('lh', BK), sh('lx', BK)]),
+        p(0, [sh('1d', BK), sh('2c', BK), sh('3d', BK)], [sh('grid', BK), sh('3d', BK), sh('c', BK), sh('cs', BK)]),
+        p(3, [sh('r', BK), sh('c', BK), sh('r', BK)], [sh('r', BK), sh('s', BK), sh('c', BK), sh('c', BK)]),
+        p(1, [sh('ld', BK), sh('ldd', BK), sh('ld', BK)], [sh('ld', BK), sh('ldd', BK), sh('lh', BK), sh('lx', BK)]),
+        p(2, [sh('cs', BK), sh('s', BK), sh('cs', BK)], [sh('cs', BK), sh('2c', BK), sh('s', BK), sh('c', BK)]),
+        p(0, [sh('s', BK), sh('d', BK), sh('s', BK)], [sh('d', BK), sh('s', BK), sh('c', BK), sh('t', BK)]),
+        p(3, [sh('lpar', BK), sh('lparv', BK), sh('lpar', BK)], [sh('l3', BK), sh('lh', BK), sh('lpar', BK), sh('lparv', BK)]),
+        o(2, [sh('c', BK), sh('c', BK), sh('s', BK), sh('c', BK)]),
+        p(1, [sh('m', BK), sh('m', BK, 0, 180), sh('m', BK)], [sh('m', BK), sh('m', BK, 0, 180), sh('c', BK), sh('s', BK)]),
+        p(2, [sh('w', BK), sh('p', BK), sh('w', BK)], [sh('w', BK), sh('h', BK), sh('p', BK), sh('d', BK)]),
+        p(0, [sh('grid', BK), sh('cs', BK), sh('grid', BK)], [sh('cs', BK), sh('grid', BK), sh('s', BK), sh('3d', BK)]),
+        p(3, [sh('t', BK), sh('s', BK), sh('t', BK)], [sh('t', BK), sh('c', BK), sh('d', BK), sh('s', BK)]),
+        p(1, [sh('lx', BK), sh('ld', BK), sh('lx', BK)], [sh('lx', BK), sh('ld', BK), sh('lh', BK), sh('lv', BK)]),
+        o(1, [sh('lpar', BK), sh('lparv', BK), sh('lpar', BK), sh('lpar', BK)]),
+        p(2, [sh('c', BK, 0, 0, 0.7), sh('c', BK), sh('c', BK, 0, 0, 1.1)], [sh('c', BK), sh('s', BK), sh('c', BK, 0, 0, 1.3), sh('r', BK)]),
+        p(0, [sh('h', BK), sh('p', BK), sh('h', BK)], [sh('p', BK), sh('h', BK), sh('w', BK), sh('d', BK)]),
+        p(3, [sh('2c', BK), sh('3d', BK), sh('2c', BK)], [sh('2c', BK), sh('c', BK), sh('cs', BK), sh('3d', BK)]),
+        p(1, [sh('s', BK, 1), sh('s', BK, 0), sh('s', BK, 1)], [sh('s', BK, 1), sh('s', BK, 0), sh('c', BK, 0), sh('c', BK, 1)]),
+        p(2, [sh('lv', BK), sh('lparv', BK), sh('l3', BK)], [sh('lh', BK), sh('lpar', BK), sh('l3', BK), sh('lx', BK)]),
+        o(0, [sh('lx', BK), sh('lh', BK), sh('lh', BK), sh('lh', BK)])
     ];
 
-    /* Attempt 2 — different B&W set */
+    /* Attempt 2 — harder pattern set */
     window.ASSESSMENT_ODD_MAN_OUT_2 = [
-        q(1, [sh('lparv', BK), sh('lpar', BK), sh('lparv', BK), sh('lparv', BK)]),
-        q(3, [sh('cs', BK), sh('cs', BK), sh('cs', BK), sh('s', BK)]),
-        q(0, [sh('ldd', BK), sh('ld', BK), sh('ld', BK), sh('ld', BK)]),
-        q(2, [sh('c', BK, 1), sh('c', BK, 1), sh('r', BK), sh('c', BK, 1)]),
-        q(1, [sh('3d', BK), sh('grid', BK), sh('3d', BK), sh('3d', BK)]),
-        q(3, [sh('t', BK), sh('t', BK), sh('t', BK), sh('m', BK)]),
-        q(0, [sh('lx', BK), sh('lv', BK), sh('lv', BK), sh('lv', BK)]),
-        q(2, [sh('h', BK, 1), sh('h', BK, 1), sh('h', BK, 0), sh('h', BK, 1)]),
-        q(1, [sh('2c', BK), sh('c', BK), sh('2c', BK), sh('2c', BK)]),
-        q(3, [sh('s', BK, 0, 0), sh('s', BK, 0, 0), sh('s', BK, 0, 0), sh('s', BK, 0, 45)]),
-        q(0, [sh('l3', BK), sh('lh', BK), sh('lh', BK), sh('lh', BK)]),
-        q(2, [sh('d', BK), sh('d', BK), sh('p', BK), sh('d', BK)]),
-        q(1, [sh('w', BK), sh('h', BK), sh('w', BK), sh('w', BK)]),
-        q(3, [sh('r', BK), sh('r', BK), sh('r', BK), sh('c', BK)]),
-        q(0, [sh('grid', BK), sh('cs', BK), sh('cs', BK), sh('cs', BK)]),
-        q(2, [sh('lv', BK), sh('lv', BK), sh('lh', BK), sh('lv', BK)]),
-        q(1, [sh('t', BK, 0, 0), sh('t', BK, 0, 90), sh('t', BK, 0, 0), sh('t', BK, 0, 0)]),
-        q(3, [sh('s', BK, 1), sh('s', BK, 1), sh('s', BK, 1), sh('c', BK, 1)]),
-        q(0, [sh('m', BK, 0, 180), sh('m', BK), sh('m', BK), sh('m', BK)]),
-        q(2, [sh('ld', BK), sh('ld', BK), sh('lx', BK), sh('ld', BK)]),
-        q(1, [sh('p', BK), sh('d', BK), sh('p', BK), sh('p', BK)]),
-        q(3, [sh('2c', BK), sh('2c', BK), sh('2c', BK), sh('3d', BK)]),
-        q(0, [sh('lpar', BK, 0, 0, 1.1), sh('lpar', BK), sh('lpar', BK), sh('lpar', BK)]),
-        q(2, [sh('c', BK), sh('c', BK), sh('s', BK, 0, 45), sh('c', BK)]),
-        q(1, [sh('cs', BK, 1), sh('cs', BK, 0), sh('cs', BK, 1), sh('cs', BK, 1)])
+        p(2, [sh('c', BK, 1), sh('r', BK), sh('c', BK, 1)], [sh('c', BK, 1), sh('s', BK, 1), sh('r', BK), sh('c', BK, 0)]),
+        p(0, [sh('t', BK), sh('t', BK, 0, 90), sh('t', BK, 0, 180)], [sh('t', BK, 0, 270), sh('t', BK), sh('s', BK), sh('d', BK)]),
+        p(3, [sh('lh', BK), sh('lpar', BK), sh('l3', BK)], [sh('lv', BK), sh('lparv', BK), sh('lx', BK), sh('lpar', BK)]),
+        p(1, [sh('s', BK), sh('d', BK), sh('s', BK, 0, 45)], [sh('d', BK), sh('d', BK, 0, 45), sh('s', BK), sh('c', BK)]),
+        p(2, [sh('1d', BK), sh('2c', BK), sh('3d', BK)], [sh('c', BK), sh('2c', BK), sh('grid', BK), sh('3d', BK)]),
+        p(0, [sh('ld', BK), sh('lx', BK), sh('ldd', BK)], [sh('lx', BK), sh('ld', BK), sh('lh', BK), sh('lv', BK)]),
+        p(3, [sh('cs', BK), sh('grid', BK), sh('cs', BK)], [sh('cs', BK), sh('s', BK), sh('2c', BK), sh('grid', BK)]),
+        p(1, [sh('m', BK), sh('c', BK), sh('m', BK, 0, 180)], [sh('m', BK), sh('c', BK), sh('m', BK, 0, 180), sh('s', BK)]),
+        o(2, [sh('h', BK, 1), sh('h', BK, 1), sh('h', BK, 0), sh('h', BK, 1)]),
+        p(2, [sh('w', BK), sh('h', BK), sh('p', BK)], [sh('d', BK), sh('w', BK), sh('c', BK), sh('s', BK)]),
+        p(0, [sh('lparv', BK), sh('lpar', BK), sh('lparv', BK)], [sh('lpar', BK), sh('lparv', BK), sh('l3', BK), sh('lh', BK)]),
+        p(3, [sh('c', BK, 0, 0, 0.7), sh('c', BK), sh('c', BK, 0, 0, 1.15)], [sh('c', BK), sh('r', BK), sh('s', BK), sh('c', BK, 0, 0, 1.35)]),
+        p(1, [sh('s', BK, 1), sh('c', BK, 1), sh('s', BK, 1)], [sh('s', BK, 1), sh('c', BK, 1), sh('s', BK, 0), sh('d', BK, 1)]),
+        p(2, [sh('2c', BK), sh('cs', BK), sh('2c', BK)], [sh('2c', BK), sh('3d', BK), sh('cs', BK), sh('c', BK)]),
+        o(1, [sh('3d', BK), sh('grid', BK), sh('3d', BK), sh('3d', BK)]),
+        p(0, [sh('t', BK), sh('s', BK), sh('d', BK)], [sh('c', BK), sh('t', BK), sh('h', BK), sh('w', BK)]),
+        p(3, [sh('lv', BK), sh('lh', BK), sh('ld', BK)], [sh('ldd', BK), sh('lx', BK), sh('lpar', BK), sh('ldd', BK)]),
+        p(1, [sh('r', BK), sh('c', BK, 0), sh('r', BK)], [sh('r', BK), sh('c', BK, 0), sh('c', BK, 1), sh('s', BK)]),
+        p(2, [sh('grid', BK), sh('3d', BK), sh('grid', BK)], [sh('grid', BK), sh('cs', BK), sh('3d', BK), sh('2c', BK)]),
+        p(0, [sh('d', BK), sh('d', BK, 0, 45), sh('d', BK)], [sh('d', BK, 0, 45), sh('d', BK), sh('s', BK), sh('p', BK)]),
+        o(3, [sh('s', BK, 0, 0), sh('s', BK, 0, 0), sh('s', BK, 0, 0), sh('s', BK, 0, 45)]),
+        p(1, [sh('l3', BK), sh('lpar', BK), sh('lh', BK)], [sh('lv', BK), sh('c', BK), sh('l3', BK), sh('lx', BK)]),
+        p(2, [sh('p', BK), sh('h', BK), sh('w', BK)], [sh('d', BK), sh('p', BK), sh('c', BK), sh('s', BK)]),
+        p(0, [sh('cs', BK, 1), sh('cs', BK, 0), sh('cs', BK, 1)], [sh('cs', BK, 0), sh('cs', BK, 1), sh('s', BK, 0), sh('c', BK, 0)]),
+        p(3, [sh('lx', BK), sh('ld', BK), sh('ldd', BK)], [sh('lh', BK), sh('lv', BK), sh('lpar', BK), sh('lx', BK)])
     ];
 
     function rawScenarios1() {

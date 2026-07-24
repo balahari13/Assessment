@@ -137,9 +137,13 @@
     }
 
     window.TrinitasAPI = {
-        async checkEligibility(email, attemptNumber = 1) {
+        async checkEligibility(email, attemptNumber = 1, options = {}) {
             const normalized = String(email || '').trim().toLowerCase();
             const attempt = Number(attemptNumber) || 1;
+
+            if (options.isAdminPractice || options.adminBypass) {
+                return { ok: true, data: { eligible: true, blocked: false, attemptNumber: attempt, adminPractice: true } };
+            }
 
             if (isLocallyBlocked(normalized, attempt)) {
                 return {
@@ -157,13 +161,31 @@
 
             const result = await request('/check-eligibility', {
                 method: 'POST',
-                body: JSON.stringify({ email: normalized, attemptNumber: attempt })
+                body: JSON.stringify({
+                    email: normalized,
+                    attemptNumber: attempt,
+                    isAdminPractice: !!options.isAdminPractice
+                })
             });
 
             if (!result.isJson || result.status === 404) {
                 return { ok: true, data: { eligible: true, blocked: false, attemptNumber: attempt, fallback: true } };
             }
             return result;
+        },
+
+        async pauseAssessment({ email, fullName, snapshot }) {
+            return request('/pause-assessment', {
+                method: 'POST',
+                body: JSON.stringify({ email, fullName, snapshot })
+            });
+        },
+
+        async resumeAssessment(email, otp) {
+            return request('/resume-assessment', {
+                method: 'POST',
+                body: JSON.stringify({ email, otp })
+            });
         },
 
         async submitAssessment(payload) {
@@ -198,6 +220,8 @@
                     voice: payload.voice || {}
                 };
 
+                finalBody.isAdminPractice = !!(payload.isAdminPractice || payload.adminPractice);
+
                 if (!finalBody.email || !finalBody.fullName || !finalBody.phone) {
                     return {
                         ok: false,
@@ -215,7 +239,9 @@
                 });
 
                 if (result.ok && result.data && result.data.success === true) {
-                    markEmailCompleted(finalBody.email, finalBody.attemptNumber);
+                    if (!finalBody.isAdminPractice) {
+                        markEmailCompleted(finalBody.email, finalBody.attemptNumber);
+                    }
                     return { ok: true, data: { ...result.data, via: 'netlify' } };
                 }
 
@@ -223,7 +249,9 @@
                 if (result.status === 403 && result.data && result.data.error === 'blocked') {
                     const msg = String(result.data.message || '');
                     if (/already completed/i.test(msg)) {
-                        markEmailCompleted(finalBody.email, finalBody.attemptNumber);
+                        if (!finalBody.isAdminPractice) {
+                            markEmailCompleted(finalBody.email, finalBody.attemptNumber);
+                        }
                         return {
                             ok: true,
                             data: { success: true, via: 'already-saved', message: msg }

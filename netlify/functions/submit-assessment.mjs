@@ -44,34 +44,37 @@ export default async (req, context) => {
             });
         }
 
+        const isAdminPractice = body.isAdminPractice === true || body.adminPractice === true;
         const store = getAssessmentStore(context);
         const candidate = await getCandidate(store, email);
 
-        if (attemptNumber === 1 && candidate?.attempt1) {
-            return jsonResponse(403, {
-                error: 'blocked',
-                message: 'This email has already completed Attempt 1.'
-            });
-        }
+        if (!isAdminPractice) {
+            if (attemptNumber === 1 && candidate?.attempt1) {
+                return jsonResponse(403, {
+                    error: 'blocked',
+                    message: 'This email has already completed Attempt 1.'
+                });
+            }
 
-        if (attemptNumber === 2) {
-            if (!candidate?.attempt1) {
-                return jsonResponse(403, {
-                    error: 'blocked',
-                    message: 'Attempt 1 must be completed before Attempt 2.'
-                });
-            }
-            if (!candidate.attempt2Enabled) {
-                return jsonResponse(403, {
-                    error: 'blocked',
-                    message: 'Second attempt is not enabled for this email.'
-                });
-            }
-            if (candidate.attempt2) {
-                return jsonResponse(403, {
-                    error: 'blocked',
-                    message: 'This email has already completed Attempt 2.'
-                });
+            if (attemptNumber === 2) {
+                if (!candidate?.attempt1) {
+                    return jsonResponse(403, {
+                        error: 'blocked',
+                        message: 'Attempt 1 must be completed before Attempt 2.'
+                    });
+                }
+                if (!candidate.attempt2Enabled) {
+                    return jsonResponse(403, {
+                        error: 'blocked',
+                        message: 'Second attempt is not enabled for this email.'
+                    });
+                }
+                if (candidate.attempt2) {
+                    return jsonResponse(403, {
+                        error: 'blocked',
+                        message: 'This email has already completed Attempt 2.'
+                    });
+                }
             }
         }
 
@@ -104,6 +107,26 @@ export default async (req, context) => {
             voice: asObject(body.voice),
             overallScore: Number(body.overallScore) || 0
         };
+
+        if (isAdminPractice) {
+            // Unlimited admin practice — store under practice log, never block candidates
+            submission.isAdminPractice = true;
+            try {
+                const key = `practice:${email}:${Date.now()}`;
+                await store.set(key, JSON.stringify({
+                    ...submission,
+                    completedAt: new Date().toISOString()
+                }));
+            } catch (err) {
+                console.error('admin practice store error:', err);
+            }
+            return jsonResponse(200, {
+                success: true,
+                attemptNumber,
+                adminPractice: true,
+                message: 'Admin practice attempt saved (does not count as a candidate submission).'
+            });
+        }
 
         const saved = await saveSubmission(store, submission);
         if (!saved.ok) {

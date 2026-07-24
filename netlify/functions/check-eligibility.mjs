@@ -23,6 +23,16 @@ export default async (req, context) => {
             return jsonResponse(400, { error: 'Valid email required' });
         }
 
+        // Admin practice / unlimited retakes
+        if (body.isAdminPractice === true || body.adminBypass === true) {
+            return jsonResponse(200, {
+                eligible: true,
+                blocked: false,
+                attemptNumber,
+                adminPractice: true
+            });
+        }
+
         const store = getAssessmentStore(context);
         const candidate = await getCandidate(store, email);
 

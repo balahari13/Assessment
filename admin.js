@@ -517,6 +517,22 @@
 
         document.getElementById('admin-refresh').addEventListener('click', loadResults);
 
+        const practiceBtn = document.getElementById('admin-practice');
+        if (practiceBtn) {
+            practiceBtn.addEventListener('click', () => {
+                const session = {
+                    fullName: 'Admin Practice',
+                    email: `admin.practice+${Date.now()}@trinitas.internal`,
+                    phone: '0000000000',
+                    attemptNumber: 1,
+                    isAdminPractice: true,
+                    registeredAt: new Date().toISOString()
+                };
+                sessionStorage.setItem('trinitas_assessment_session', JSON.stringify(session));
+                window.open('assessment.html', '_blank');
+            });
+        }
+
         document.getElementById('toggle-answer-key').addEventListener('click', () => {
             const panel = document.getElementById('answer-key-panel');
             const visible = !panel.hidden;

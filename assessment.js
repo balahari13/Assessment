@@ -70,8 +70,12 @@
         if (sectionEl) sectionEl.textContent = formatTime(sectionSecondsLeft);
     }
 
-    function startTimers(minutes) {
-        sectionSecondsLeft = minutes * 60;
+    function startTimers(minutes, resumeSectionSeconds) {
+        if (typeof resumeSectionSeconds === 'number' && resumeSectionSeconds > 0) {
+            sectionSecondsLeft = resumeSectionSeconds;
+        } else {
+            sectionSecondsLeft = minutes * 60;
+        }
         updateTimers();
         clearInterval(globalTimer);
         clearInterval(sectionTimer);
@@ -148,6 +152,7 @@
         else if (t === 'l3') inner = `<line x1="14" y1="24" x2="66" y2="24" stroke="${stroke}" stroke-width="3" stroke-linecap="round"/><line x1="14" y1="40" x2="66" y2="40" stroke="${stroke}" stroke-width="3" stroke-linecap="round"/><line x1="14" y1="56" x2="66" y2="56" stroke="${stroke}" stroke-width="3" stroke-linecap="round"/>`;
         else if (t === '2c') inner = `<circle cx="26" cy="40" r="12" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/><circle cx="54" cy="40" r="12" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
         else if (t === 'cs') inner = `<rect x="16" y="16" width="48" height="48" rx="2" fill="none" stroke="${stroke}" stroke-width="${sw}"/><circle cx="40" cy="40" r="14" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
+        else if (t === '1d') inner = `<circle cx="40" cy="40" r="8" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
         else if (t === '3d') inner = `<circle cx="22" cy="40" r="7" fill="${fill}" stroke="${stroke}" stroke-width="2"/><circle cx="40" cy="40" r="7" fill="${fill}" stroke="${stroke}" stroke-width="2"/><circle cx="58" cy="40" r="7" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
         else if (t === 'grid') inner = `<rect x="16" y="16" width="20" height="20" fill="${fill}" stroke="${stroke}" stroke-width="2"/><rect x="44" y="16" width="20" height="20" fill="${fill}" stroke="${stroke}" stroke-width="2"/><rect x="16" y="44" width="20" height="20" fill="${fill}" stroke="${stroke}" stroke-width="2"/><rect x="44" y="44" width="20" height="20" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
         else inner = `<circle cx="40" cy="40" r="20" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
@@ -186,18 +191,33 @@
         }
         const isLast = i >= qs.length - 1;
         const selected = state.oddman.answers[i];
+        const isPattern = item.mode === 'pattern' && item.series && item.options;
+        const choices = isPattern ? item.options : (item.shapes || []);
+
+        const seriesHtml = isPattern ? `
+            <div class="pattern-series" aria-label="Pattern series">
+                ${item.series.map(shape => `
+                    <div class="pattern-series-item">${shapeSvg(shape)}</div>
+                `).join('')}
+                <div class="pattern-series-item pattern-series-item--q"><span>?</span></div>
+            </div>
+            <p class="pattern-prompt">Which figure comes next in the pattern?</p>
+        ` : `
+            <p class="pattern-prompt">Which figure does <strong>not</strong> belong with the others?</p>
+        `;
 
         panel.innerHTML = `
             <div class="section-intro">
                 <h2>Logical Reasoning</h2>
-                <p class="section-desc">Choose the figure that does <strong>not</strong> belong with the others (shapes and lines). Questions are optional; you may skip. Time for this section: <strong>${section.minutes} minutes</strong>.</p>
+                <p class="section-desc">Complete visual patterns or find the figure that does not fit. Black-and-white shapes and lines. Questions are optional; you may skip. Time: <strong>${section.minutes} minutes</strong>.</p>
                 <span class="section-timer">Section time remaining: <span id="section-timer">${formatTime(sectionSecondsLeft || section.minutes * 60)}</span></span>
             </div>
             <div class="grammar-pagination">
                 <span>Question <strong>${i + 1}</strong> of <strong>${qs.length}</strong></span>
             </div>
-            <div class="oddman-grid" role="listbox" aria-label="Shape options">
-                ${item.shapes.map((shape, j) => `
+            ${seriesHtml}
+            <div class="oddman-grid" role="listbox" aria-label="Answer options">
+                ${choices.map((shape, j) => `
                     <button type="button" class="oddman-option ${selected === j ? 'oddman-option--selected' : ''}" data-idx="${j}" aria-pressed="${selected === j}">
                         <span class="oddman-option-label">${String.fromCharCode(65 + j)}</span>
                         ${shapeSvg(shape)}
@@ -568,10 +588,12 @@
         return Math.round((totalScore / totalQuestions) * 100);
     }
 
-    function renderGrammar() {
+    function renderGrammar(preserve) {
         setPanelCompact(false);
-        englishPhase = 'mcq';
-        englishQuestionIndex = 0;
+        if (!preserve) {
+            englishPhase = 'mcq';
+            englishQuestionIndex = 0;
+        }
         ensureGrammarAnswers();
         ensureFillBlankAnswers();
         renderEnglishQuestion();
@@ -888,9 +910,9 @@
         state.workplace.percent = Math.round((score / data.workplaceQuestions.length) * 100);
     }
 
-    function renderWorkplace() {
+    function renderWorkplace(preserve) {
         setPanelCompact(false);
-        workplaceQuestionIndex = 0;
+        if (!preserve) workplaceQuestionIndex = 0;
         ensureWorkplaceAnswers();
         renderWorkplaceQuestion();
     }
@@ -1290,20 +1312,45 @@
         }
     }
 
-    function renderSection() {
+    function renderSection(opts) {
+        const preserve = !!(opts && opts.preserveIndices);
+        const resumeSec = opts && typeof opts.resumeSectionSeconds === 'number'
+            ? opts.resumeSectionSeconds
+            : null;
         updateProgress();
         const section = data.sections[sectionIndex];
         document.getElementById('section-name').textContent = section.label;
 
-        if (section.id === 'oddman') { oddmanIndex = 0; renderOddManOut(); }
-        else if (section.id === 'scenarios') { scenarioIndex = 0; renderScenarios(); }
-        else if (section.id === 'grammar') renderGrammar();
-        else if (section.id === 'reading') { readingPassageIndex = 0; readingQuestionIndex = 0; renderReading(); }
-        else if (section.id === 'workplace') renderWorkplace();
-        else if (section.id === 'email') { emailTopicIndex = 0; renderEmailWriting(); }
-        else if (section.id === 'typing') renderTyping();
-        else if (section.id === 'voice') { voiceRound = 0; renderVoice(); }
-        startTimers(section.minutes);
+        if (section.id === 'oddman') {
+            if (!preserve) oddmanIndex = 0;
+            renderOddManOut();
+        } else if (section.id === 'scenarios') {
+            if (!preserve) scenarioIndex = 0;
+            renderScenarios();
+        } else if (section.id === 'grammar') {
+            if (!preserve) {
+                englishPhase = 'mcq';
+                englishQuestionIndex = 0;
+            }
+            renderGrammar(preserve);
+        } else if (section.id === 'reading') {
+            if (!preserve) {
+                readingPassageIndex = 0;
+                readingQuestionIndex = 0;
+            }
+            renderReading();
+        } else if (section.id === 'workplace') {
+            if (!preserve) workplaceQuestionIndex = 0;
+            renderWorkplace(preserve);
+        } else if (section.id === 'email') {
+            if (!preserve) emailTopicIndex = 0;
+            renderEmailWriting();
+        } else if (section.id === 'typing') renderTyping();
+        else if (section.id === 'voice') {
+            if (!preserve) voiceRound = 0;
+            renderVoice();
+        }
+        startTimers(section.minutes, resumeSec);
     }
 
     function goNextSection(force) {
@@ -1451,6 +1498,7 @@
             phone: String(session.phone || '').trim(),
             registeredAt: session.registeredAt || null,
             attemptNumber: Number(session.attemptNumber) || 1,
+            isAdminPractice: !!session.isAdminPractice,
             durationMinutes,
             timedOut: !!timedOut,
             terminatedReason: terminatedReason || null,
@@ -1603,19 +1651,200 @@
         `;
     }
 
+    function buildSnapshot() {
+        const voiceSafe = {
+            ...state.voice,
+            recordings: (state.voice.recordings || []).map(r => {
+                if (!r) return null;
+                return {
+                    prompt: r.prompt,
+                    type: r.type,
+                    text: r.text,
+                    durationSec: r.durationSec,
+                    byteSize: r.byteSize || 0,
+                    completed: !!r.completed
+                };
+            })
+        };
+        return {
+            session: { ...session },
+            sectionIndex,
+            englishQuestionIndex,
+            englishPhase,
+            readingPassageIndex,
+            readingQuestionIndex,
+            workplaceQuestionIndex,
+            emailTopicIndex,
+            oddmanIndex,
+            scenarioIndex,
+            voiceRound,
+            globalSecondsLeft,
+            sectionSecondsLeft,
+            startedAt,
+            tabSwitchCount,
+            state: {
+                oddman: state.oddman,
+                scenarios: state.scenarios,
+                grammar: state.grammar,
+                fillBlank: state.fillBlank,
+                reading: state.reading,
+                workplace: state.workplace,
+                email: state.email,
+                typing: state.typing,
+                voice: voiceSafe
+            }
+        };
+    }
+
+    function applySnapshot(snap) {
+        if (!snap || !snap.session) return false;
+        session = snap.session;
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+        data = resolveAssessmentData(session.attemptNumber || 1);
+        sectionIndex = Number(snap.sectionIndex) || 0;
+        englishQuestionIndex = Number(snap.englishQuestionIndex) || 0;
+        englishPhase = snap.englishPhase === 'fill' ? 'fill' : 'mcq';
+        readingPassageIndex = Number(snap.readingPassageIndex) || 0;
+        readingQuestionIndex = Number(snap.readingQuestionIndex) || 0;
+        workplaceQuestionIndex = Number(snap.workplaceQuestionIndex) || 0;
+        emailTopicIndex = Number(snap.emailTopicIndex) || 0;
+        oddmanIndex = Number(snap.oddmanIndex) || 0;
+        scenarioIndex = Number(snap.scenarioIndex) || 0;
+        voiceRound = Number(snap.voiceRound) || 0;
+        globalSecondsLeft = Math.max(30, Number(snap.globalSecondsLeft) || data.totalMinutes * 60);
+        sectionSecondsLeft = Math.max(5, Number(snap.sectionSecondsLeft) || 60);
+        startedAt = snap.startedAt || Date.now();
+        tabSwitchCount = Number(snap.tabSwitchCount) || 0;
+        if (snap.state) {
+            Object.keys(snap.state).forEach(k => {
+                if (state[k] && snap.state[k]) {
+                    Object.assign(state[k], snap.state[k]);
+                }
+            });
+        }
+        if (state.email && (!state.email.topics || !state.email.topics.length)) {
+            initEmailTopics();
+        }
+        return true;
+    }
+
+    async function pauseSession() {
+        if (sessionEnded || isSubmitting) return;
+        if (session.isAdminPractice) {
+            alert('Admin practice sessions can be closed anytime. Pause/OTP is for candidate sessions.');
+        }
+        if (!confirm('Pause this assessment? An OTP will be sent to your registered email so you can resume later.')) {
+            return;
+        }
+
+        clearInterval(globalTimer);
+        clearInterval(sectionTimer);
+        clearVoiceRecordTimer();
+
+        const panel = document.getElementById('assessment-content');
+        const snapshot = buildSnapshot();
+        panel.innerHTML = `<p class="section-desc">Pausing session and sending OTP to ${session.email}…</p>`;
+
+        try {
+            const { ok, data: res } = await window.TrinitasAPI.pauseAssessment({
+                email: session.email,
+                fullName: session.fullName,
+                snapshot
+            });
+            if (!ok) {
+                panel.innerHTML = `
+                    <div class="form-alert form-alert--error" style="display:block">
+                        <p>${res.message || 'Could not pause.'}</p>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="pause-retry" style="margin-top:1rem">Back to assessment</button>
+                `;
+                document.getElementById('pause-retry').addEventListener('click', () => {
+                    renderSection({
+                        preserveIndices: true,
+                        resumeSectionSeconds: sectionSecondsLeft
+                    });
+                });
+                return;
+            }
+            sessionStorage.removeItem(SESSION_KEY);
+            sessionEnded = true;
+            panel.innerHTML = `
+                <div class="form-alert form-alert--success" style="display:block">
+                    <h2 style="margin-bottom:0.5rem">Session paused</h2>
+                    <p>${res.message || 'OTP sent to your email.'}</p>
+                    <p style="margin-top:0.65rem;font-size:0.9rem">Go to the Careers page → <strong>Resume assessment</strong>, enter your email and the 6-digit OTP.</p>
+                </div>
+                <a href="careers.html#resume" class="btn btn-primary" style="margin-top:1.25rem">Open Careers to resume</a>
+            `;
+        } catch (err) {
+            panel.innerHTML = `
+                <div class="form-alert form-alert--error" style="display:block">
+                    <p>${err.message || 'Pause failed.'}</p>
+                </div>
+                <button type="button" class="btn btn-primary" id="pause-retry2" style="margin-top:1rem">Back to assessment</button>
+            `;
+            document.getElementById('pause-retry2').addEventListener('click', () => {
+                renderSection({ preserveIndices: true, resumeSectionSeconds: sectionSecondsLeft });
+            });
+        }
+    }
+
+    function endSession() {
+        if (sessionEnded || isSubmitting) return;
+        if (!confirm('End the assessment now and submit your answers so far? This cannot be undone.')) {
+            return;
+        }
+        finishAssessment(false, 'candidate-end');
+    }
+
+    function initSessionControls() {
+        const pauseBtn = document.getElementById('btn-pause-session');
+        const endBtn = document.getElementById('btn-end-session');
+        if (pauseBtn) pauseBtn.addEventListener('click', pauseSession);
+        if (endBtn) endBtn.addEventListener('click', endSession);
+    }
+
     function init() {
+        const resumeRaw = sessionStorage.getItem('trinitas_resume_snapshot');
+        if (resumeRaw) {
+            try {
+                const snap = JSON.parse(resumeRaw);
+                sessionStorage.removeItem('trinitas_resume_snapshot');
+                if (!applySnapshot(snap)) {
+                    window.location.href = 'careers.html';
+                    return;
+                }
+                document.getElementById('candidate-name').textContent = session.fullName;
+                document.getElementById('candidate-email').textContent = session.email;
+                const attemptLabel = data.attemptLabel || (session.attemptNumber === 2 ? 'Attempt 2' : 'Attempt 1');
+                const badge = document.getElementById('attempt-badge');
+                if (badge) badge.textContent = session.isAdminPractice ? 'Admin practice' : attemptLabel;
+                updateTimers();
+                initTabDetection();
+                initSessionControls();
+                renderSection({
+                    preserveIndices: true,
+                    resumeSectionSeconds: sectionSecondsLeft
+                });
+                return;
+            } catch {
+                sessionStorage.removeItem('trinitas_resume_snapshot');
+            }
+        }
+
         if (!loadSession()) return;
 
         document.getElementById('candidate-name').textContent = session.fullName;
         document.getElementById('candidate-email').textContent = session.email;
         const attemptLabel = data.attemptLabel || (session.attemptNumber === 2 ? 'Attempt 2' : 'Attempt 1');
         const badge = document.getElementById('attempt-badge');
-        if (badge) badge.textContent = attemptLabel;
+        if (badge) badge.textContent = session.isAdminPractice ? 'Admin practice' : attemptLabel;
         initEmailTopics();
         startedAt = Date.now();
         globalSecondsLeft = data.totalMinutes * 60;
         updateTimers();
         initTabDetection();
+        initSessionControls();
         renderSection();
     }
 

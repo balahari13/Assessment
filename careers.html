@@ -71,7 +71,8 @@
                     <h2>What to expect</h2>
                     <ul class="careers-list">
                         <li><strong>Timed assessment</strong> — allow approximately 75 minutes in a quiet, uninterrupted setting</li>
-                        <li><strong>Sections</strong> — Logical reasoning (shapes &amp; lines), customer response ranking, English, reading, workplace, email writing, typing, and voice</li>
+                        <li><strong>Sections</strong> — Logical reasoning (patterns), customer response ranking, English, reading, workplace, email writing, typing, and voice</li>
+                        <li><strong>Pause &amp; resume</strong> — you may pause and continue later using an OTP sent to your email</li>
                         <li><strong>Attempt 1</strong> — preliminary assessment (one submission per email)</li>
                         <li><strong>Attempt 2</strong> — second assessment; available after Attempt 1 when enabled for your email</li>
                         <li>Use a stable internet connection and a device with a working microphone</li>
@@ -103,6 +104,22 @@
                             <button type="submit" class="btn btn-primary btn-full">Begin Attempt 1</button>
                         </form>
                         <a href="#attempt2" class="btn btn-secondary btn-full attempt2-link" id="attempt2-trigger">Second Attempt</a>
+                    </div>
+                    <div class="careers-card careers-resume-card" id="resume">
+                        <h3>Resume paused assessment</h3>
+                        <p class="section-desc">If you paused mid-assessment, enter your email and the 6-digit OTP sent to your inbox.</p>
+                        <form class="register-form" id="resume-form" novalidate>
+                            <div class="form-field">
+                                <label for="resumeEmail">Email Address</label>
+                                <input type="email" id="resumeEmail" name="email" required placeholder="you@email.com" autocomplete="email">
+                            </div>
+                            <div class="form-field">
+                                <label for="resumeOtp">OTP (6 digits)</label>
+                                <input type="text" id="resumeOtp" name="otp" required placeholder="123456" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code">
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-full">Resume assessment</button>
+                        </form>
+                        <div id="resume-alert" class="form-alert" hidden></div>
                     </div>
                     <div id="register-alert" class="form-alert" hidden></div>
                     <div id="blocked-notice" class="blocked-notice" hidden></div>

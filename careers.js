@@ -118,9 +118,50 @@
         syncHash();
     }
 
+    function initResume() {
+        const form = document.getElementById('resume-form');
+        const alert = document.getElementById('resume-alert');
+        if (!form) return;
+
+        form.addEventListener('submit', async e => {
+            e.preventDefault();
+            if (alert) alert.hidden = true;
+            const email = form.email.value.trim().toLowerCase();
+            const otp = form.otp.value.trim();
+            if (!email || !/^\d{6}$/.test(otp)) {
+                showAlert(alert, 'Enter your email and the 6-digit OTP from your inbox.', 'error');
+                return;
+            }
+            const button = form.querySelector('button[type="submit"]');
+            const label = button.textContent;
+            button.disabled = true;
+            button.textContent = 'Verifying…';
+            try {
+                const { ok, data } = await window.TrinitasAPI.resumeAssessment(email, otp);
+                if (!ok || !data.snapshot) {
+                    showAlert(alert, data.message || 'Could not resume. Check email and OTP.', 'error');
+                    button.disabled = false;
+                    button.textContent = label;
+                    return;
+                }
+                sessionStorage.setItem('trinitas_resume_snapshot', JSON.stringify(data.snapshot));
+                window.location.href = 'assessment.html';
+            } catch {
+                showAlert(alert, 'Unable to resume right now. Try again shortly.', 'error');
+                button.disabled = false;
+                button.textContent = label;
+            }
+        });
+
+        if (window.location.hash === '#resume') {
+            document.getElementById('resume')?.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         initNav();
         initRegistration();
         initAttempt2Nav();
+        initResume();
     });
 })();
