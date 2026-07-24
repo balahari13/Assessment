@@ -34,7 +34,8 @@
 
     function markEmailCompleted(email, attemptNumber = 1) {
         const map = getCompletedMap();
-        const normalized = email.trim().toLowerCase();
+        const normalized = String(email || '').trim().toLowerCase();
+        if (!normalized.includes('@')) return;
         if (!map[normalized]) map[normalized] = [];
         const attempt = Number(attemptNumber) || 1;
         if (!map[normalized].includes(attempt)) {
@@ -44,7 +45,7 @@
     }
 
     function clearEmailCompleted(email, attemptNumber) {
-        const normalized = email.trim().toLowerCase();
+        const normalized = String(email || '').trim().toLowerCase();
         const map = getCompletedMap();
         if (!map[normalized]) return;
         if (attemptNumber) {
@@ -58,7 +59,7 @@
 
     function isLocallyBlocked(email, attemptNumber = 1) {
         const map = getCompletedMap();
-        const normalized = email.trim().toLowerCase();
+        const normalized = String(email || '').trim().toLowerCase();
         return (map[normalized] || []).includes(Number(attemptNumber) || 1);
     }
 
@@ -70,7 +71,13 @@
             });
             const contentType = response.headers.get('content-type') || '';
             const isJson = contentType.includes('application/json');
-            const data = isJson ? await response.json().catch(() => ({})) : {};
+            let data = {};
+            if (isJson) {
+                data = await response.json().catch(() => ({}));
+            } else {
+                const text = await response.text().catch(() => '');
+                data = { error: 'non-json', message: text.slice(0, 200) || `HTTP ${response.status}` };
+            }
             return { ok: response.ok, status: response.status, data, isJson };
         } catch (err) {
             return {
@@ -116,9 +123,22 @@
         }
     }
 
+    function resolveContactEmail(payload) {
+        const candidates = [
+            payload.candidateEmail,
+            payload.contactEmail,
+            typeof payload.email === 'string' ? payload.email : null
+        ];
+        for (const c of candidates) {
+            const s = String(c || '').trim().toLowerCase();
+            if (s.includes('@')) return s;
+        }
+        return '';
+    }
+
     window.TrinitasAPI = {
         async checkEligibility(email, attemptNumber = 1) {
-            const normalized = email.trim().toLowerCase();
+            const normalized = String(email || '').trim().toLowerCase();
             const attempt = Number(attemptNumber) || 1;
 
             if (isLocallyBlocked(normalized, attempt)) {
@@ -148,21 +168,20 @@
 
         async submitAssessment(payload) {
             try {
-                const contactEmail = String(payload.candidateEmail || payload.email || '')
-                    .trim()
-                    .toLowerCase();
-                // If email writing overwrote contact email with an object, recover from candidateEmail
+                const contactEmail = resolveContactEmail(payload);
                 const writing = (payload.emailWriting && typeof payload.emailWriting === 'object')
                     ? payload.emailWriting
-                    : (payload.email && typeof payload.email === 'object' ? payload.email : {});
+                    : {};
 
                 const finalBody = {
                     fullName: String(payload.fullName || '').trim(),
                     email: contactEmail,
+                    candidateEmail: contactEmail,
+                    contactEmail,
                     phone: String(payload.phone || '').trim(),
                     attemptNumber: Number(payload.attemptNumber) || 1,
                     registeredAt: payload.registeredAt || null,
-                    durationMinutes: payload.durationMinutes || null,
+                    durationMinutes: payload.durationMinutes ?? null,
                     timedOut: !!payload.timedOut,
                     terminatedReason: payload.terminatedReason || null,
                     tabSwitchCount: Number(payload.tabSwitchCount) || 0,
@@ -173,31 +192,8 @@
                     reading: payload.reading || {},
                     workplace: payload.workplace || {},
                     emailWriting: writing,
-                    typing: {
-                        bestWpm: payload.typing?.bestWpm || 0,
-                        bestAccuracy: payload.typing?.bestAccuracy || 0,
-                        rounds: (payload.typing?.rounds || []).map(r => ({
-                            passage: r.passage,
-                            wpm: r.wpm,
-                            accuracy: r.accuracy,
-                            words: r.words,
-                            elapsedSec: r.elapsedSec,
-                            typedText: String(r.typedText || '').slice(0, 5000)
-                        })),
-                        avgWpm: payload.typing?.avgWpm || 0
-                    },
-                    voice: {
-                        completionPercent: payload.voice?.completionPercent || 0,
-                        validCount: payload.voice?.validCount || 0,
-                        prompts: (payload.voice?.prompts || []).map(p => ({
-                            prompt: p.prompt,
-                            type: p.type,
-                            text: p.text,
-                            durationSec: p.durationSec,
-                            byteSize: p.byteSize,
-                            completed: !!p.completed
-                        }))
-                    }
+                    typing: payload.typing || {},
+                    voice: payload.voice || {}
                 };
 
                 if (!finalBody.email || !finalBody.fullName || !finalBody.phone) {
@@ -210,21 +206,31 @@
                     };
                 }
 
+                // Primary: Netlify function + Blobs
                 const result = await request('/submit-assessment', {
                     method: 'POST',
                     body: JSON.stringify(finalBody)
                 });
 
-                if (result.ok && result.data.success) {
+                if (result.ok && result.data && result.data.success === true) {
                     markEmailCompleted(finalBody.email, finalBody.attemptNumber);
                     return { ok: true, data: { ...result.data, via: 'netlify' } };
                 }
 
-                if (result.status === 403 && result.data.error === 'blocked') {
-                    markEmailCompleted(finalBody.email, finalBody.attemptNumber);
+                // Already submitted — treat as success so the candidate does not lose their work
+                if (result.status === 403 && result.data && result.data.error === 'blocked') {
+                    const msg = String(result.data.message || '');
+                    if (/already completed/i.test(msg)) {
+                        markEmailCompleted(finalBody.email, finalBody.attemptNumber);
+                        return {
+                            ok: true,
+                            data: { success: true, via: 'already-saved', message: msg }
+                        };
+                    }
                     return { ok: false, data: result.data };
                 }
 
+                // Fallback: email notification (scores summary)
                 const formOk = await submitViaFormSubmit({
                     fullName: finalBody.fullName,
                     email: finalBody.email,
@@ -251,8 +257,8 @@
                     ok: false,
                     data: {
                         error: 'submit-failed',
-                        message: result.data?.message || result.data?.detail || result.data?.error ||
-                            'Submission failed. Please try again or email info@trinitasnxt.in.'
+                        message: result.data?.message || result.data?.detail ||
+                            (result.status ? `Server returned ${result.status}. Please retry.` : 'Network error. Please check your connection and retry.')
                     }
                 };
             } catch (err) {

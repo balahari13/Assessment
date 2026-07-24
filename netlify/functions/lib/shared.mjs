@@ -94,7 +94,13 @@ async function upsertIndex(store, email) {
 }
 
 export async function saveSubmission(store, submission) {
-    const email = normalizeEmail(submission.email);
+    const email = normalizeEmail(
+        typeof submission.email === 'string' ? submission.email : submission.contactEmail
+    );
+    if (!email || !email.includes('@')) {
+        return { ok: false, reason: 'invalid_email' };
+    }
+
     const attemptNumber = Number(submission.attemptNumber) || 1;
     let candidate = await getCandidate(store, email) || {
         email,
@@ -105,26 +111,58 @@ export async function saveSubmission(store, submission) {
         attempt2Enabled: false
     };
 
-    const record = { ...submission, email, completedAt: new Date().toISOString() };
-    delete record.attemptNumber;
+    // Build a clean record: contact email is always a string
+    const emailWriting = submission.emailWriting || submission.emailAssessment || {};
+    const record = {
+        email,
+        fullName: submission.fullName,
+        phone: submission.phone,
+        registeredAt: submission.registeredAt || null,
+        durationMinutes: submission.durationMinutes ?? null,
+        timedOut: !!submission.timedOut,
+        terminatedReason: submission.terminatedReason || null,
+        tabSwitchCount: Number(submission.tabSwitchCount) || 0,
+        overallScore: Number(submission.overallScore) || 0,
+        grammar: submission.grammar || {},
+        fillBlank: submission.fillBlank || {},
+        englishPercent: Number(submission.englishPercent) || 0,
+        reading: submission.reading || {},
+        workplace: submission.workplace || {},
+        emailWriting,
+        // Admin detail view uses .email for writing scores when object-shaped
+        email: emailWriting,
+        typing: submission.typing || {},
+        voice: submission.voice || {},
+        completedAt: new Date().toISOString()
+    };
+    // contact email must remain on the parent candidate; section scores store writing under record.email (object)
+    // Keep string contact on record as contactEmail for clarity
+    record.contactEmail = email;
 
     if (attemptNumber === 1) {
         if (candidate.attempt1) return { ok: false, reason: 'attempt1_exists' };
         candidate.attempt1 = record;
         candidate.fullName = submission.fullName;
         candidate.phone = submission.phone;
+        candidate.email = email;
     } else if (attemptNumber === 2) {
         if (!candidate.attempt1) return { ok: false, reason: 'attempt1_required' };
         if (!candidate.attempt2Enabled) return { ok: false, reason: 'attempt2_not_enabled' };
         if (candidate.attempt2) return { ok: false, reason: 'attempt2_exists' };
         candidate.attempt2 = record;
+        candidate.email = email;
     } else {
         return { ok: false, reason: 'invalid_attempt' };
     }
 
     candidate.updatedAt = new Date().toISOString();
-    await store.set(attemptKey(email), JSON.stringify(candidate));
-    await upsertIndex(store, email);
+    try {
+        await store.set(attemptKey(email), JSON.stringify(candidate));
+        await upsertIndex(store, email);
+    } catch (err) {
+        console.error('saveSubmission store error:', err);
+        return { ok: false, reason: 'store_error', detail: err.message };
+    }
     return { ok: true };
 }
 

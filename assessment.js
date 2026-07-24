@@ -1168,11 +1168,13 @@
         }
         const durationMinutes = Math.round((Date.now() - startedAt) / 60000);
 
+        const contactEmail = String(session.email || '').trim().toLowerCase();
         const payload = {
-            fullName: session.fullName,
-            candidateEmail: session.email,
-            email: session.email,
-            phone: session.phone,
+            fullName: String(session.fullName || '').trim(),
+            candidateEmail: contactEmail,
+            contactEmail,
+            email: contactEmail,
+            phone: String(session.phone || '').trim(),
             registeredAt: session.registeredAt || null,
             attemptNumber: Number(session.attemptNumber) || 1,
             durationMinutes,
@@ -1180,29 +1182,52 @@
             terminatedReason: terminatedReason || null,
             tabSwitchCount,
             overallScore,
-            grammar: state.grammar,
-            fillBlank: state.fillBlank,
+            grammar: {
+                answers: state.grammar.answers || [],
+                score: state.grammar.score || 0,
+                percent: state.grammar.percent || 0
+            },
+            fillBlank: {
+                answers: state.fillBlank.answers || [],
+                score: state.fillBlank.score || 0,
+                percent: state.fillBlank.percent || 0
+            },
             englishPercent: getEnglishPercent(),
-            reading: state.reading,
-            workplace: state.workplace,
+            reading: {
+                answers: state.reading.answers || [],
+                score: state.reading.score || 0,
+                percent: state.reading.percent || 0
+            },
+            workplace: {
+                answers: state.workplace.answers || [],
+                score: state.workplace.score || 0,
+                percent: state.workplace.percent || 0
+            },
             emailWriting: {
-                percent: state.email.percent,
-                topics: state.email.topics,
-                responses: state.email.responses,
-                scores: state.email.scores,
-                wordCounts: state.email.wordCounts
+                percent: state.email.percent || 0,
+                topics: state.email.topics || [],
+                responses: (state.email.responses || []).map(t => String(t || '').slice(0, 8000)),
+                scores: state.email.scores || [],
+                wordCounts: state.email.wordCounts || []
             },
             typing: {
-                bestWpm: state.typing.bestWpm,
-                bestAccuracy: state.typing.bestAccuracy,
-                rounds: state.typing.rounds,
-                avgWpm: state.typing.rounds.length
+                bestWpm: state.typing.bestWpm || 0,
+                bestAccuracy: state.typing.bestAccuracy || 0,
+                rounds: (state.typing.rounds || []).map(r => ({
+                    passage: r.passage,
+                    wpm: r.wpm,
+                    accuracy: r.accuracy,
+                    words: r.words,
+                    elapsedSec: r.elapsedSec,
+                    typedText: String(r.typedText || '').slice(0, 4000)
+                })),
+                avgWpm: state.typing.rounds && state.typing.rounds.length
                     ? Math.round(state.typing.rounds.reduce((a, r) => a + r.wpm, 0) / state.typing.rounds.length)
                     : 0
             },
             voice: {
-                completionPercent: state.voice.completionPercent,
-                validCount: state.voice.validCount,
+                completionPercent: state.voice.completionPercent || 0,
+                validCount: state.voice.validCount || 0,
                 prompts: (state.voice.recordings || []).filter(Boolean).map(r => ({
                     prompt: r.prompt,
                     type: r.type,
@@ -1214,12 +1239,25 @@
             }
         };
 
+        // Persist a local backup so candidates never lose a completed attempt
+        try {
+            localStorage.setItem('trinitas_last_submission_backup', JSON.stringify({
+                savedAt: new Date().toISOString(),
+                payload
+            }));
+        } catch {
+            /* ignore quota */
+        }
+
         let ok = false;
         let res = {};
         try {
+            if (!window.TrinitasAPI || typeof window.TrinitasAPI.submitAssessment !== 'function') {
+                throw new Error('Submission API not loaded. Please refresh and retry.');
+            }
             const result = await window.TrinitasAPI.submitAssessment(payload);
-            ok = result.ok;
-            res = result.data || {};
+            ok = !!(result && result.ok);
+            res = (result && result.data) || {};
         } catch (err) {
             ok = false;
             res = { message: err.message || 'Submission failed.' };
@@ -1228,16 +1266,35 @@
         if (!ok) {
             isSubmitting = false;
             sessionEnded = false;
+            const errMsg = res.message || res.error || 'Submission failed.';
             panel.innerHTML = `
                 <div class="form-alert form-alert--error" style="display:block">
-                    <p>${res.message || 'Submission failed.'} Please contact <a href="mailto:info@trinitasnxt.in">info@trinitasnxt.in</a>.</p>
+                    <h2 style="margin-bottom:0.5rem">Submission incomplete</h2>
+                    <p>${errMsg}</p>
+                    <p style="margin-top:0.65rem;font-size:0.88rem">Your answers are still saved on this device. Click <strong>Retry Submit</strong> — do not close this tab until you see a success message.</p>
+                    <p style="margin-top:0.5rem;font-size:0.88rem">If it still fails, email <a href="mailto:info@trinitasnxt.in">info@trinitasnxt.in</a> with your name and registered email.</p>
                 </div>
-                <button type="button" class="btn btn-primary" id="retry-submit" style="margin-top:1rem">Retry Submit</button>
+                <div class="assessment-actions" style="margin-top:1.25rem">
+                    <button type="button" class="btn btn-primary" id="retry-submit">Retry Submit</button>
+                    <button type="button" class="btn btn-secondary" id="copy-backup">Copy backup reference</button>
+                </div>
             `;
             document.getElementById('retry-submit').addEventListener('click', () => finishAssessment(timedOut, terminatedReason));
+            document.getElementById('copy-backup').addEventListener('click', async () => {
+                const ref = `${payload.fullName} | ${payload.email} | Attempt ${payload.attemptNumber} | Overall ${payload.overallScore}% | ${new Date().toISOString()}`;
+                try {
+                    await navigator.clipboard.writeText(ref);
+                    document.getElementById('copy-backup').textContent = 'Copied';
+                } catch {
+                    prompt('Copy this reference:', ref);
+                }
+            });
             return;
         }
 
+        try {
+            localStorage.removeItem('trinitas_last_submission_backup');
+        } catch { /* ignore */ }
         sessionStorage.removeItem(SESSION_KEY);
         const viaEmail = res.via === 'email';
 
@@ -1245,7 +1302,7 @@
             panel.innerHTML = `
                 <div class="form-alert form-alert--error" style="display:block">
                     <h2 style="margin-bottom:0.5rem">Session Ended</h2>
-                    <p>Your assessment was terminated because you left this tab more than ${MAX_TAB_SWITCHES} times. Your partial responses have been recorded and our recruitment team has been notified.</p>
+                    <p>Your assessment was terminated because you left this tab more than ${MAX_TAB_SWITCHES} times. Your partial responses have been recorded.</p>
                 </div>
                 <a href="careers.html" class="btn btn-primary" style="margin-top:1.5rem">Back to Careers</a>
             `;
@@ -1255,8 +1312,8 @@
         panel.innerHTML = `
             <div class="form-alert form-alert--success" style="display:block">
                 <h2 style="margin-bottom:0.5rem">Assessment Submitted</h2>
-                <p>Thank you, ${session.fullName}. Your preliminary assessment has been recorded. Our recruitment team will review your submission and contact you if your profile matches current openings.</p>
-                ${viaEmail ? '<p style="margin-top:0.5rem;font-size:0.88rem">A copy was sent to our recruitment inbox.</p>' : ''}
+                <p>Thank you, ${payload.fullName}. Your assessment has been recorded successfully. Our team will review your submission and contact you if needed.</p>
+                ${viaEmail ? '<p style="margin-top:0.5rem;font-size:0.88rem">A summary was also sent to our recruitment inbox.</p>' : ''}
             </div>
             <a href="careers.html" class="btn btn-primary" style="margin-top:1.5rem">Back to Careers</a>
         `;

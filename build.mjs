@@ -5,7 +5,7 @@ const root = import.meta.dirname;
 const deploy = join(root, 'deploy');
 
 const siteFiles = [
-    'index.html', 'about.html', 'careers.html', 'assessment.html', 'admin.html',
+    'index.html', 'about.html', 'careers.html', 'healthcare.html', 'assessment.html', 'admin.html',
     '404.html', 'thank-you.html',
     'styles.css', 'careers.css', 'main.js', 'api.js', 'careers.js',
     'assessment.js', 'assessment-data.js', 'assessment-data-attempt2.js', 'admin.js',

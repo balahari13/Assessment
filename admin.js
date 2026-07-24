@@ -164,7 +164,7 @@
                 <div class="admin-section-score"><strong>${s.fillBlank?.percent || 0}%</strong><span>Fill</span></div>
                 <div class="admin-section-score"><strong>${s.reading?.percent || 0}%</strong><span>Reading</span></div>
                 <div class="admin-section-score"><strong>${s.workplace?.percent || 0}%</strong><span>Workplace</span></div>
-                <div class="admin-section-score"><strong>${s.email?.percent || 0}%</strong><span>Email</span></div>
+                <div class="admin-section-score"><strong>${(s.emailWriting || s.email)?.percent || 0}%</strong><span>Email</span></div>
                 <div class="admin-section-score"><strong>${s.typing?.bestWpm || 0}</strong><span>WPM</span></div>
                 <div class="admin-section-score"><strong>${s.typing?.bestAccuracy || 0}%</strong><span>Accuracy</span></div>
                 <div class="admin-section-score"><strong>${s.voice?.completionPercent || 0}%</strong><span>Voice</span></div>
@@ -173,7 +173,7 @@
             <div class="admin-detail-block"><h3>Fill in the Blanks (${s.fillBlank?.score || 0}/${data.fillBlankQuestions.length})</h3><ul class="admin-ans-list">${fillHtml}</ul></div>
             <div class="admin-detail-block"><h3>Reading (${s.reading?.score || 0}/${data.readingPassages?.reduce((n, p) => n + p.questions.length, 0) || 0})</h3>${readingHtml}</div>
             <div class="admin-detail-block"><h3>Workplace (${s.workplace?.score || 0}/${data.workplaceQuestions?.length || 0})</h3><ul class="admin-ans-list">${workplaceHtml}</ul></div>
-            <div class="admin-detail-block"><h3>Email Writing (${s.email?.percent || 0}%)</h3>${renderEmailDetail(s.email)}</div>
+            <div class="admin-detail-block"><h3>Email Writing (${(s.emailWriting || (typeof s.email === 'object' ? s.email : null) || {})?.percent || 0}%)</h3>${renderEmailDetail(s.emailWriting || (typeof s.email === 'object' ? s.email : null))}</div>
             <div class="admin-detail-block"><h3>Typing — ${s.typing?.bestWpm || 0} WPM, ${s.typing?.bestAccuracy || 0}% accuracy</h3><pre class="admin-typed-preview">${typed}</pre></div>
             <div class="admin-detail-block"><h3>Voice (${s.voice?.completionPercent || 0}%${s.voice?.validCount != null ? `, ${s.voice.validCount} valid` : ''})</h3><ul class="admin-ans-list">${voiceHtml}</ul></div>
         `;
@@ -381,7 +381,7 @@
                 <td>${scorePill(a1?.fillBlank?.percent)}</td>
                 <td>${scorePill(a1?.reading?.percent)}</td>
                 <td>${scorePill(a1?.workplace?.percent)}</td>
-                <td>${scorePill(a1?.email?.percent)}</td>
+                <td>${scorePill((a1?.emailWriting || (typeof a1?.email === 'object' ? a1.email : null))?.percent)}</td>
                 <td>${a1?.typing?.bestWpm ? `${a1.typing.bestWpm}` : '—'}</td>
                 <td>${scorePill(a1?.typing?.bestAccuracy)}</td>
                 <td>${scorePill(a1?.voice?.completionPercent)}</td>
@@ -439,7 +439,7 @@
                 a1?.fillBlank?.percent || '',
                 a1?.reading?.percent || '',
                 a1?.workplace?.percent || '',
-                a1?.email?.percent || '',
+                (a1?.emailWriting || (typeof a1?.email === 'object' ? a1.email : null))?.percent || '',
                 a1?.typing?.bestWpm || '',
                 a1?.typing?.bestAccuracy || '',
                 a1?.voice?.completionPercent || '',
