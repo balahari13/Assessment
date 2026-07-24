@@ -1,85 +1,84 @@
 /**
- * Logical Reasoning (shape aptitude) + Customer Response scenarios.
- * Black & white figures; scenario response order is shuffled so Best is not always first.
+ * Logical Reasoning — Odd Man Out (exam-style B&W figures) + Customer Response scenarios.
+ * Scenario response order is shuffled so Best is not always first.
  */
 (function () {
     'use strict';
 
-    // Shape types: c circle, s square, t triangle, d diamond, h hex, p pentagon, r ring, w star, m semicircle
-    // Lines: lh horizontal, lv vertical, ld diagonal \, ldd diagonal /, lx cross, lpar two H lines, lparv two V lines, l3 three H lines
-    // Multi: 2c two circles, cs circle in square, 3d three dots, grid 4 small squares
-    // f: #111 black fill, #fff white fill; o:1 outline only (black stroke)
-    function sh(t, f, o, rot, sz) {
-        return { t: t, f: f || '#111111', o: o ? 1 : 0, rot: rot || 0, sz: sz || 1 };
+    /**
+     * Figure codes (black & white aptitude style):
+     * Basic: c filled circle, r ring, s square, t triangle, d diamond, h hex
+     * Dots: c1/c2/c3 circle+dots, s1/s2 square+dots
+     * Divisions: ch/cv/cx circle+line(s), sd/sx square+diagonal(s)
+     * Nested: ncs circle-in-square, nsc square-in-circle, nct triangle-in-circle, nrc concentric
+     * Half: halfL/halfR half-filled circle, halfSq half square
+     * Marks: plus, bars2/bars3, arrR/arrU, corner, pie
+     * Lines: lh, lv, ld, ldd, lx, lpar, lparv
+     */
+    function f(t, rot) {
+        return { t: t, rot: rot || 0 };
     }
-    /** Pattern: complete the series (series → ?, pick from options). */
-    function p(answer, series, options) {
-        return { mode: 'pattern', answer, series, options };
-    }
-    /** Classic odd-one-out among 4 figures. */
-    function o(answer, shapes) {
-        return { mode: 'odd', answer, shapes };
+    /** Odd man out: 4 figures, answer = index of the odd one (0–3). */
+    function odd(answer, a, b, c, d) {
+        return { mode: 'odd', answer, shapes: [a, b, c, d] };
     }
 
-    const BK = '#111111';
-    const WH = '#ffffff';
-
-    /* Attempt 1 — complex B&W patterns + mixed odd-one-out */
+    /* Attempt 1 — classic odd man out (4 figures, find the different one) */
     window.ASSESSMENT_ODD_MAN_OUT_1 = [
-        p(1, [sh('c', BK), sh('c', BK), sh('c', BK)], [sh('s', BK), sh('c', BK), sh('t', BK), sh('d', BK)]),
-        p(2, [sh('lh', BK), sh('lpar', BK), sh('l3', BK)], [sh('lv', BK), sh('lx', BK), sh('lpar', BK), sh('c', BK)]),
-        p(0, [sh('s', BK), sh('s', BK, 0, 45), sh('s', BK)], [sh('s', BK, 0, 45), sh('s', BK), sh('c', BK), sh('d', BK)]),
-        p(3, [sh('c', BK, 1), sh('c', BK, 0), sh('c', BK, 1)], [sh('c', BK, 1), sh('s', BK, 1), sh('c', BK, 0), sh('c', BK, 0)]),
-        p(1, [sh('t', BK), sh('t', BK, 0, 180), sh('t', BK)], [sh('t', BK), sh('t', BK, 0, 180), sh('s', BK), sh('d', BK)]),
-        p(2, [sh('lv', BK), sh('lh', BK), sh('lv', BK)], [sh('lv', BK), sh('ld', BK), sh('lh', BK), sh('lx', BK)]),
-        p(0, [sh('1d', BK), sh('2c', BK), sh('3d', BK)], [sh('grid', BK), sh('3d', BK), sh('c', BK), sh('cs', BK)]),
-        p(3, [sh('r', BK), sh('c', BK), sh('r', BK)], [sh('r', BK), sh('s', BK), sh('c', BK), sh('c', BK)]),
-        p(1, [sh('ld', BK), sh('ldd', BK), sh('ld', BK)], [sh('ld', BK), sh('ldd', BK), sh('lh', BK), sh('lx', BK)]),
-        p(2, [sh('cs', BK), sh('s', BK), sh('cs', BK)], [sh('cs', BK), sh('2c', BK), sh('s', BK), sh('c', BK)]),
-        p(0, [sh('s', BK), sh('d', BK), sh('s', BK)], [sh('d', BK), sh('s', BK), sh('c', BK), sh('t', BK)]),
-        p(3, [sh('lpar', BK), sh('lparv', BK), sh('lpar', BK)], [sh('l3', BK), sh('lh', BK), sh('lpar', BK), sh('lparv', BK)]),
-        o(2, [sh('c', BK), sh('c', BK), sh('s', BK), sh('c', BK)]),
-        p(1, [sh('m', BK), sh('m', BK, 0, 180), sh('m', BK)], [sh('m', BK), sh('m', BK, 0, 180), sh('c', BK), sh('s', BK)]),
-        p(2, [sh('w', BK), sh('p', BK), sh('w', BK)], [sh('w', BK), sh('h', BK), sh('p', BK), sh('d', BK)]),
-        p(0, [sh('grid', BK), sh('cs', BK), sh('grid', BK)], [sh('cs', BK), sh('grid', BK), sh('s', BK), sh('3d', BK)]),
-        p(3, [sh('t', BK), sh('s', BK), sh('t', BK)], [sh('t', BK), sh('c', BK), sh('d', BK), sh('s', BK)]),
-        p(1, [sh('lx', BK), sh('ld', BK), sh('lx', BK)], [sh('lx', BK), sh('ld', BK), sh('lh', BK), sh('lv', BK)]),
-        o(1, [sh('lpar', BK), sh('lparv', BK), sh('lpar', BK), sh('lpar', BK)]),
-        p(2, [sh('c', BK, 0, 0, 0.7), sh('c', BK), sh('c', BK, 0, 0, 1.1)], [sh('c', BK), sh('s', BK), sh('c', BK, 0, 0, 1.3), sh('r', BK)]),
-        p(0, [sh('h', BK), sh('p', BK), sh('h', BK)], [sh('p', BK), sh('h', BK), sh('w', BK), sh('d', BK)]),
-        p(3, [sh('2c', BK), sh('3d', BK), sh('2c', BK)], [sh('2c', BK), sh('c', BK), sh('cs', BK), sh('3d', BK)]),
-        p(1, [sh('s', BK, 1), sh('s', BK, 0), sh('s', BK, 1)], [sh('s', BK, 1), sh('s', BK, 0), sh('c', BK, 0), sh('c', BK, 1)]),
-        p(2, [sh('lv', BK), sh('lparv', BK), sh('l3', BK)], [sh('lh', BK), sh('lpar', BK), sh('l3', BK), sh('lx', BK)]),
-        o(0, [sh('lx', BK), sh('lh', BK), sh('lh', BK), sh('lh', BK)])
+        odd(2, f('c'), f('c'), f('s'), f('c')),
+        odd(1, f('r'), f('c'), f('r'), f('r')),
+        odd(3, f('t'), f('t'), f('t'), f('d')),
+        odd(0, f('ch'), f('cv'), f('cv'), f('cv')),
+        odd(2, f('c1'), f('c1'), f('c2'), f('c1')),
+        odd(1, f('s'), f('s', 45), f('s'), f('s')),
+        odd(3, f('ncs'), f('ncs'), f('ncs'), f('nsc')),
+        odd(0, f('halfL'), f('halfR'), f('halfR'), f('halfR')),
+        odd(2, f('bars2'), f('bars2'), f('bars3'), f('bars2')),
+        odd(1, f('t'), f('t', 180), f('t'), f('t')),
+        odd(3, f('cx'), f('cx'), f('cx'), f('ch')),
+        odd(0, f('s1'), f('s2'), f('s2'), f('s2')),
+        odd(2, f('nrc'), f('nrc'), f('r'), f('nrc')),
+        odd(1, f('ld'), f('lh'), f('ld'), f('ld')),
+        odd(3, f('plus'), f('plus'), f('plus'), f('lx')),
+        odd(0, f('pie'), f('c'), f('c'), f('c')),
+        odd(2, f('nct'), f('nct'), f('ncs'), f('nct')),
+        odd(1, f('arrR'), f('arrU'), f('arrR'), f('arrR')),
+        odd(3, f('halfSq'), f('halfSq'), f('halfSq'), f('s')),
+        odd(0, f('h'), f('s'), f('s'), f('s')),
+        odd(2, f('c3'), f('c3'), f('c1'), f('c3')),
+        odd(1, f('sd'), f('sx'), f('sd'), f('sd')),
+        odd(3, f('lpar'), f('lpar'), f('lpar'), f('lparv')),
+        odd(0, f('corner'), f('s'), f('s'), f('s')),
+        odd(2, f('d'), f('d'), f('s', 45), f('d'))
     ];
 
-    /* Attempt 2 — harder pattern set */
+    /* Attempt 2 — harder odd man out */
     window.ASSESSMENT_ODD_MAN_OUT_2 = [
-        p(2, [sh('c', BK, 1), sh('r', BK), sh('c', BK, 1)], [sh('c', BK, 1), sh('s', BK, 1), sh('r', BK), sh('c', BK, 0)]),
-        p(0, [sh('t', BK), sh('t', BK, 0, 90), sh('t', BK, 0, 180)], [sh('t', BK, 0, 270), sh('t', BK), sh('s', BK), sh('d', BK)]),
-        p(3, [sh('lh', BK), sh('lpar', BK), sh('l3', BK)], [sh('lv', BK), sh('lparv', BK), sh('lx', BK), sh('lpar', BK)]),
-        p(1, [sh('s', BK), sh('d', BK), sh('s', BK, 0, 45)], [sh('d', BK), sh('d', BK, 0, 45), sh('s', BK), sh('c', BK)]),
-        p(2, [sh('1d', BK), sh('2c', BK), sh('3d', BK)], [sh('c', BK), sh('2c', BK), sh('grid', BK), sh('3d', BK)]),
-        p(0, [sh('ld', BK), sh('lx', BK), sh('ldd', BK)], [sh('lx', BK), sh('ld', BK), sh('lh', BK), sh('lv', BK)]),
-        p(3, [sh('cs', BK), sh('grid', BK), sh('cs', BK)], [sh('cs', BK), sh('s', BK), sh('2c', BK), sh('grid', BK)]),
-        p(1, [sh('m', BK), sh('c', BK), sh('m', BK, 0, 180)], [sh('m', BK), sh('c', BK), sh('m', BK, 0, 180), sh('s', BK)]),
-        o(2, [sh('h', BK, 1), sh('h', BK, 1), sh('h', BK, 0), sh('h', BK, 1)]),
-        p(2, [sh('w', BK), sh('h', BK), sh('p', BK)], [sh('d', BK), sh('w', BK), sh('c', BK), sh('s', BK)]),
-        p(0, [sh('lparv', BK), sh('lpar', BK), sh('lparv', BK)], [sh('lpar', BK), sh('lparv', BK), sh('l3', BK), sh('lh', BK)]),
-        p(3, [sh('c', BK, 0, 0, 0.7), sh('c', BK), sh('c', BK, 0, 0, 1.15)], [sh('c', BK), sh('r', BK), sh('s', BK), sh('c', BK, 0, 0, 1.35)]),
-        p(1, [sh('s', BK, 1), sh('c', BK, 1), sh('s', BK, 1)], [sh('s', BK, 1), sh('c', BK, 1), sh('s', BK, 0), sh('d', BK, 1)]),
-        p(2, [sh('2c', BK), sh('cs', BK), sh('2c', BK)], [sh('2c', BK), sh('3d', BK), sh('cs', BK), sh('c', BK)]),
-        o(1, [sh('3d', BK), sh('grid', BK), sh('3d', BK), sh('3d', BK)]),
-        p(0, [sh('t', BK), sh('s', BK), sh('d', BK)], [sh('c', BK), sh('t', BK), sh('h', BK), sh('w', BK)]),
-        p(3, [sh('lv', BK), sh('lh', BK), sh('ld', BK)], [sh('ldd', BK), sh('lx', BK), sh('lpar', BK), sh('ldd', BK)]),
-        p(1, [sh('r', BK), sh('c', BK, 0), sh('r', BK)], [sh('r', BK), sh('c', BK, 0), sh('c', BK, 1), sh('s', BK)]),
-        p(2, [sh('grid', BK), sh('3d', BK), sh('grid', BK)], [sh('grid', BK), sh('cs', BK), sh('3d', BK), sh('2c', BK)]),
-        p(0, [sh('d', BK), sh('d', BK, 0, 45), sh('d', BK)], [sh('d', BK, 0, 45), sh('d', BK), sh('s', BK), sh('p', BK)]),
-        o(3, [sh('s', BK, 0, 0), sh('s', BK, 0, 0), sh('s', BK, 0, 0), sh('s', BK, 0, 45)]),
-        p(1, [sh('l3', BK), sh('lpar', BK), sh('lh', BK)], [sh('lv', BK), sh('c', BK), sh('l3', BK), sh('lx', BK)]),
-        p(2, [sh('p', BK), sh('h', BK), sh('w', BK)], [sh('d', BK), sh('p', BK), sh('c', BK), sh('s', BK)]),
-        p(0, [sh('cs', BK, 1), sh('cs', BK, 0), sh('cs', BK, 1)], [sh('cs', BK, 0), sh('cs', BK, 1), sh('s', BK, 0), sh('c', BK, 0)]),
-        p(3, [sh('lx', BK), sh('ld', BK), sh('ldd', BK)], [sh('lh', BK), sh('lv', BK), sh('lpar', BK), sh('lx', BK)])
+        odd(1, f('c2'), f('c3'), f('c2'), f('c2')),
+        odd(3, f('nsc'), f('nsc'), f('nsc'), f('ncs')),
+        odd(0, f('t', 90), f('t'), f('t'), f('t')),
+        odd(2, f('halfL'), f('halfL'), f('halfR'), f('halfL')),
+        odd(1, f('cx'), f('ch'), f('cx'), f('cx')),
+        odd(3, f('bars3'), f('bars3'), f('bars3'), f('bars2')),
+        odd(0, f('pie'), f('halfL'), f('halfL'), f('halfL')),
+        odd(2, f('nrc'), f('nrc'), f('c'), f('nrc')),
+        odd(1, f('s', 0), f('s', 45), f('s', 0), f('s', 0)),
+        odd(3, f('arrU'), f('arrU'), f('arrU'), f('arrR')),
+        odd(0, f('sd'), f('ch'), f('ch'), f('ch')),
+        odd(2, f('c1'), f('c1'), f('s1'), f('c1')),
+        odd(1, f('lparv'), f('lpar'), f('lparv'), f('lparv')),
+        odd(3, f('nct'), f('nct'), f('nct'), f('nsc')),
+        odd(0, f('corner'), f('s1'), f('s1'), f('s1')),
+        odd(2, f('r'), f('r'), f('nrc'), f('r')),
+        odd(1, f('d'), f('h'), f('d'), f('d')),
+        odd(3, f('plus'), f('plus'), f('plus'), f('cx')),
+        odd(0, f('halfSq'), f('halfL'), f('halfL'), f('halfL')),
+        odd(2, f('t'), f('t'), f('t', 180), f('t')),
+        odd(1, f('sx'), f('sd'), f('sx'), f('sx')),
+        odd(3, f('c3'), f('c3'), f('c3'), f('c2')),
+        odd(0, f('lx'), f('ld'), f('ld'), f('ld')),
+        odd(2, f('ncs'), f('ncs'), f('s'), f('ncs')),
+        odd(1, f('cv'), f('ch'), f('cv'), f('cv'))
     ];
 
     function rawScenarios1() {
