@@ -1,10 +1,9 @@
+import { randomBytes } from 'crypto';
 import {
     corsHeaders,
     jsonResponse,
     getAssessmentStore,
-    verifyAdminToken,
-    enableSecondAttempt,
-    normalizeEmail
+    verifyAdminToken
 } from './lib/shared.mjs';
 import { writeAudit } from './lib/audit.mjs';
 
@@ -23,33 +22,34 @@ export default async (req, context) => {
             return jsonResponse(401, { error: 'Unauthorized' }, origin);
         }
 
-        const body = await req.json();
-        const email = normalizeEmail(body.email);
-        if (!email) {
-            return jsonResponse(400, { error: 'Email required' }, origin);
-        }
+        const body = await req.json().catch(() => ({}));
+        const code = String(body.code || randomBytes(4).toString('hex')).trim().toUpperCase();
+        const days = Math.min(90, Math.max(1, Number(body.days) || 14));
+        const expiresAt = Date.now() + days * 24 * 60 * 60 * 1000;
 
-        const result = await enableSecondAttempt(store, email);
-        if (!result.ok) {
-            return jsonResponse(400, {
-                error: result.reason,
-                message: 'Candidate must complete Attempt 1 before enabling Attempt 2.'
-            }, origin);
-        }
+        await store.set(`hr-invite:${code}`, JSON.stringify({
+            code,
+            createdAt: new Date().toISOString(),
+            expiresAt,
+            used: false
+        }));
 
         await writeAudit(store, {
             actor: 'admin',
             role: 'admin',
-            action: 'enable_attempt2',
-            target: email
+            action: 'hr_invite_create',
+            target: code,
+            meta: { days, expiresAt: new Date(expiresAt).toISOString() }
         });
 
         return jsonResponse(200, {
             success: true,
-            message: `Second attempt enabled for ${email}.`
+            code,
+            expiresAt: new Date(expiresAt).toISOString(),
+            message: `Invite code ${code} valid for ${days} days. Share only with trusted HR staff.`
         }, origin);
     } catch (err) {
-        console.error('admin-enable-attempt2 error:', err);
+        console.error('admin-hr-invite error:', err);
         return jsonResponse(500, { error: 'Server error', detail: err.message }, origin);
     }
 };

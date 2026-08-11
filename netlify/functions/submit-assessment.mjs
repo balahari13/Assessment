@@ -4,19 +4,23 @@ import {
     getAssessmentStore,
     normalizeEmail,
     saveSubmission,
-    getCandidate
+    getCandidate,
+    generateReferenceId
 } from './lib/shared.mjs';
+import { serverScoreSubmission } from './lib/score.mjs';
+import { writeAudit } from './lib/audit.mjs';
 
 function asObject(value) {
     return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
 }
 
 export default async (req, context) => {
+    const origin = req.headers.get('origin') || req.headers.get('Origin') || '';
     if (req.method === 'OPTIONS') {
-        return new Response(null, { status: 204, headers: corsHeaders() });
+        return new Response(null, { status: 204, headers: corsHeaders(origin) });
     }
     if (req.method !== 'POST') {
-        return jsonResponse(405, { error: 'Method not allowed' });
+        return jsonResponse(405, { error: 'Method not allowed' }, origin);
     }
 
     try {
@@ -24,10 +28,9 @@ export default async (req, context) => {
         try {
             body = await req.json();
         } catch {
-            return jsonResponse(400, { error: 'Invalid JSON body' });
+            return jsonResponse(400, { error: 'Invalid JSON body' }, origin);
         }
 
-        // Contact email only — never reuse the email-writing object field
         const email = normalizeEmail(
             body.candidateEmail ||
             (typeof body.email === 'string' ? body.email : '') ||
@@ -41,7 +44,7 @@ export default async (req, context) => {
             return jsonResponse(400, {
                 error: 'validation',
                 message: 'Name, email, and phone are required'
-            });
+            }, origin);
         }
 
         const isAdminPractice = body.isAdminPractice === true || body.adminPractice === true;
@@ -53,7 +56,7 @@ export default async (req, context) => {
                 return jsonResponse(403, {
                     error: 'blocked',
                     message: 'This email has already completed Attempt 1.'
-                });
+                }, origin);
             }
 
             if (attemptNumber === 2) {
@@ -61,55 +64,58 @@ export default async (req, context) => {
                     return jsonResponse(403, {
                         error: 'blocked',
                         message: 'Attempt 1 must be completed before Attempt 2.'
-                    });
+                    }, origin);
                 }
                 if (!candidate.attempt2Enabled) {
                     return jsonResponse(403, {
                         error: 'blocked',
                         message: 'Second attempt is not enabled for this email.'
-                    });
+                    }, origin);
                 }
                 if (candidate.attempt2) {
                     return jsonResponse(403, {
                         error: 'blocked',
                         message: 'This email has already completed Attempt 2.'
-                    });
+                    }, origin);
                 }
             }
         }
 
-        // Writing section lives under emailWriting only (never overwrites contact email)
-        const emailWriting = asObject(
-            body.emailWriting || body.emailSection || body.emailAssessment
-        );
+        const scored = serverScoreSubmission(body, attemptNumber);
+        const referenceId = body.referenceId || candidate?.referenceId || generateReferenceId();
 
         const submission = {
             email,
             fullName,
             phone,
             attemptNumber,
+            referenceId,
             registeredAt: body.registeredAt || new Date().toISOString(),
             durationMinutes: body.durationMinutes ?? null,
             timedOut: !!body.timedOut,
             terminatedReason: body.terminatedReason || null,
             tabSwitchCount: Number(body.tabSwitchCount) || 0,
-            oddman: asObject(body.oddman),
-            scenarios: asObject(body.scenarios),
-            grammar: asObject(body.grammar),
-            fillBlank: asObject(body.fillBlank),
-            englishPercent: Number(body.englishPercent) || 0,
-            reading: asObject(body.reading),
-            workplace: asObject(body.workplace),
-            emailWriting,
-            // Alias for admin UI that still reads submission.email as writing scores when object-shaped
-            emailAssessment: emailWriting,
-            typing: asObject(body.typing),
-            voice: asObject(body.voice),
-            overallScore: Number(body.overallScore) || 0
+            consentAccepted: !!body.consentAccepted,
+            deviceWarningAcknowledged: !!body.deviceWarningAcknowledged,
+            oddman: scored.oddman,
+            scenarios: scored.scenarios,
+            grammar: scored.grammar,
+            fillBlank: scored.fillBlank,
+            englishPercent: scored.englishPercent,
+            reading: scored.reading,
+            workplace: scored.workplace,
+            emailWriting: scored.emailWriting,
+            emailAssessment: scored.emailWriting,
+            typing: scored.typing,
+            voice: scored.voice,
+            overallScore: scored.overallScore,
+            serverScored: true,
+            scoredAt: scored.scoredAt,
+            // Keep raw client score for discrepancy review only
+            clientOverallScore: Number(body.overallScore) || null
         };
 
         if (isAdminPractice) {
-            // Unlimited admin practice — store under practice log, never block candidates
             submission.isAdminPractice = true;
             try {
                 const key = `practice:${email}:${Date.now()}`;
@@ -124,8 +130,9 @@ export default async (req, context) => {
                 success: true,
                 attemptNumber,
                 adminPractice: true,
+                referenceId,
                 message: 'Admin practice attempt saved (does not count as a candidate submission).'
-            });
+            }, origin);
         }
 
         const saved = await saveSubmission(store, submission);
@@ -135,7 +142,7 @@ export default async (req, context) => {
                     error: 'store_error',
                     message: 'Could not save to storage. Please retry.',
                     detail: saved.detail || null
-                });
+                }, origin);
             }
             const messages = {
                 attempt1_exists: 'This email has already completed Attempt 1.',
@@ -149,20 +156,34 @@ export default async (req, context) => {
                 error: 'blocked',
                 message: messages[saved.reason] || 'Submission blocked.',
                 reason: saved.reason
-            });
+            }, origin);
         }
+
+        await writeAudit(store, {
+            actor: email,
+            role: 'candidate',
+            action: 'assessment_submit',
+            target: email,
+            meta: {
+                attemptNumber,
+                referenceId,
+                overallScore: submission.overallScore,
+                tabSwitchCount: submission.tabSwitchCount
+            }
+        });
 
         return jsonResponse(200, {
             success: true,
             attemptNumber,
-            message: `Attempt ${attemptNumber} submitted successfully`
-        });
+            referenceId,
+            message: `Attempt ${attemptNumber} submitted successfully. Reference: ${referenceId}`
+        }, origin);
     } catch (err) {
         console.error('submit-assessment error:', err);
         return jsonResponse(500, {
             error: 'Server error',
             message: 'Server error while saving assessment. Please retry.',
             detail: err.message
-        });
+        }, origin);
     }
 };

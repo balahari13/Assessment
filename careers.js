@@ -103,6 +103,17 @@
         update();
     }
 
+    function updateChecklist(candidate) {
+        document.querySelectorAll('#careers-checklist [data-step]').forEach(li => {
+            const step = li.dataset.step;
+            let done = false;
+            if (candidate) {
+                if (step === 'account' || step === 'signin') done = true;
+            }
+            li.classList.toggle('is-done', done);
+        });
+    }
+
     function showLoggedIn(candidate) {
         const auth = document.getElementById('auth-panels');
         const panel = document.getElementById('logged-in-panel');
@@ -110,12 +121,22 @@
         if (panel) panel.hidden = false;
         const nameEl = document.getElementById('logged-name');
         const metaEl = document.getElementById('logged-meta');
+        const refEl = document.getElementById('logged-ref');
         if (nameEl) nameEl.textContent = candidate.fullName || candidate.username;
         if (metaEl) {
             metaEl.textContent = `@${candidate.username} · ${candidate.email}${candidate.phone ? ' · ' + candidate.phone : ''}`;
         }
+        if (refEl) {
+            if (candidate.referenceId) {
+                refEl.hidden = false;
+                refEl.innerHTML = `Your reference ID: <strong>${candidate.referenceId}</strong> — keep this for recruitment communications.`;
+            } else {
+                refEl.hidden = true;
+            }
+        }
         const resumeEmail = document.getElementById('resumeEmail');
         if (resumeEmail && candidate.email) resumeEmail.value = candidate.email;
+        updateChecklist(candidate);
     }
 
     function showAuthPanels() {
@@ -234,9 +255,13 @@
                         username: data.username,
                         fullName: data.fullName,
                         email: data.email,
-                        phone: data.phone
+                        phone: data.phone,
+                        referenceId: data.referenceId || null
                     });
                     showLoggedIn(getCandidate());
+                    if (data.referenceId) {
+                        showAlert(alert, `Account created. Reference ID: ${data.referenceId}`, 'success');
+                    }
                 } else {
                     showAlert(alert, data.message || 'Account created. Please sign in.', 'success');
                     document.querySelector('.careers-tab[data-panel="signin"]')?.click();
@@ -282,7 +307,8 @@
                     username: data.username,
                     fullName: data.fullName,
                     email: data.email,
-                    phone: data.phone
+                    phone: data.phone,
+                    referenceId: data.referenceId || null
                 });
                 showLoggedIn(getCandidate());
             } catch {
@@ -392,6 +418,7 @@
                 email: candidate.email,
                 phone: candidate.phone,
                 username: candidate.username,
+                referenceId: candidate.referenceId || null,
                 attemptNumber,
                 registeredAt: new Date().toISOString()
             }));

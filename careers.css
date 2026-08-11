@@ -1550,6 +1550,111 @@ body.admin-modal-open {
 .hr-page .admin-login-card {
     max-width: 440px;
 }
+
+.admin-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0 0 1.25rem;
+    padding: 0.35rem;
+    background: #fff;
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 12px;
+}
+.admin-tab {
+    border: none;
+    background: transparent;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-muted, #64748b);
+    padding: 0.5rem 0.85rem;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.admin-tab:hover { color: var(--navy, #0f172a); background: #f8fafc; }
+.admin-tab--active {
+    background: var(--blue, #2563eb);
+    color: #fff;
+}
+.admin-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    margin-bottom: 0.85rem;
+}
+.admin-filter-input,
+.admin-filter-select {
+    font: inherit;
+    font-size: 0.88rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 8px;
+    background: #fff;
+}
+.admin-filter-input { flex: 1; min-width: 200px; }
+.admin-ref {
+    font-size: 0.72rem;
+    background: #f1f5f9;
+    padding: 0.15rem 0.35rem;
+    border-radius: 4px;
+}
+.admin-section-title-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+.careers-progress-checklist {
+    list-style: none;
+    margin: 1rem 0 0;
+    padding: 0;
+}
+.careers-progress-checklist li {
+    display: flex;
+    gap: 0.65rem;
+    align-items: flex-start;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--border, #e2e8f0);
+    font-size: 0.9rem;
+    color: var(--text-muted, #64748b);
+}
+.careers-progress-checklist li strong { color: var(--navy, #0f172a); }
+.careers-progress-checklist .step-num {
+    flex-shrink: 0;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 999px;
+    background: #e2e8f0;
+    color: var(--navy);
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: grid;
+    place-items: center;
+}
+.careers-progress-checklist li.is-done .step-num {
+    background: #10b981;
+    color: #fff;
+}
+.careers-ref-banner {
+    margin: 0.75rem 0 0;
+    padding: 0.65rem 0.85rem;
+    background: rgba(37, 99, 235, 0.08);
+    border: 1px solid rgba(37, 99, 235, 0.2);
+    border-radius: 8px;
+    font-size: 0.88rem;
+}
+.assessment-gate {
+    max-width: 560px;
+    margin: 2rem auto;
+    background: #fff;
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 14px;
+    padding: 1.75rem;
+    box-shadow: 0 8px 30px rgba(15, 23, 42, 0.06);
+}
+.assessment-gate h2 { margin: 0 0 0.75rem; font-size: 1.25rem; }
+.assessment-gate ul { margin: 0.75rem 0 1.25rem; padding-left: 1.2rem; color: var(--text-muted); font-size: 0.92rem; line-height: 1.55; }
+.assessment-gate .form-field { margin-bottom: 0.85rem; }
 @media (max-width: 700px) {
     .pipeline-columns {
         grid-template-columns: minmax(220px, 1fr);

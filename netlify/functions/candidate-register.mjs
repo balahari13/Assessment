@@ -1,20 +1,19 @@
-import { createHash, randomBytes } from 'crypto';
+import { randomBytes } from 'crypto';
 import {
     corsHeaders,
     jsonResponse,
     getAssessmentStore,
-    normalizeEmail
+    normalizeEmail,
+    generateReferenceId
 } from './lib/shared.mjs';
+import { hashPassword } from './lib/password.mjs';
+import { writeAudit } from './lib/audit.mjs';
 
 const CANDIDATE_INDEX = 'candidate-index';
 const MAX_BYTES = 1.5 * 1024 * 1024;
 
 function candidateKey(username) {
     return `candidate:${String(username || '').trim().toLowerCase()}`;
-}
-
-function hashPassword(password, salt) {
-    return createHash('sha256').update(`${salt}:${password}`).digest('hex');
 }
 
 function validatePassword(password) {
@@ -33,11 +32,12 @@ function validateUsername(username) {
 }
 
 export default async (req, context) => {
+    const origin = req.headers.get('origin') || '';
     if (req.method === 'OPTIONS') {
-        return new Response(null, { status: 204, headers: corsHeaders() });
+        return new Response(null, { status: 204, headers: corsHeaders(origin) });
     }
     if (req.method !== 'POST') {
-        return jsonResponse(405, { error: 'Method not allowed' });
+        return jsonResponse(405, { error: 'Method not allowed' }, origin);
     }
 
     try {
@@ -54,32 +54,32 @@ export default async (req, context) => {
         const fileBase64 = String(body.fileBase64 || '').replace(/^data:[^;]+;base64,/, '');
 
         if (!fullName || !email || !email.includes('@') || !phone) {
-            return jsonResponse(400, { error: 'validation', message: 'Name, email, and phone are required.' });
+            return jsonResponse(400, { error: 'validation', message: 'Name, email, and phone are required.' }, origin);
         }
         const userErr = validateUsername(username);
-        if (userErr) return jsonResponse(400, { error: 'validation', message: userErr });
+        if (userErr) return jsonResponse(400, { error: 'validation', message: userErr }, origin);
         const passErr = validatePassword(password);
-        if (passErr) return jsonResponse(400, { error: 'validation', message: passErr });
+        if (passErr) return jsonResponse(400, { error: 'validation', message: passErr }, origin);
         if (!fileBase64 || fileBase64.length < 20) {
-            return jsonResponse(400, { error: 'validation', message: 'Please attach your resume (PDF or Word).' });
+            return jsonResponse(400, { error: 'validation', message: 'Please attach your resume (PDF or Word).' }, origin);
         }
         const approxBytes = Math.floor((fileBase64.length * 3) / 4);
         if (approxBytes > MAX_BYTES) {
-            return jsonResponse(400, { error: 'validation', message: 'Resume must be under 1.5 MB.' });
+            return jsonResponse(400, { error: 'validation', message: 'Resume must be under 1.5 MB.' }, origin);
         }
         if (!/\.(pdf|doc|docx)$/i.test(fileName)) {
-            return jsonResponse(400, { error: 'validation', message: 'Only PDF or Word resumes are accepted.' });
+            return jsonResponse(400, { error: 'validation', message: 'Only PDF or Word resumes are accepted.' }, origin);
         }
 
         const store = getAssessmentStore(context);
         const existing = await store.get(candidateKey(username), { type: 'text' });
         if (existing) {
-            return jsonResponse(409, { error: 'exists', message: 'That username is already taken. Choose another or sign in.' });
+            return jsonResponse(409, { error: 'exists', message: 'That username is already taken. Choose another or sign in.' }, origin);
         }
 
-        const salt = randomBytes(12).toString('hex');
-        const passwordHash = hashPassword(password, salt);
+        const { salt, passwordHash } = hashPassword(password);
         const resumeId = `resume-${Date.now()}-${username.replace(/[^a-z0-9]/g, '')}`;
+        const referenceId = generateReferenceId();
 
         const resumeRecord = {
             id: resumeId,
@@ -92,6 +92,7 @@ export default async (req, context) => {
             fileType,
             fileBase64,
             username,
+            referenceId,
             submittedAt: new Date().toISOString()
         };
         await store.set(`resume:${resumeId}`, JSON.stringify(resumeRecord));
@@ -110,6 +111,7 @@ export default async (req, context) => {
             passwordHash,
             resumeId,
             role,
+            referenceId,
             passwordResetEnabled: false,
             createdAt: new Date().toISOString()
         };
@@ -128,8 +130,17 @@ export default async (req, context) => {
             email: candidate.email,
             fullName: candidate.fullName,
             phone: candidate.phone,
+            referenceId,
             expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000
         }));
+
+        await writeAudit(store, {
+            actor: username,
+            role: 'candidate',
+            action: 'candidate_register',
+            target: email,
+            meta: { referenceId, resumeId }
+        });
 
         return jsonResponse(200, {
             success: true,
@@ -138,10 +149,11 @@ export default async (req, context) => {
             fullName,
             email,
             phone,
-            message: 'Account created and resume submitted. You can start Attempt 1 now.'
-        });
+            referenceId,
+            message: `Account created. Your reference ID is ${referenceId}. You can start Attempt 1 now.`
+        }, origin);
     } catch (err) {
         console.error('candidate-register error:', err);
-        return jsonResponse(500, { error: 'Server error', message: err.message });
+        return jsonResponse(500, { error: 'Server error', message: err.message }, origin);
     }
 };

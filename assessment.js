@@ -1514,6 +1514,9 @@
             terminatedReason: terminatedReason || null,
             tabSwitchCount,
             overallScore,
+            referenceId: session.referenceId || null,
+            consentAccepted: !!session.consentAccepted,
+            deviceWarningAcknowledged: !!session.deviceWarningAcknowledged,
             oddman: {
                 answers: state.oddman.answers || [],
                 score: state.oddman.score || 0,
@@ -1652,6 +1655,7 @@
         }
 
         const attemptNum = Number(payload.attemptNumber) || 1;
+        const refId = res.referenceId || payload.referenceId || session?.referenceId || '';
         const afterMsg = attemptNum === 1
             ? `<div class="assessment-next-steps" style="margin-top:1rem;text-align:left">
                     <p style="margin:0 0 0.5rem;font-weight:600">Next steps</p>
@@ -1666,6 +1670,7 @@
             <div class="form-alert form-alert--success" style="display:block">
                 <h2 style="margin-bottom:0.5rem">Submission received</h2>
                 <p>Thank you, ${payload.fullName}. Your Attempt ${attemptNum} has been recorded successfully.</p>
+                ${refId ? `<p style="margin-top:0.65rem">Reference ID: <strong>${refId}</strong></p>` : ''}
                 ${afterMsg}
                 ${viaEmail ? '<p style="margin-top:0.75rem;font-size:0.88rem">A notification has also been sent to our recruitment team.</p>' : ''}
             </div>
@@ -1861,13 +1866,68 @@
         const attemptLabel = data.attemptLabel || (session.attemptNumber === 2 ? 'Attempt 2' : 'Attempt 1');
         const badge = document.getElementById('attempt-badge');
         if (badge) badge.textContent = session.isAdminPractice ? 'Admin practice' : attemptLabel;
-        initEmailTopics();
-        startedAt = Date.now();
-        globalSecondsLeft = data.totalMinutes * 60;
-        updateTimers();
-        initTabDetection();
-        initSessionControls();
-        renderSection();
+
+        function beginAssessment() {
+            initEmailTopics();
+            startedAt = Date.now();
+            globalSecondsLeft = data.totalMinutes * 60;
+            updateTimers();
+            initTabDetection();
+            initSessionControls();
+            renderSection();
+        }
+
+        // Admin practice skips the candidate gate
+        if (session.isAdminPractice || session.gateAccepted) {
+            beginAssessment();
+            return;
+        }
+
+        const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
+            (window.matchMedia && window.matchMedia('(max-width: 768px)').matches);
+        const panel = document.getElementById('assessment-content');
+        panel.innerHTML = `
+            <div class="assessment-gate">
+                <h2>Before you begin</h2>
+                <p class="section-desc">Please confirm the following. Your responses are reviewed confidentially; individual scores are not shown on completion.</p>
+                ${isMobile ? `<div class="form-alert form-alert--error" style="display:block;margin-bottom:1rem">Mobile device detected. Typing and voice sections work best on a <strong>desktop or laptop</strong> with a keyboard and microphone. Continue only if you cannot use another device.</div>` : ''}
+                <ul>
+                    <li>Allow about <strong>${data.totalMinutes || 75} minutes</strong> uninterrupted</li>
+                    <li>Stay on this browser tab (leaving the tab is monitored)</li>
+                    <li>Use headphones/mic if available for voice prompts</li>
+                    <li>Do not share questions or receive assistance during the test</li>
+                </ul>
+                <div class="form-field">
+                    <label class="consent-label">
+                        <input type="checkbox" id="gate-consent" required>
+                        <span>I consent to Trinitas processing my assessment responses and contact details for recruitment only, in line with the privacy notice.</span>
+                    </label>
+                </div>
+                <div class="form-field">
+                    <label class="consent-label">
+                        <input type="checkbox" id="gate-device" ${isMobile ? '' : 'checked'}>
+                        <span>I understand the device recommendations and integrity rules.</span>
+                    </label>
+                </div>
+                <button type="button" class="btn btn-primary btn-full" id="gate-start">Start assessment</button>
+                <p class="section-desc" style="margin-top:0.75rem;font-size:0.85rem"><a href="privacy.html" target="_blank" rel="noopener">Privacy notice</a> · <a href="careers.html">Back to Careers</a></p>
+            </div>
+        `;
+        document.getElementById('gate-start')?.addEventListener('click', () => {
+            const consent = document.getElementById('gate-consent')?.checked;
+            const device = document.getElementById('gate-device')?.checked;
+            if (!consent || !device) {
+                alert('Please accept both confirmations to continue.');
+                return;
+            }
+            session.gateAccepted = true;
+            session.consentAccepted = true;
+            session.deviceWarningAcknowledged = true;
+            try {
+                sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+            } catch { /* ignore */ }
+            beginAssessment();
+        });
     }
 
     document.addEventListener('DOMContentLoaded', init);

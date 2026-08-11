@@ -1,17 +1,15 @@
-import { createHash, randomBytes } from 'crypto';
+import { randomBytes } from 'crypto';
 import {
     corsHeaders,
     jsonResponse,
     getAssessmentStore,
     verifyAdminToken
 } from './lib/shared.mjs';
+import { hashPassword } from './lib/password.mjs';
+import { writeAudit } from './lib/audit.mjs';
 
 function candidateKey(username) {
     return `candidate:${String(username || '').trim().toLowerCase()}`;
-}
-
-function hashPassword(password, salt) {
-    return createHash('sha256').update(`${salt}:${password}`).digest('hex');
 }
 
 function validatePassword(password) {
@@ -28,17 +26,18 @@ function generateTempPassword() {
 }
 
 export default async (req, context) => {
+    const origin = req.headers.get('origin') || '';
     if (req.method === 'OPTIONS') {
-        return new Response(null, { status: 204, headers: corsHeaders() });
+        return new Response(null, { status: 204, headers: corsHeaders(origin) });
     }
     if (req.method !== 'POST') {
-        return jsonResponse(405, { error: 'Method not allowed' });
+        return jsonResponse(405, { error: 'Method not allowed' }, origin);
     }
 
     try {
         const store = getAssessmentStore(context);
         if (!await verifyAdminToken(store, req.headers.get('Authorization'))) {
-            return jsonResponse(401, { error: 'Unauthorized' });
+            return jsonResponse(401, { error: 'Unauthorized' }, origin);
         }
 
         const body = await req.json();
@@ -46,12 +45,12 @@ export default async (req, context) => {
         const action = String(body.action || '').trim();
 
         if (!username) {
-            return jsonResponse(400, { error: 'Username required' });
+            return jsonResponse(400, { error: 'Username required' }, origin);
         }
 
         const raw = await store.get(candidateKey(username), { type: 'text' });
         if (!raw) {
-            return jsonResponse(404, { error: 'not_found', message: 'Candidate account not found.' });
+            return jsonResponse(404, { error: 'not_found', message: 'Candidate account not found.' }, origin);
         }
 
         const candidate = JSON.parse(raw);
@@ -59,47 +58,65 @@ export default async (req, context) => {
         if (action === 'enable') {
             candidate.passwordResetEnabled = true;
             await store.set(candidateKey(username), JSON.stringify(candidate));
+            await writeAudit(store, {
+                actor: 'admin',
+                role: 'admin',
+                action: 'password_reset_enable',
+                target: username
+            });
             return jsonResponse(200, {
                 success: true,
                 passwordResetEnabled: true,
-                message: `Password reset enabled for @${username}. They can set a new password on Careers using username and registered email.`
-            });
+                message: `Password reset enabled for @${username}.`
+            }, origin);
         }
 
         if (action === 'disable') {
             candidate.passwordResetEnabled = false;
             await store.set(candidateKey(username), JSON.stringify(candidate));
+            await writeAudit(store, {
+                actor: 'admin',
+                role: 'admin',
+                action: 'password_reset_disable',
+                target: username
+            });
             return jsonResponse(200, {
                 success: true,
                 passwordResetEnabled: false,
                 message: `Password reset disabled for @${username}.`
-            });
+            }, origin);
         }
 
         if (action === 'set-temp') {
             const tempPassword = String(body.password || '').trim() || generateTempPassword();
             const passErr = validatePassword(tempPassword);
             if (passErr) {
-                return jsonResponse(400, { error: 'validation', message: passErr });
+                return jsonResponse(400, { error: 'validation', message: passErr }, origin);
             }
-            const salt = randomBytes(12).toString('hex');
-            candidate.salt = salt;
-            candidate.passwordHash = hashPassword(tempPassword, salt);
+            const upgraded = hashPassword(tempPassword);
+            candidate.salt = upgraded.salt;
+            candidate.passwordHash = upgraded.passwordHash;
             candidate.passwordResetEnabled = false;
             await store.set(candidateKey(username), JSON.stringify(candidate));
+            await writeAudit(store, {
+                actor: 'admin',
+                role: 'admin',
+                action: 'password_temp_set',
+                target: username
+            });
             return jsonResponse(200, {
                 success: true,
                 temporaryPassword: tempPassword,
-                message: `Temporary password set for @${username}. Share it securely with the candidate, then ask them to sign in.`
-            });
+                message: `Temporary password set for @${username}. Share it securely.`
+            }, origin);
         }
 
         return jsonResponse(400, {
             error: 'invalid_action',
             message: 'action must be enable, disable, or set-temp.'
-        });
+        }, origin);
     } catch (err) {
         console.error('admin-password-reset error:', err);
-        return jsonResponse(500, { error: 'Server error', detail: err.message });
+        return jsonResponse(500, { error: 'Server error', detail: err.message }, origin);
     }
 };

@@ -434,6 +434,21 @@
                 headers: { Authorization: `Bearer ${token}` },
                 body: JSON.stringify(payload)
             });
+        },
+
+        async adminHrInvite(token, payload = {}) {
+            return request('/admin-hr-invite', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body: JSON.stringify(payload)
+            });
+        },
+
+        async adminAudit(token, limit = 80) {
+            return request(`/admin-audit?limit=${limit}`, {
+                method: 'GET',
+                headers: { Authorization: `Bearer ${token}` }
+            });
         }
     };
 })();

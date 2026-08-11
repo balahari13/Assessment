@@ -11,7 +11,7 @@ const siteFiles = [
     'styles.css', 'careers.css', 'main.js', 'api.js', 'careers.js', 'healthcare.js', 'hr.js',
     'agent-mail.js', 'agent-dashboard.js',
     'assessment.js', 'assessment-aptitude.js', 'assessment-data.js', 'assessment-data-attempt2.js', 'admin.js',
-    'logo-icon.png', 'logo-full.png', 'logo-wordmark.png'
+    'logo-icon.png', 'logo-full.png', 'logo-wordmark.png', 'README.md'
 ];
 
 if (!existsSync(deploy)) {

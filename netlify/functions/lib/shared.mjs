@@ -2,16 +2,25 @@ import { getStore } from '@netlify/blobs';
 import { createHmac, randomBytes, timingSafeEqual } from 'crypto';
 
 const STORE_NAME = 'trinitas-assessments';
-const ADMIN_ID = 'Trinitas';
-const ADMIN_PASSWORD = 'Trinitas2026*';
-/** Site / agent-portal admin (email-style login) */
-const SITE_ADMIN_EMAIL = 'balahari@trinitas.in';
-const SITE_ADMIN_PASSWORD = 'Trinitas2026415*';
+/** Prefer Netlify env vars — never commit production secrets. Fallbacks keep existing deploys working. */
+const ADMIN_ID = process.env.ADMIN_ID || 'Trinitas';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Trinitas2026*';
+const SITE_ADMIN_EMAIL = (process.env.SITE_ADMIN_EMAIL || 'balahari@trinitas.in').toLowerCase();
+const SITE_ADMIN_PASSWORD = process.env.SITE_ADMIN_PASSWORD || 'Trinitas2026415*';
 const TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 
 /** Default Google Meet room for HR interviews (same as Healthcare help desk). */
-export const DEFAULT_MEET_LINK = 'https://meet.google.com/ygi-ejrk-sae';
-export const HIRING_WHATSAPP = '919790113193';
+export const DEFAULT_MEET_LINK = process.env.DEFAULT_MEET_LINK || 'https://meet.google.com/ygi-ejrk-sae';
+export const HIRING_WHATSAPP = process.env.HIRING_WHATSAPP || '919790113193';
+
+const DEFAULT_ORIGINS = [
+    'https://assessment.netlify.app',
+    'https://trinitasnxt.in',
+    'https://www.trinitasnxt.in',
+    'http://localhost:8888',
+    'http://localhost:3000',
+    'http://127.0.0.1:8888'
+];
 
 export const PIPELINE_STAGES = [
     { id: 'applied', label: 'Applied / Resume', order: 1 },
@@ -23,19 +32,45 @@ export const PIPELINE_STAGES = [
     { id: 'closed', label: 'Closed / Not selected', order: 7 }
 ];
 
-export function corsHeaders() {
+function allowedOrigins() {
+    const extra = String(process.env.ALLOWED_ORIGINS || '')
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+    return [...new Set([...DEFAULT_ORIGINS, ...extra])];
+}
+
+export function corsHeaders(requestOrigin) {
+    const allowed = allowedOrigins();
+    let origin = '*';
+    if (requestOrigin && allowed.includes(requestOrigin)) {
+        origin = requestOrigin;
+    } else if (process.env.SITE_URL && allowed.includes(process.env.SITE_URL)) {
+        origin = process.env.SITE_URL;
+    } else if (allowed.length) {
+        // Reflect first production origin when request has no Origin (same-origin Netlify functions)
+        origin = allowed[0];
+    }
     return {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': origin,
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE'
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE',
+        'Vary': 'Origin'
     };
 }
 
-export function jsonResponse(status, body) {
+export function jsonResponse(status, body, requestOrigin) {
     return new Response(JSON.stringify(body), {
         status,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders() }
+        headers: { 'Content-Type': 'application/json', ...corsHeaders(requestOrigin) }
     });
+}
+
+/** Human-friendly reference e.g. TRI-2026-A3F91C */
+export function generateReferenceId() {
+    const year = new Date().getFullYear();
+    const code = randomBytes(3).toString('hex').toUpperCase();
+    return `TRI-${year}-${code}`;
 }
 
 export function getAssessmentStore(context) {
@@ -125,8 +160,13 @@ export async function saveSubmission(store, submission) {
         phone: submission.phone,
         attempt1: null,
         attempt2: null,
-        attempt2Enabled: false
+        attempt2Enabled: false,
+        referenceId: submission.referenceId || null
     };
+
+    if (submission.referenceId) {
+        candidate.referenceId = submission.referenceId;
+    }
 
     // Build a clean record: contact email is always a string
     const emailWriting = submission.emailWriting || submission.emailAssessment || {};
@@ -134,12 +174,15 @@ export async function saveSubmission(store, submission) {
         email,
         fullName: submission.fullName,
         phone: submission.phone,
+        referenceId: submission.referenceId || candidate.referenceId || null,
         registeredAt: submission.registeredAt || null,
         durationMinutes: submission.durationMinutes ?? null,
         timedOut: !!submission.timedOut,
         terminatedReason: submission.terminatedReason || null,
         tabSwitchCount: Number(submission.tabSwitchCount) || 0,
         overallScore: Number(submission.overallScore) || 0,
+        serverScored: !!submission.serverScored,
+        clientOverallScore: submission.clientOverallScore ?? null,
         oddman: submission.oddman || {},
         scenarios: submission.scenarios || {},
         grammar: submission.grammar || {},
@@ -190,7 +233,7 @@ export async function saveAttempt(store, attempt) {
 }
 
 function signToken(token) {
-    const secret = process.env.ADMIN_TOKEN_SECRET || 'trinitas-admin-secret';
+    const secret = process.env.ADMIN_TOKEN_SECRET || process.env.ADMIN_PASSWORD || 'trinitas-admin-secret';
     return createHmac('sha256', secret).update(token).digest('hex');
 }
 
@@ -306,6 +349,14 @@ export function verifyAdminCredentials(username, password) {
 
 export function isSiteAdminEmail(email) {
     return normalizeEmail(email) === SITE_ADMIN_EMAIL;
+}
+
+export function getAdminConfigPublic() {
+    return {
+        meetLink: DEFAULT_MEET_LINK,
+        whatsapp: HIRING_WHATSAPP,
+        envSecretsConfigured: !!(process.env.ADMIN_PASSWORD && process.env.ADMIN_TOKEN_SECRET)
+    };
 }
 
 export function agentKey(email) {

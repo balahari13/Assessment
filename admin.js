@@ -246,14 +246,18 @@
         const active = detailAttempt === 2 && a2 ? 2 : 1;
         const sub = active === 2 ? a2 : a1;
 
+        const ref = candidate.referenceId || a1?.referenceId || a2?.referenceId || '—';
         container.innerHTML = `
             <div class="admin-detail-header">
                 <h2>${candidate.fullName || sub?.fullName || 'Candidate'}</h2>
                 <div class="admin-detail-meta">
+                    <span><strong>Ref</strong> ${ref}</span>
                     <span>${candidate.email}</span>
                     <span>${candidate.phone || sub?.phone || ''}</span>
                     <span>Completed: ${formatDate(sub?.completedAt)}</span>
                     <span>Duration: ${sub?.durationMinutes || '—'} min</span>
+                    ${sub?.serverScored ? '<span class="score-pill score-pill--high">Server scored</span>' : ''}
+                    ${sub?.tabSwitchCount != null ? `<span>Tab switches: ${sub.tabSwitchCount}</span>` : ''}
                 </div>
             </div>
             <div class="admin-attempt-tabs">
@@ -366,21 +370,41 @@
         `;
     }
 
+    function getFilteredResults() {
+        const q = (document.getElementById('results-search')?.value || '').trim().toLowerCase();
+        const filter = document.getElementById('results-filter-attempt2')?.value || 'all';
+        return cachedResults.filter(raw => {
+            const r = normalizeCandidate(raw);
+            const a1 = getSubmission(r, 1);
+            const a2 = getSubmission(r, 2);
+            const ref = (r.referenceId || a1?.referenceId || a2?.referenceId || '').toLowerCase();
+            const hay = `${r.fullName || ''} ${r.email || ''} ${ref}`.toLowerCase();
+            if (q && !hay.includes(q)) return false;
+            if (filter === 'enabled' && !r.attempt2Enabled) return false;
+            if (filter === 'done2' && !a2) return false;
+            if (filter === 'a1only' && (!a1 || a2)) return false;
+            return true;
+        });
+    }
+
     function renderTable(results) {
         const tbody = document.getElementById('results-body');
-        cachedResults = results;
-        if (!results.length) {
-            tbody.innerHTML = '<tr><td colspan="16">No assessment submissions yet.</td></tr>';
+        if (results !== undefined) cachedResults = results;
+        const list = getFilteredResults();
+        if (!list.length) {
+            tbody.innerHTML = '<tr><td colspan="17">No matching assessment submissions.</td></tr>';
             return;
         }
 
-        tbody.innerHTML = results.map(raw => {
+        tbody.innerHTML = list.map(raw => {
             const r = normalizeCandidate(raw);
             const email = r.email || '';
             const a1 = getSubmission(r, 1);
             const a2 = getSubmission(r, 2);
+            const ref = r.referenceId || a1?.referenceId || a2?.referenceId || '—';
             return `
             <tr data-email="${email}">
+                <td><code class="admin-ref">${ref}</code></td>
                 <td>${r.fullName || a1?.fullName || '—'}</td>
                 <td>${email || '—'}</td>
                 <td>${scorePill(a1?.overallScore)}</td>
@@ -502,6 +526,56 @@
         loadCandidates();
         loadPipeline();
         loadHrTeam();
+        loadAudit();
+    }
+
+    async function loadAudit() {
+        const tbody = document.getElementById('audit-body');
+        if (!tbody) return;
+        const token = sessionStorage.getItem(TOKEN_KEY);
+        const { ok, data } = await window.TrinitasAPI.adminAudit(token, 100);
+        if (!ok) {
+            tbody.innerHTML = '<tr><td colspan="6">Could not load audit log.</td></tr>';
+            return;
+        }
+        const items = data.items || [];
+        if (!items.length) {
+            tbody.innerHTML = '<tr><td colspan="6">No audit entries yet.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = items.map(e => `
+            <tr>
+                <td>${formatPausedDate(e.at)}</td>
+                <td>${escapeHtml(e.actor || '—')}</td>
+                <td>${escapeHtml(e.role || '—')}</td>
+                <td><code>${escapeHtml(e.action || '—')}</code></td>
+                <td>${escapeHtml(e.target || '—')}</td>
+                <td style="font-size:0.78rem;max-width:220px;overflow:hidden;text-overflow:ellipsis">${escapeHtml(JSON.stringify(e.meta || {}))}</td>
+            </tr>
+        `).join('');
+    }
+
+    function initAdminTabs() {
+        const tabs = document.querySelectorAll('.admin-tab');
+        if (!tabs.length) return;
+        function showPanel(name) {
+            tabs.forEach(t => t.classList.toggle('admin-tab--active', t.dataset.adminPanel === name));
+            document.querySelectorAll('[data-admin-section]').forEach(sec => {
+                const panels = String(sec.dataset.adminSection || '').split(/\s+/);
+                const match = panels.includes(name) || (name === 'overview' && panels.includes('overview'));
+                // overview shows stats only; other panels hide overview-only
+                if (name === 'overview') {
+                    sec.hidden = !panels.includes('overview');
+                } else {
+                    sec.hidden = !panels.includes(name);
+                }
+            });
+            // overview also shows a quick slice of pipeline + results? keep overview = stats only
+        }
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => showPanel(tab.dataset.adminPanel));
+        });
+        showPanel('overview');
     }
 
     async function handleResumeDownload(id) {
@@ -1098,6 +1172,32 @@
                 loadPipeline();
             });
         }
+
+        document.getElementById('refresh-audit')?.addEventListener('click', loadAudit);
+        document.getElementById('btn-hr-invite')?.addEventListener('click', async () => {
+            const token = sessionStorage.getItem(TOKEN_KEY);
+            const { ok, data } = await window.TrinitasAPI.adminHrInvite(token, { days: 14 });
+            const box = document.getElementById('hr-invite-display');
+            if (!ok) {
+                showToast(data.message || data.error || 'Could not create invite.', 'error');
+                return;
+            }
+            if (box) {
+                box.hidden = false;
+                box.textContent = `Invite code: ${data.code} (expires ${formatPausedDate(data.expiresAt)}). Share only with trusted HR.`;
+            }
+            try {
+                await navigator.clipboard.writeText(data.code);
+                showToast(`Invite ${data.code} copied to clipboard.`, 'success');
+            } catch {
+                showToast(data.message || `Invite: ${data.code}`, 'success');
+            }
+            loadAudit();
+        });
+
+        document.getElementById('results-search')?.addEventListener('input', () => renderTable());
+        document.getElementById('results-filter-attempt2')?.addEventListener('change', () => renderTable());
+        initAdminTabs();
     }
 
     function initDetailModal() {

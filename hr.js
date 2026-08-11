@@ -107,12 +107,17 @@
             const email = form.email.value.trim().toLowerCase();
             const phone = form.phone.value.trim();
             const password = form.password.value;
+            const inviteCode = form.inviteCode.value.trim();
+            if (!inviteCode) {
+                showAlert(alert, 'An administrator invite code is required.', 'error');
+                return;
+            }
             const btn = form.querySelector('button[type="submit"]');
             const label = btn.textContent;
             btn.disabled = true;
             btn.textContent = 'Creating…';
             try {
-                const { ok, data } = await window.TrinitasAPI.hrRegister({ fullName, email, phone, password });
+                const { ok, data } = await window.TrinitasAPI.hrRegister({ fullName, email, phone, password, inviteCode });
                 if (!ok || !data.success) {
                     showAlert(alert, data.message || data.error || 'Registration failed.', 'error');
                     btn.disabled = false;

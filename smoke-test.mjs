@@ -70,12 +70,14 @@ mustContain(join(deploy, 'privacy.html'), [
 console.log('\nSmoke test: candidate account + resume path');
 mustContain(join(deploy, 'careers.html'), ['id="signup-form"', 'id="signin-form"', 'suPassword', 'Begin Attempt 1', 'panel-forgot', 'Forgot password'], 'careers account + attempts');
 mustContain(join(deploy, 'careers.js'), ['candidate-register', 'candidate-login', 'passwordStrength', 'btn-attempt1', 'candidate-reset-password'], 'careers.js account flow');
-mustContain(join(deploy, 'admin.html'), ['id="resumes-body"', 'Resume submissions', 'id="candidates-body"', 'Candidate accounts', 'Hiring pipeline', 'hr-team-body', 'admin-pipeline-board'], 'admin resumes + pipeline + HR');
-mustContain(join(deploy, 'admin.js'), ['loadResumes', 'adminResumes', 'adminResumeDownload', 'handleResumeDelete', 'loadPipeline', 'loadHrTeam', 'ensureAssessmentData'], 'admin.js resumes + pipeline');
-mustContain(join(deploy, 'api.js'), ['adminResumes', 'adminResumeDownload', 'adminResumeDelete', 'adminCandidates', 'adminPasswordReset', 'pipelineList', 'hrRegister'], 'api.js resumes + pipeline + HR');
-mustContain(join(deploy, 'careers.html'), ['firstname.lastname'], 'generic username placeholder');
-mustContain(join(deploy, 'hr.html'), ['hr-register-form', 'Google Meet', 'pipeline-board', 'Hiring pipeline'], 'HR portal page');
-mustContain(join(deploy, 'hr.js'), ['hrRegister', 'pipelineList', 'Schedule interview'], 'HR portal script');
+mustContain(join(deploy, 'admin.html'), ['id="resumes-body"', 'Resume submissions', 'id="candidates-body"', 'Candidate accounts', 'Hiring pipeline', 'hr-team-body', 'admin-pipeline-board', 'admin-tabs', 'audit-body', 'btn-hr-invite', 'results-search'], 'admin tabs + pipeline + HR + audit');
+mustContain(join(deploy, 'admin.js'), ['loadResumes', 'handleResumeDelete', 'loadPipeline', 'loadHrTeam', 'loadAudit', 'initAdminTabs', 'ensureAssessmentData'], 'admin.js product UX');
+mustContain(join(deploy, 'api.js'), ['adminResumes', 'adminResumeDelete', 'adminCandidates', 'pipelineList', 'hrRegister', 'adminHrInvite', 'adminAudit'], 'api.js full admin/HR surface');
+mustContain(join(deploy, 'careers.html'), ['firstname.lastname', 'careers-progress-checklist'], 'careers checklist + generic username');
+mustContain(join(deploy, 'hr.html'), ['hr-register-form', 'Google Meet', 'pipeline-board', 'inviteCode'], 'HR invite-only portal');
+mustContain(join(deploy, 'hr.js'), ['hrRegister', 'pipelineList', 'inviteCode'], 'HR portal script');
+mustContain(join(deploy, 'assessment.js'), ['gate-consent', 'assessment-gate', 'referenceId'], 'assessment consent gate + ref');
+mustExist(join(root, 'README.md'), 'README.md');
 mustExist(join(functionsDir, 'candidate-register.mjs'), 'function candidate-register.mjs');
 mustExist(join(functionsDir, 'candidate-login.mjs'), 'function candidate-login.mjs');
 mustExist(join(functionsDir, 'candidate-reset-password.mjs'), 'function candidate-reset-password.mjs');
@@ -90,7 +92,16 @@ mustExist(join(functionsDir, 'hr-register.mjs'), 'function hr-register.mjs');
 mustExist(join(functionsDir, 'hr-login.mjs'), 'function hr-login.mjs');
 mustExist(join(functionsDir, 'pipeline.mjs'), 'function pipeline.mjs');
 mustExist(join(functionsDir, 'admin-hr.mjs'), 'function admin-hr.mjs');
+mustExist(join(functionsDir, 'admin-hr-invite.mjs'), 'function admin-hr-invite.mjs');
+mustExist(join(functionsDir, 'admin-audit.mjs'), 'function admin-audit.mjs');
+mustExist(join(functionsDir, 'lib', 'password.mjs'), 'password.mjs scrypt');
+mustExist(join(functionsDir, 'lib', 'score.mjs'), 'score.mjs server scoring');
+mustExist(join(functionsDir, 'lib', 'answer-keys.mjs'), 'answer-keys.mjs');
+mustExist(join(functionsDir, 'lib', 'audit.mjs'), 'audit.mjs');
 mustContain(join(functionsDir, 'pipeline.mjs'), ['PIPELINE_STAGES', 'DEFAULT_MEET_LINK', 'verifyStaffAccess'], 'pipeline handler');
+mustContain(join(functionsDir, 'lib', 'shared.mjs'), ['ADMIN_PASSWORD', 'ALLOWED_ORIGINS', 'generateReferenceId'], 'env secrets + CORS + ref IDs');
+mustContain(join(functionsDir, 'submit-assessment.mjs'), ['serverScoreSubmission', 'referenceId'], 'server-side scoring on submit');
+mustContain(join(functionsDir, 'hr-register.mjs'), ['invite_required', 'inviteCode'], 'HR invite-only');
 mustContain(join(deploy, 'careers.html'), ['after-attempt-box', 'Assessment process'], 'careers after-attempt copy');
 mustContain(join(deploy, 'admin.html'), ['Assessment data (with answers) loads only after successful admin sign-in', 'admin-logged-out', 'id="admin-dashboard" hidden'], 'admin login-gated shell');
 mustContain(join(deploy, 'careers.css'), ['admin-dashboard[hidden]', 'body.admin-logged-out #admin-dashboard'], 'admin dashboard hidden CSS override fix');
@@ -126,6 +137,8 @@ const requiredFns = [
     'hr-login.mjs',
     'pipeline.mjs',
     'admin-hr.mjs',
+    'admin-hr-invite.mjs',
+    'admin-audit.mjs',
     'pause-assessment.mjs',
     'resume-assessment.mjs',
     'admin-paused.mjs',

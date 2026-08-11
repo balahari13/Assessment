@@ -60,7 +60,17 @@
 
             <div id="admin-toast" class="admin-toast" hidden></div>
 
-            <section class="admin-stats" aria-label="Summary statistics">
+            <nav class="admin-tabs" id="admin-tabs" aria-label="Admin sections">
+                <button type="button" class="admin-tab admin-tab--active" data-admin-panel="overview">Overview</button>
+                <button type="button" class="admin-tab" data-admin-panel="pipeline">Pipeline</button>
+                <button type="button" class="admin-tab" data-admin-panel="results">Assessments</button>
+                <button type="button" class="admin-tab" data-admin-panel="resumes">Resumes</button>
+                <button type="button" class="admin-tab" data-admin-panel="accounts">Accounts</button>
+                <button type="button" class="admin-tab" data-admin-panel="hr">HR team</button>
+                <button type="button" class="admin-tab" data-admin-panel="audit">Audit log</button>
+            </nav>
+
+            <section class="admin-stats" data-admin-section="overview" aria-label="Summary statistics">
                 <div class="admin-stat"><strong id="stat-total">—</strong><span>Candidates</span></div>
                 <div class="admin-stat"><strong id="stat-grammar">—</strong><span>Avg English</span></div>
                 <div class="admin-stat"><strong id="stat-reading">—</strong><span>Avg Reading</span></div>
@@ -69,14 +79,14 @@
                 <div class="admin-stat"><strong id="stat-voice">—</strong><span>Avg Voice</span></div>
             </section>
 
-            <section class="answer-key-panel" id="answer-key-panel" hidden>
+            <section class="answer-key-panel" id="answer-key-panel" data-admin-section="results" hidden>
                 <div class="answer-key-panel-head">
                     <h2>Assessment Answer Key</h2>
                 </div>
                 <div id="answer-key-content"></div>
             </section>
 
-            <section class="admin-table-card">
+            <section class="admin-table-card" data-admin-section="pipeline">
                 <div class="admin-section-title-row">
                     <h2 class="admin-section-title">Hiring pipeline — next course of action</h2>
                     <button type="button" class="btn btn-secondary btn-sm" id="refresh-pipeline">Refresh pipeline</button>
@@ -108,12 +118,16 @@
                 </div>
             </section>
 
-            <section class="admin-table-card admin-paused-card">
+            <section class="admin-table-card admin-paused-card" data-admin-section="hr">
                 <div class="admin-section-title-row">
                     <h2 class="admin-section-title">HR team</h2>
-                    <button type="button" class="btn btn-secondary btn-sm" id="refresh-hr">Refresh HR</button>
+                    <div class="admin-section-title-actions">
+                        <button type="button" class="btn btn-primary btn-sm" id="btn-hr-invite">Generate invite code</button>
+                        <button type="button" class="btn btn-secondary btn-sm" id="refresh-hr">Refresh HR</button>
+                    </div>
                 </div>
-                <p class="section-desc admin-paused-desc">HR staff who registered on the HR portal. Activate, deactivate, or remove accounts. HR conducts interviews via Google Meet.</p>
+                <p class="section-desc admin-paused-desc">HR registration is invite-only. Generate a code, share it securely, then activate/deactivate accounts. HR conducts interviews via Google Meet.</p>
+                <div id="hr-invite-display" class="form-alert form-alert--success" hidden></div>
                 <div class="results-table-wrap">
                     <table class="results-table">
                         <thead>
@@ -133,7 +147,7 @@
                 </div>
             </section>
 
-            <section class="admin-table-card admin-paused-card">
+            <section class="admin-table-card admin-paused-card" data-admin-section="accounts">
                 <div class="admin-section-title-row">
                     <h2 class="admin-section-title">Candidate accounts</h2>
                     <button type="button" class="btn btn-secondary btn-sm" id="refresh-candidates">Refresh accounts</button>
@@ -157,12 +171,12 @@
                 </div>
             </section>
 
-            <section class="admin-table-card admin-paused-card">
+            <section class="admin-table-card admin-paused-card" data-admin-section="resumes">
                 <div class="admin-section-title-row">
                     <h2 class="admin-section-title">Resume submissions</h2>
                     <button type="button" class="btn btn-secondary btn-sm" id="refresh-resumes">Refresh resumes</button>
                 </div>
-                <p class="section-desc admin-paused-desc">CVs submitted from the Careers page. Download to review offline.</p>
+                <p class="section-desc admin-paused-desc">CVs submitted from the Careers page. Downloads are audit-logged. Delete when no longer needed.</p>
                 <div class="results-table-wrap">
                     <table class="results-table">
                         <thead>
@@ -183,7 +197,7 @@
                 </div>
             </section>
 
-            <section class="admin-table-card admin-paused-card">
+            <section class="admin-table-card admin-paused-card" data-admin-section="results">
                 <div class="admin-section-title-row">
                     <h2 class="admin-section-title">Paused assessments</h2>
                     <button type="button" class="btn btn-secondary btn-sm" id="refresh-paused">Refresh paused</button>
@@ -208,14 +222,24 @@
                 </div>
             </section>
 
-            <section class="admin-table-card">
+            <section class="admin-table-card" data-admin-section="results">
                 <div class="admin-section-title-row">
                     <h2 class="admin-section-title">Submitted results</h2>
+                </div>
+                <div class="admin-filter-bar">
+                    <input type="search" id="results-search" class="admin-filter-input" placeholder="Search name, email, reference…" autocomplete="off">
+                    <select id="results-filter-attempt2" class="admin-filter-select">
+                        <option value="all">All candidates</option>
+                        <option value="enabled">Attempt 2 enabled</option>
+                        <option value="done2">Completed Attempt 2</option>
+                        <option value="a1only">Attempt 1 only</option>
+                    </select>
                 </div>
                 <div class="results-table-wrap">
                     <table class="results-table results-table--detailed">
                         <thead>
                             <tr>
+                                <th>Ref</th>
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Overall</th>
@@ -235,7 +259,32 @@
                             </tr>
                         </thead>
                         <tbody id="results-body">
-                            <tr><td colspan="16">Loading…</td></tr>
+                            <tr><td colspan="17">Loading…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="admin-table-card" data-admin-section="audit">
+                <div class="admin-section-title-row">
+                    <h2 class="admin-section-title">Audit log</h2>
+                    <button type="button" class="btn btn-secondary btn-sm" id="refresh-audit">Refresh audit</button>
+                </div>
+                <p class="section-desc admin-paused-desc">Sensitive actions: resume access, password resets, HR invites, assessment submits, pipeline changes.</p>
+                <div class="results-table-wrap">
+                    <table class="results-table">
+                        <thead>
+                            <tr>
+                                <th>When</th>
+                                <th>Actor</th>
+                                <th>Role</th>
+                                <th>Action</th>
+                                <th>Target</th>
+                                <th>Detail</th>
+                            </tr>
+                        </thead>
+                        <tbody id="audit-body">
+                            <tr><td colspan="6">No audit entries yet.</td></tr>
                         </tbody>
                     </table>
                 </div>

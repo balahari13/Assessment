@@ -1,4 +1,3 @@
-import { createHash } from 'crypto';
 import {
     corsHeaders,
     jsonResponse,
@@ -7,17 +6,15 @@ import {
     createHrToken,
     hrKey
 } from './lib/shared.mjs';
-
-function hashPassword(password, salt) {
-    return createHash('sha256').update(`${salt}:${password}`).digest('hex');
-}
+import { verifyPassword, hashPassword, needsRehash } from './lib/password.mjs';
 
 export default async (req, context) => {
+    const origin = req.headers.get('origin') || '';
     if (req.method === 'OPTIONS') {
-        return new Response(null, { status: 204, headers: corsHeaders() });
+        return new Response(null, { status: 204, headers: corsHeaders(origin) });
     }
     if (req.method !== 'POST') {
-        return jsonResponse(405, { error: 'Method not allowed' });
+        return jsonResponse(405, { error: 'Method not allowed' }, origin);
     }
 
     try {
@@ -26,26 +23,34 @@ export default async (req, context) => {
         const password = String(body.password || '');
 
         if (!email || !password) {
-            return jsonResponse(400, { error: 'Email and password are required.' });
+            return jsonResponse(400, { error: 'Email and password are required.' }, origin);
         }
 
         const store = getAssessmentStore(context);
         const raw = await store.get(hrKey(email), { type: 'text' });
         if (!raw) {
-            return jsonResponse(401, { error: 'Invalid email or password.' });
+            return jsonResponse(401, { error: 'Invalid email or password.' }, origin);
         }
 
         const account = JSON.parse(raw);
-        if (account.active === false) {
+        if (account.active === false || account.pendingApproval) {
             return jsonResponse(403, {
                 error: 'disabled',
-                message: 'This HR account has been deactivated. Contact an administrator.'
-            });
+                message: account.pendingApproval
+                    ? 'Your HR account is pending administrator approval.'
+                    : 'This HR account has been deactivated. Contact an administrator.'
+            }, origin);
         }
 
-        const hash = hashPassword(password, account.salt);
-        if (hash !== account.passwordHash) {
-            return jsonResponse(401, { error: 'Invalid email or password.' });
+        if (!verifyPassword(password, account)) {
+            return jsonResponse(401, { error: 'Invalid email or password.' }, origin);
+        }
+
+        if (needsRehash(account)) {
+            const upgraded = hashPassword(password);
+            account.salt = upgraded.salt;
+            account.passwordHash = upgraded.passwordHash;
+            await store.set(hrKey(email), JSON.stringify(account));
         }
 
         const { token } = await createHrToken(store, account);
@@ -58,9 +63,9 @@ export default async (req, context) => {
             phone: account.phone || '',
             role: 'hr',
             message: 'Signed in successfully.'
-        });
+        }, origin);
     } catch (err) {
         console.error('hr-login error:', err);
-        return jsonResponse(500, { error: 'Server error', message: err.message });
+        return jsonResponse(500, { error: 'Server error', message: err.message }, origin);
     }
 };

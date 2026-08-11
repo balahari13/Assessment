@@ -69,12 +69,16 @@
                 <div>
                     <p class="eyebrow">How it works</p>
                     <h2>Account first, then assessment</h2>
-                    <ul class="careers-list">
-                        <li><strong>Create account</strong> — username, strong password, resume upload</li>
-                        <li><strong>Start immediately</strong> — no email code wait; begin Attempt 1 after registration</li>
-                        <li><strong>Sign in</strong> — then start Attempt 1 or Attempt 2 (when enabled)</li>
-                        <li><strong>Assessment</strong> — about 75 minutes; pause available with recruitment OTP</li>
+                    <ol class="careers-progress-checklist" id="careers-checklist">
+                        <li data-step="account"><span class="step-num">1</span><span><strong>Create account</strong> — username, strong password, resume</span></li>
+                        <li data-step="signin"><span class="step-num">2</span><span><strong>Sign in</strong> — receive your reference ID</span></li>
+                        <li data-step="attempt1"><span class="step-num">3</span><span><strong>Attempt 1</strong> — ~75 minutes; desktop recommended</span></li>
+                        <li data-step="review"><span class="step-num">4</span><span><strong>Recruitment review</strong> — scores are not shown to you</span></li>
+                        <li data-step="next"><span class="step-num">5</span><span><strong>Next step</strong> — Attempt 2, interview, or update by email</span></li>
+                    </ol>
+                    <ul class="careers-list" style="margin-top:1rem">
                         <li>Use a stable connection and a device with a working microphone</li>
+                        <li>Mobile phones are not ideal for typing and voice sections</li>
                     </ul>
                     <div class="after-attempt-box">
                         <h3>What happens after Attempt 1?</h3>
@@ -210,6 +214,7 @@
                                 <p class="eyebrow">Signed in</p>
                                 <h3 id="logged-name">Candidate</h3>
                                 <p class="section-desc" id="logged-meta"></p>
+                                <p class="careers-ref-banner" id="logged-ref" hidden></p>
                             </div>
                             <button type="button" class="btn btn-secondary" id="candidate-logout">Sign out</button>
                         </div>
