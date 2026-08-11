@@ -1284,6 +1284,35 @@ body.admin-modal-open {
     border: 1px solid rgba(16, 185, 129, 0.25);
     font-size: 0.88rem;
 }
+
+/* Privacy page */
+.privacy-doc {
+    max-width: 720px;
+    margin: 0 auto;
+}
+.privacy-block {
+    margin-bottom: 1.75rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+.privacy-block:last-of-type { border-bottom: none; }
+.privacy-block h2 {
+    font-size: 1.15rem;
+    margin: 0 0 0.55rem;
+    color: var(--navy);
+}
+.privacy-block p {
+    font-size: 0.95rem;
+    line-height: 1.65;
+    color: var(--text-muted);
+    margin: 0 0 0.65rem;
+}
+.privacy-close {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    margin-top: 1.5rem;
+}
 .admin-section-title-row {
     display: flex;
     align-items: center;

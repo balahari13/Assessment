@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node build.mjs"
+    "build": "node build.mjs && node smoke-test.mjs",
+    "smoke": "node smoke-test.mjs"
   },
   "dependencies": {
     "@netlify/blobs": "^8.1.0"

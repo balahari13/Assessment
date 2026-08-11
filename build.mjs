@@ -6,7 +6,7 @@ const deploy = join(root, 'deploy');
 
 const siteFiles = [
     'index.html', 'about.html', 'careers.html', 'healthcare.html', 'assessment.html', 'admin.html',
-    'agent-mail.html', 'agent-dashboard.html',
+    'agent-mail.html', 'agent-dashboard.html', 'privacy.html',
     '404.html', 'thank-you.html',
     'styles.css', 'careers.css', 'main.js', 'api.js', 'careers.js', 'healthcare.js',
     'agent-mail.js', 'agent-dashboard.js',
