@@ -2,6 +2,7 @@
     'use strict';
 
     const SESSION_KEY = 'trinitas_assessment_session';
+    const CANDIDATE_KEY = 'trinitas_candidate_auth';
 
     function initNav() {
         const nav = document.getElementById('nav');
@@ -29,98 +30,116 @@
         el.hidden = false;
     }
 
-    function initRegistration() {
-        const form1 = document.getElementById('register-form');
-        const form2 = document.getElementById('register-form-attempt2');
-        const alert = document.getElementById('register-alert');
-        const blocked = document.getElementById('blocked-notice');
-
-        async function handleSubmit(e, attemptNumber) {
-            e.preventDefault();
-            const form = e.target;
-            if (blocked) blocked.hidden = true;
-            if (alert) alert.hidden = true;
-
-            const fullName = form.fullName.value.trim();
-            const email = form.email.value.trim().toLowerCase();
-            const phone = form.phone.value.trim();
-            const consent = form.consent.checked;
-
-            if (!fullName || !email || !phone || !consent) {
-                showAlert(alert, 'Please complete all fields and accept the terms.', 'error');
-                return;
-            }
-
-            const button = form.querySelector('button[type="submit"]');
-            const defaultLabel = button.textContent;
-            button.disabled = true;
-            button.textContent = 'Checking eligibility...';
-
-            try {
-                const { ok, data } = await window.TrinitasAPI.checkEligibility(email, attemptNumber);
-
-                if (!ok && data.error) {
-                    throw new Error(data.error);
-                }
-
-                if (data.blocked || data.eligible === false) {
-                    if (blocked) {
-                        blocked.textContent = data.message || 'You are not eligible for this attempt right now.';
-                        blocked.hidden = false;
-                    }
-                    button.disabled = false;
-                    button.textContent = defaultLabel;
-                    return;
-                }
-
-                const session = {
-                    fullName,
-                    email,
-                    phone,
-                    attemptNumber,
-                    registeredAt: new Date().toISOString()
-                };
-                sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
-                window.location.href = 'assessment.html';
-            } catch {
-                showAlert(alert, 'Unable to verify eligibility. Ensure the site is deployed on Netlify with serverless functions enabled, then try again.', 'error');
-                button.disabled = false;
-                button.textContent = defaultLabel;
-            }
+    function getCandidate() {
+        try {
+            return JSON.parse(sessionStorage.getItem(CANDIDATE_KEY) || 'null');
+        } catch {
+            return null;
         }
-
-        if (form1) form1.addEventListener('submit', e => handleSubmit(e, 1));
-        if (form2) form2.addEventListener('submit', e => handleSubmit(e, 2));
     }
 
-    function initAttempt2Nav() {
-        const section = document.getElementById('attempt2');
-        const registerSection = document.getElementById('register');
-        if (!section) return;
-
-        function showAttempt2(show) {
-            section.hidden = !show;
-            if (registerSection) registerSection.hidden = show;
-            if (show) {
-                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                const first = section.querySelector('input');
-                if (first) setTimeout(() => first.focus(), 400);
-            } else if (registerSection) {
-                registerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-        }
-
-        function syncHash() {
-            showAttempt2(window.location.hash === '#attempt2');
-        }
-
-        window.addEventListener('hashchange', syncHash);
-        syncHash();
+    function setCandidate(data) {
+        sessionStorage.setItem(CANDIDATE_KEY, JSON.stringify(data));
     }
 
-    function initCvSubmit() {
-        const form = document.getElementById('cv-form');
-        const alert = document.getElementById('cv-alert');
+    function clearCandidate() {
+        sessionStorage.removeItem(CANDIDATE_KEY);
+    }
+
+    function passwordChecks(pw) {
+        return {
+            length: pw.length >= 12,
+            number: /\d/.test(pw),
+            special: /[^A-Za-z0-9]/.test(pw)
+        };
+    }
+
+    function passwordStrength(pw) {
+        const checks = passwordChecks(pw);
+        let score = 0;
+        if (pw.length >= 12) score += 25;
+        if (pw.length >= 16) score += 10;
+        if (checks.number) score += 20;
+        if (checks.special) score += 20;
+        if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score += 15;
+        if (pw.length >= 14 && checks.number && checks.special) score += 10;
+        score = Math.min(100, score);
+
+        let label = 'Too weak';
+        let level = 'weak';
+        if (score >= 85) { label = 'Strong'; level = 'strong'; }
+        else if (score >= 65) { label = 'Good'; level = 'good'; }
+        else if (score >= 40) { label = 'Fair'; level = 'fair'; }
+        else if (pw.length > 0) { label = 'Weak'; level = 'weak'; }
+        else { label = 'Enter a password'; level = 'empty'; }
+
+        const valid = checks.length && checks.number && checks.special;
+        return { score, label, level, checks, valid };
+    }
+
+    function initPasswordStrength() {
+        const input = document.getElementById('suPassword');
+        const fill = document.getElementById('pw-strength-fill');
+        const label = document.getElementById('pw-strength-label');
+        const rules = document.getElementById('pw-rules');
+        if (!input || !fill || !label) return;
+
+        function update() {
+            const s = passwordStrength(input.value);
+            fill.style.width = `${s.score}%`;
+            fill.className = '';
+            fill.id = 'pw-strength-fill';
+            fill.classList.add(`pw-fill--${s.level}`);
+            label.textContent = s.label === 'Enter a password' ? s.label : `Strength: ${s.label} (${s.score}%)`;
+            label.className = `pw-strength-label pw-label--${s.level}`;
+            if (rules) {
+                rules.querySelectorAll('[data-rule]').forEach(li => {
+                    const key = li.dataset.rule;
+                    li.classList.toggle('pw-rule--ok', !!s.checks[key]);
+                });
+            }
+        }
+        input.addEventListener('input', update);
+        update();
+    }
+
+    function showLoggedIn(candidate) {
+        const auth = document.getElementById('auth-panels');
+        const panel = document.getElementById('logged-in-panel');
+        if (auth) auth.hidden = true;
+        if (panel) panel.hidden = false;
+        const nameEl = document.getElementById('logged-name');
+        const metaEl = document.getElementById('logged-meta');
+        if (nameEl) nameEl.textContent = candidate.fullName || candidate.username;
+        if (metaEl) {
+            metaEl.textContent = `@${candidate.username} · ${candidate.email}${candidate.phone ? ' · ' + candidate.phone : ''}`;
+        }
+        const resumeEmail = document.getElementById('resumeEmail');
+        if (resumeEmail && candidate.email) resumeEmail.value = candidate.email;
+    }
+
+    function showAuthPanels() {
+        const auth = document.getElementById('auth-panels');
+        const panel = document.getElementById('logged-in-panel');
+        if (auth) auth.hidden = false;
+        if (panel) panel.hidden = true;
+    }
+
+    function initTabs() {
+        document.querySelectorAll('.careers-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.careers-tab').forEach(t => t.classList.remove('careers-tab--active'));
+                tab.classList.add('careers-tab--active');
+                const panel = tab.dataset.panel;
+                document.getElementById('panel-signup').hidden = panel !== 'signup';
+                document.getElementById('panel-signin').hidden = panel !== 'signin';
+            });
+        });
+    }
+
+    function initSignup() {
+        const form = document.getElementById('signup-form');
+        const alert = document.getElementById('signup-alert');
         if (!form) return;
 
         form.addEventListener('submit', async e => {
@@ -130,14 +149,20 @@
             const fullName = form.fullName.value.trim();
             const email = form.email.value.trim().toLowerCase();
             const phone = form.phone.value.trim();
+            const username = form.username.value.trim().toLowerCase();
+            const password = form.password.value;
             const role = form.role.value;
             const notes = form.notes.value.trim();
             const consent = form.consent.checked;
-            const fileInput = document.getElementById('cvFile');
-            const file = fileInput && fileInput.files && fileInput.files[0];
+            const file = document.getElementById('suFile')?.files?.[0];
 
-            if (!fullName || !email || !phone || !consent) {
+            const strength = passwordStrength(password);
+            if (!fullName || !email || !phone || !username || !consent) {
                 showAlert(alert, 'Please complete all required fields and accept the consent.', 'error');
+                return;
+            }
+            if (!strength.valid) {
+                showAlert(alert, 'Password must be at least 12 characters with 1 number and 1 special character.', 'error');
                 return;
             }
             if (!file) {
@@ -145,14 +170,14 @@
                 return;
             }
             if (file.size > 1.5 * 1024 * 1024) {
-                showAlert(alert, 'File is too large. Please keep your resume under 1.5 MB.', 'error');
+                showAlert(alert, 'Resume must be under 1.5 MB.', 'error');
                 return;
             }
 
-            const button = form.querySelector('button[type="submit"]');
+            const button = document.getElementById('signup-btn');
             const label = button.textContent;
             button.disabled = true;
-            button.textContent = 'Uploading…';
+            button.textContent = 'Creating account…';
 
             try {
                 const fileBase64 = await new Promise((resolve, reject) => {
@@ -162,13 +187,15 @@
                     reader.readAsDataURL(file);
                 });
 
-                const res = await fetch('/.netlify/functions/submit-resume', {
+                const res = await fetch('/.netlify/functions/candidate-register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         fullName,
                         email,
                         phone,
+                        username,
+                        password,
                         role,
                         notes,
                         fileName: file.name,
@@ -178,18 +205,131 @@
                 });
                 const data = await res.json().catch(() => ({}));
                 if (!res.ok || !data.success) {
-                    showAlert(alert, data.message || data.error || 'Submission failed. Please try again.', 'error');
+                    showAlert(alert, data.message || data.error || 'Registration failed.', 'error');
                     button.disabled = false;
                     button.textContent = label;
                     return;
                 }
-                showAlert(alert, data.message || 'Resume submitted successfully.', 'success');
-                form.reset();
+
+                setCandidate({
+                    token: data.token,
+                    username: data.username,
+                    fullName: data.fullName,
+                    email: data.email,
+                    phone: data.phone
+                });
+                showAlert(alert, data.message || 'Account created.', 'success');
+                showLoggedIn(getCandidate());
             } catch {
-                showAlert(alert, 'Unable to submit right now. Please try again shortly.', 'error');
+                showAlert(alert, 'Unable to register right now. Please try again shortly.', 'error');
             }
             button.disabled = false;
             button.textContent = label;
+        });
+    }
+
+    function initSignin() {
+        const form = document.getElementById('signin-form');
+        const alert = document.getElementById('signin-alert');
+        if (!form) return;
+
+        form.addEventListener('submit', async e => {
+            e.preventDefault();
+            if (alert) alert.hidden = true;
+            const username = form.username.value.trim().toLowerCase();
+            const password = form.password.value;
+            const button = form.querySelector('button[type="submit"]');
+            const label = button.textContent;
+            button.disabled = true;
+            button.textContent = 'Signing in…';
+
+            try {
+                const res = await fetch('/.netlify/functions/candidate-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok || !data.success) {
+                    showAlert(alert, data.error || data.message || 'Sign-in failed.', 'error');
+                    button.disabled = false;
+                    button.textContent = label;
+                    return;
+                }
+                setCandidate({
+                    token: data.token,
+                    username: data.username,
+                    fullName: data.fullName,
+                    email: data.email,
+                    phone: data.phone
+                });
+                showLoggedIn(getCandidate());
+            } catch {
+                showAlert(alert, 'Unable to sign in right now.', 'error');
+            }
+            button.disabled = false;
+            button.textContent = label;
+        });
+    }
+
+    async function startAttempt(attemptNumber) {
+        const candidate = getCandidate();
+        const alert = document.getElementById('register-alert');
+        const blocked = document.getElementById('blocked-notice');
+        if (!candidate) {
+            showAuthPanels();
+            return;
+        }
+        if (blocked) blocked.hidden = true;
+        if (alert) alert.hidden = true;
+
+        const btn = document.getElementById(attemptNumber === 2 ? 'btn-attempt2' : 'btn-attempt1');
+        const label = btn?.textContent;
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = 'Checking eligibility…';
+        }
+
+        try {
+            const { ok, data } = await window.TrinitasAPI.checkEligibility(candidate.email, attemptNumber);
+            if (!ok && data.error) throw new Error(data.error);
+
+            if (data.blocked || data.eligible === false) {
+                if (blocked) {
+                    blocked.textContent = data.message || 'You are not eligible for this attempt right now.';
+                    blocked.hidden = false;
+                }
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = label;
+                }
+                return;
+            }
+
+            sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+                fullName: candidate.fullName,
+                email: candidate.email,
+                phone: candidate.phone,
+                username: candidate.username,
+                attemptNumber,
+                registeredAt: new Date().toISOString()
+            }));
+            window.location.href = 'assessment.html';
+        } catch {
+            showAlert(alert, 'Unable to verify eligibility. Ensure the site is deployed with serverless functions, then try again.', 'error');
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = label;
+            }
+        }
+    }
+
+    function initAttempts() {
+        document.getElementById('btn-attempt1')?.addEventListener('click', () => startAttempt(1));
+        document.getElementById('btn-attempt2')?.addEventListener('click', () => startAttempt(2));
+        document.getElementById('candidate-logout')?.addEventListener('click', () => {
+            clearCandidate();
+            showAuthPanels();
         });
     }
 
@@ -204,7 +344,7 @@
             const email = form.email.value.trim().toLowerCase();
             const otp = form.otp.value.trim();
             if (!email || !/^\d{6}$/.test(otp)) {
-                showAlert(alert, 'Enter your email and the 6-digit OTP from your inbox.', 'error');
+                showAlert(alert, 'Enter your email and the 6-digit OTP.', 'error');
                 return;
             }
             const button = form.querySelector('button[type="submit"]');
@@ -222,7 +362,7 @@
                 sessionStorage.setItem('trinitas_resume_snapshot', JSON.stringify(data.snapshot));
                 window.location.href = 'assessment.html';
             } catch {
-                showAlert(alert, 'Unable to resume right now. Try again shortly.', 'error');
+                showAlert(alert, 'Unable to resume right now.', 'error');
                 button.disabled = false;
                 button.textContent = label;
             }
@@ -235,9 +375,18 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         initNav();
-        initRegistration();
-        initAttempt2Nav();
-        initCvSubmit();
+        initTabs();
+        initPasswordStrength();
+        initSignup();
+        initSignin();
+        initAttempts();
         initResume();
+
+        const existing = getCandidate();
+        if (existing?.token && existing?.username) {
+            showLoggedIn(existing);
+        } else {
+            showAuthPanels();
+        }
     });
 })();

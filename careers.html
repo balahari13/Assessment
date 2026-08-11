@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Careers | Trinitas NextGen Business Solutions</title>
-    <meta name="description" content="Join Trinitas NextGen Business Solutions — 100% work-from-home BPO careers in India. Complete our preliminary skills assessment.">
+    <meta name="description" content="Join Trinitas NextGen Business Solutions — create an account, submit your resume, then take Attempt 1 or Attempt 2 after login.">
     <meta name="theme-color" content="#020617">
     <link rel="icon" href="logo-icon.png" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -52,11 +52,11 @@
             <div class="container">
                 <p class="eyebrow eyebrow-light">Work From Home · India</p>
                 <h1>Build your BPO career with <span class="text-accent-light">Trinitas</span></h1>
-                <p class="lead lead-light">Join our 100% remote workforce in India. Complete a preliminary skills assessment before our recruitment team reviews your profile.</p>
+                <p class="lead lead-light">Create an account, submit your resume, then sign in to take Attempt 1 or Attempt 2.</p>
                 <div class="careers-steps">
-                    <div class="career-step"><strong>Step 1</strong><span>Register with your details</span></div>
-                    <div class="career-step"><strong>Step 2</strong><span>Complete the timed assessment</span></div>
-                    <div class="career-step"><strong>Step 3</strong><span>Results reviewed by recruitment</span></div>
+                    <div class="career-step"><strong>Step 1</strong><span>Create account + submit resume</span></div>
+                    <div class="career-step"><strong>Step 2</strong><span>Sign in and start assessment</span></div>
+                    <div class="career-step"><strong>Step 3</strong><span>Recruitment reviews your results</span></div>
                 </div>
                 <p style="margin-top:1.25rem">
                     <a href="healthcare.html" class="btn btn-outline-light">Healthcare opportunity (Arise) →</a>
@@ -67,138 +67,149 @@
         <section class="section section-light" id="register">
             <div class="container careers-grid">
                 <div>
-                    <p class="eyebrow">Preliminary Assessment</p>
-                    <h2>What to expect</h2>
+                    <p class="eyebrow">How it works</p>
+                    <h2>Account first, then assessment</h2>
                     <ul class="careers-list">
-                        <li><strong>Timed assessment</strong> — allow approximately 75 minutes in a quiet, uninterrupted setting</li>
-                        <li><strong>Sections</strong> — Logical reasoning (odd man out figures), customer response ranking, English, reading, workplace, email writing, typing, and voice</li>
-                        <li><strong>Pause &amp; resume</strong> — you may pause anytime; recruitment generates an OTP so you can resume later</li>
-                        <li><strong>Attempt 1</strong> — preliminary assessment (one submission per email)</li>
-                        <li><strong>Attempt 2</strong> — second assessment; available after Attempt 1 when enabled for your email</li>
-                        <li>Use a stable internet connection and a device with a working microphone</li>
+                        <li><strong>Create account</strong> — choose a username and a strong password, then upload your resume</li>
+                        <li><strong>Password rules</strong> — at least 12 characters, including 1 number and 1 special character</li>
+                        <li><strong>Sign in</strong> — access Attempt 1 and Attempt 2 only after login</li>
+                        <li><strong>Assessment</strong> — about 75 minutes; pause available with recruitment OTP</li>
+                        <li>Use a stable connection and a device with a working microphone</li>
                     </ul>
                 </div>
-                <div class="careers-register-stack">
-                    <div class="careers-card" id="attempt1-card">
-                        <h3>Attempt 1</h3>
-                        <p class="section-desc">First-time candidates start here. Your email is locked for Attempt 1 after submission.</p>
-                        <form class="register-form" id="register-form" novalidate>
-                            <div class="form-field">
-                                <label for="fullName">Full Name</label>
-                                <input type="text" id="fullName" name="fullName" required placeholder="Your full name" autocomplete="name">
-                            </div>
-                            <div class="form-field">
-                                <label for="email">Email Address</label>
-                                <input type="email" id="email" name="email" required placeholder="you@email.com" autocomplete="email">
-                            </div>
-                            <div class="form-field">
-                                <label for="phone">Phone Number</label>
-                                <input type="tel" id="phone" name="phone" required placeholder="+91 XXXXX XXXXX" autocomplete="tel">
-                            </div>
-                            <div class="form-field">
-                                <label class="consent-label">
-                                    <input type="checkbox" name="consent" required>
-                                    <span>I confirm this is my Attempt 1 submission and my responses will be stored for recruitment review.</span>
-                                </label>
-                            </div>
-                            <button type="submit" class="btn btn-primary btn-full">Begin Attempt 1</button>
-                        </form>
-                        <a href="#attempt2" class="btn btn-secondary btn-full attempt2-link" id="attempt2-trigger">Second Attempt</a>
-                    </div>
-                    <div class="careers-card careers-cv-card" id="submit-resume">
-                        <h3>Submit your resume</h3>
-                        <p class="section-desc">Share your CV for recruitment review. We handle your document with care and use it only for hiring.</p>
-                        <form class="register-form" id="cv-form" novalidate>
-                            <div class="form-field">
-                                <label for="cvName">Full Name</label>
-                                <input type="text" id="cvName" name="fullName" required placeholder="Your full name" autocomplete="name">
-                            </div>
-                            <div class="form-field">
-                                <label for="cvEmail">Email Address</label>
-                                <input type="email" id="cvEmail" name="email" required placeholder="you@email.com" autocomplete="email">
-                            </div>
-                            <div class="form-field">
-                                <label for="cvPhone">Phone Number</label>
-                                <input type="tel" id="cvPhone" name="phone" required placeholder="+91 XXXXX XXXXX" autocomplete="tel">
-                            </div>
-                            <div class="form-field">
-                                <label for="cvRole">Role of interest</label>
-                                <select id="cvRole" name="role">
-                                    <option value="General application">General application</option>
-                                    <option value="Healthcare Agent (Arise)">Healthcare Agent (Arise)</option>
-                                    <option value="Customer Support">Customer Support</option>
-                                    <option value="Back Office Operations">Back Office Operations</option>
-                                    <option value="Voice / Support Agent">Voice / Support Agent</option>
-                                </select>
-                            </div>
-                            <div class="form-field">
-                                <label for="cvFile">Resume (PDF or Word, max 1.5 MB)</label>
-                                <input type="file" id="cvFile" name="resume" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" required>
-                            </div>
-                            <div class="form-field">
-                                <label for="cvNotes">Cover note (optional)</label>
-                                <textarea id="cvNotes" name="notes" rows="3" placeholder="Brief note for the hiring team"></textarea>
-                            </div>
-                            <div class="form-field">
-                                <label class="consent-label">
-                                    <input type="checkbox" name="consent" required>
-                                    <span>I agree that Trinitas may store and review my resume for recruitment only, with care for my personal data.</span>
-                                </label>
-                            </div>
-                            <button type="submit" class="btn btn-primary btn-full">Submit resume</button>
-                        </form>
-                        <div id="cv-alert" class="form-alert" hidden></div>
-                    </div>
-                    <div class="careers-card careers-resume-card" id="resume">
-                        <h3>Resume paused assessment</h3>
-                        <p class="section-desc">If you paused mid-assessment, ask recruitment to generate an OTP for your email, then enter it below.</p>
-                        <form class="register-form" id="resume-form" novalidate>
-                            <div class="form-field">
-                                <label for="resumeEmail">Email Address</label>
-                                <input type="email" id="resumeEmail" name="email" required placeholder="you@email.com" autocomplete="email">
-                            </div>
-                            <div class="form-field">
-                                <label for="resumeOtp">OTP (6 digits)</label>
-                                <input type="text" id="resumeOtp" name="otp" required placeholder="123456" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code">
-                            </div>
-                            <button type="submit" class="btn btn-primary btn-full">Resume assessment</button>
-                        </form>
-                        <div id="resume-alert" class="form-alert" hidden></div>
-                    </div>
-                    <div id="register-alert" class="form-alert" hidden></div>
-                    <div id="blocked-notice" class="blocked-notice" hidden></div>
-                </div>
-            </div>
-        </section>
 
-        <section class="section section-light attempt2-section" id="attempt2" hidden>
-            <div class="container" style="max-width:520px">
-                <p class="eyebrow">Attempt 2</p>
-                <h2>Second Attempt</h2>
-                <p class="section-desc">Complete Attempt 1 first, then register here when Attempt 2 is enabled for your email.</p>
-                <div class="careers-card careers-card--advanced">
-                    <form class="register-form" id="register-form-attempt2" novalidate>
-                        <div class="form-field">
-                            <label for="fullName2">Full Name</label>
-                            <input type="text" id="fullName2" name="fullName" required placeholder="Your full name" autocomplete="name">
+                <div class="careers-register-stack">
+                    <!-- AUTH: create / login (hidden when logged in) -->
+                    <div id="auth-panels">
+                        <div class="careers-tabs">
+                            <button type="button" class="careers-tab careers-tab--active" data-panel="signup">Create account</button>
+                            <button type="button" class="careers-tab" data-panel="signin">Sign in</button>
                         </div>
-                        <div class="form-field">
-                            <label for="email2">Email Address</label>
-                            <input type="email" id="email2" name="email" required placeholder="you@email.com" autocomplete="email">
+
+                        <div class="careers-card careers-cv-card" id="panel-signup">
+                            <h3>Create account &amp; submit resume</h3>
+                            <p class="section-desc">Register with a username and password, attach your CV, then sign in to start assessments.</p>
+                            <form class="register-form" id="signup-form" novalidate>
+                                <div class="form-field">
+                                    <label for="suName">Full Name</label>
+                                    <input type="text" id="suName" name="fullName" required placeholder="Your full name" autocomplete="name">
+                                </div>
+                                <div class="form-field">
+                                    <label for="suEmail">Email Address</label>
+                                    <input type="email" id="suEmail" name="email" required placeholder="you@email.com" autocomplete="email">
+                                </div>
+                                <div class="form-field">
+                                    <label for="suPhone">Phone Number</label>
+                                    <input type="tel" id="suPhone" name="phone" required placeholder="+91 XXXXX XXXXX" autocomplete="tel">
+                                </div>
+                                <div class="form-field">
+                                    <label for="suUsername">Username</label>
+                                    <input type="text" id="suUsername" name="username" required placeholder="e.g. balahari.m" autocomplete="username" minlength="4" maxlength="32" pattern="[A-Za-z0-9._\-]+">
+                                    <span class="field-hint">4–32 characters: letters, numbers, . _ -</span>
+                                </div>
+                                <div class="form-field">
+                                    <label for="suPassword">Password</label>
+                                    <input type="password" id="suPassword" name="password" required placeholder="Min. 12 characters" autocomplete="new-password">
+                                    <div class="pw-strength" id="pw-strength" aria-live="polite">
+                                        <div class="pw-strength-bar"><span id="pw-strength-fill"></span></div>
+                                        <span class="pw-strength-label" id="pw-strength-label">Enter a password</span>
+                                    </div>
+                                    <ul class="pw-rules" id="pw-rules">
+                                        <li data-rule="length">At least 12 characters</li>
+                                        <li data-rule="number">At least 1 number</li>
+                                        <li data-rule="special">At least 1 special character</li>
+                                    </ul>
+                                </div>
+                                <div class="form-field">
+                                    <label for="suRole">Role of interest</label>
+                                    <select id="suRole" name="role">
+                                        <option value="General application">General application</option>
+                                        <option value="Healthcare Agent (Arise)">Healthcare Agent (Arise)</option>
+                                        <option value="Customer Support">Customer Support</option>
+                                        <option value="Back Office Operations">Back Office Operations</option>
+                                        <option value="Voice / Support Agent">Voice / Support Agent</option>
+                                    </select>
+                                </div>
+                                <div class="form-field">
+                                    <label for="suFile">Resume (PDF or Word, max 1.5 MB)</label>
+                                    <input type="file" id="suFile" name="resume" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" required>
+                                </div>
+                                <div class="form-field">
+                                    <label for="suNotes">Cover note (optional)</label>
+                                    <textarea id="suNotes" name="notes" rows="2" placeholder="Brief note for hiring"></textarea>
+                                </div>
+                                <div class="form-field">
+                                    <label class="consent-label">
+                                        <input type="checkbox" name="consent" required>
+                                        <span>I agree Trinitas may store my account and resume for recruitment only.</span>
+                                    </label>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-full" id="signup-btn">Create account &amp; submit resume</button>
+                            </form>
+                            <div id="signup-alert" class="form-alert" hidden></div>
                         </div>
-                        <div class="form-field">
-                            <label for="phone2">Phone Number</label>
-                            <input type="tel" id="phone2" name="phone" required placeholder="+91 XXXXX XXXXX" autocomplete="tel">
+
+                        <div class="careers-card" id="panel-signin" hidden>
+                            <h3>Sign in</h3>
+                            <p class="section-desc">Use the username and password you created. Then start Attempt 1 or Attempt 2.</p>
+                            <form class="register-form" id="signin-form" novalidate>
+                                <div class="form-field">
+                                    <label for="siUsername">Username</label>
+                                    <input type="text" id="siUsername" name="username" required autocomplete="username">
+                                </div>
+                                <div class="form-field">
+                                    <label for="siPassword">Password</label>
+                                    <input type="password" id="siPassword" name="password" required autocomplete="current-password">
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-full">Sign in</button>
+                            </form>
+                            <div id="signin-alert" class="form-alert" hidden></div>
                         </div>
-                        <div class="form-field">
-                            <label class="consent-label">
-                                <input type="checkbox" name="consent" required>
-                                <span>I confirm Attempt 2 is enabled for my email and I will complete it in one sitting.</span>
-                            </label>
+                    </div>
+
+                    <!-- LOGGED IN: attempts -->
+                    <div id="logged-in-panel" hidden>
+                        <div class="careers-card careers-logged-banner">
+                            <div>
+                                <p class="eyebrow">Signed in</p>
+                                <h3 id="logged-name">Candidate</h3>
+                                <p class="section-desc" id="logged-meta"></p>
+                            </div>
+                            <button type="button" class="btn btn-secondary" id="candidate-logout">Sign out</button>
                         </div>
-                        <button type="submit" class="btn btn-secondary btn-full">Begin Attempt 2</button>
-                    </form>
-                    <a href="#register" class="attempt2-back">← Back to Attempt 1</a>
+
+                        <div class="careers-card" id="attempt1-card">
+                            <h3>Attempt 1</h3>
+                            <p class="section-desc">Preliminary skills assessment. One submission per email.</p>
+                            <button type="button" class="btn btn-primary btn-full" id="btn-attempt1">Begin Attempt 1</button>
+                        </div>
+
+                        <div class="careers-card careers-card--advanced" id="attempt2-card">
+                            <h3>Attempt 2</h3>
+                            <p class="section-desc">Available after Attempt 1 when recruitment enables it for your email.</p>
+                            <button type="button" class="btn btn-secondary btn-full" id="btn-attempt2">Begin Attempt 2</button>
+                        </div>
+
+                        <div class="careers-card careers-resume-card" id="resume">
+                            <h3>Resume paused assessment</h3>
+                            <p class="section-desc">If you paused mid-assessment, ask recruitment to generate an OTP, then enter it below.</p>
+                            <form class="register-form" id="resume-form" novalidate>
+                                <div class="form-field">
+                                    <label for="resumeEmail">Email Address</label>
+                                    <input type="email" id="resumeEmail" name="email" required placeholder="you@email.com" autocomplete="email">
+                                </div>
+                                <div class="form-field">
+                                    <label for="resumeOtp">OTP (6 digits)</label>
+                                    <input type="text" id="resumeOtp" name="otp" required placeholder="123456" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code">
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-full">Resume assessment</button>
+                            </form>
+                            <div id="resume-alert" class="form-alert" hidden></div>
+                        </div>
+
+                        <div id="register-alert" class="form-alert" hidden></div>
+                        <div id="blocked-notice" class="blocked-notice" hidden></div>
+                    </div>
                 </div>
             </div>
         </section>

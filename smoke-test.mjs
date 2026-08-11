@@ -67,15 +67,16 @@ mustContain(join(deploy, 'privacy.html'), [
     'info@trinitasnxt.in'
 ], 'privacy.html');
 
-console.log('\nSmoke test: resume submission path');
-mustContain(join(deploy, 'careers.html'), ['id="cv-form"', 'id="submit-resume"', 'Submit resume'], 'careers resume form');
-mustContain(join(deploy, 'careers.js'), ['submit-resume', 'cv-form', 'fileBase64'], 'careers.js resume submit');
+console.log('\nSmoke test: candidate account + resume path');
+mustContain(join(deploy, 'careers.html'), ['id="signup-form"', 'id="signin-form"', 'suPassword', 'Begin Attempt 1'], 'careers account + attempts');
+mustContain(join(deploy, 'careers.js'), ['candidate-register', 'candidate-login', 'passwordStrength', 'btn-attempt1'], 'careers.js account flow');
 mustContain(join(deploy, 'admin.html'), ['id="resumes-body"', 'Resume submissions'], 'admin resumes UI');
 mustContain(join(deploy, 'admin.js'), ['loadResumes', 'adminResumes', 'adminResumeDownload'], 'admin.js resumes');
 mustContain(join(deploy, 'api.js'), ['adminResumes', 'adminResumeDownload'], 'api.js resumes');
-mustExist(join(functionsDir, 'submit-resume.mjs'), 'function submit-resume.mjs');
+mustExist(join(functionsDir, 'candidate-register.mjs'), 'function candidate-register.mjs');
+mustExist(join(functionsDir, 'candidate-login.mjs'), 'function candidate-login.mjs');
 mustExist(join(functionsDir, 'admin-resumes.mjs'), 'function admin-resumes.mjs');
-mustContain(join(functionsDir, 'submit-resume.mjs'), ['export default', 'fileBase64', 'resume-index'], 'submit-resume handler');
+mustContain(join(functionsDir, 'candidate-register.mjs'), ['export default', 'fileBase64', 'passwordHash', '12'], 'candidate-register handler');
 mustContain(join(functionsDir, 'admin-resumes.mjs'), ['export default', 'verifyAdminToken', 'resume-index'], 'admin-resumes handler');
 
 console.log('\nSmoke test: pause / OTP path');
@@ -97,7 +98,8 @@ mustContain(join(functionsDir, 'resume-assessment.mjs'), ['otp_not_ready', 'otpH
 console.log('\nSmoke test: functions directory inventory');
 const fnFiles = readdirSync(functionsDir).filter(f => f.endsWith('.mjs'));
 const requiredFns = [
-    'submit-resume.mjs',
+    'candidate-register.mjs',
+    'candidate-login.mjs',
     'admin-resumes.mjs',
     'pause-assessment.mjs',
     'resume-assessment.mjs',

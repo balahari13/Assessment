@@ -1256,7 +1256,7 @@ body.admin-modal-open {
 }
 .careers-resume-card h3 { margin-bottom: 0.35rem; }
 .careers-cv-card {
-    margin-top: 1rem;
+    margin-top: 0;
     border-color: rgba(16, 185, 129, 0.3);
     background: linear-gradient(180deg, rgba(16, 185, 129, 0.04), #fff);
 }
@@ -1274,6 +1274,94 @@ body.admin-modal-open {
     font-size: 0.85rem;
     width: 100%;
 }
+.careers-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.85rem;
+}
+.careers-tab {
+    flex: 1;
+    border: 1px solid var(--border);
+    background: var(--white);
+    border-radius: 99px;
+    padding: 0.55rem 0.75rem;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-family: inherit;
+}
+.careers-tab--active {
+    background: rgba(37, 99, 235, 0.1);
+    border-color: var(--blue);
+    color: var(--blue);
+}
+.field-hint {
+    display: block;
+    margin-top: 0.3rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+.pw-strength { margin-top: 0.55rem; }
+.pw-strength-bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+}
+.pw-strength-bar span {
+    display: block;
+    height: 100%;
+    width: 0;
+    border-radius: 99px;
+    transition: width 0.25s ease, background 0.25s ease;
+    background: #94a3b8;
+}
+.pw-fill--empty { background: #94a3b8; width: 0 !important; }
+.pw-fill--weak { background: #ef4444; }
+.pw-fill--fair { background: #f59e0b; }
+.pw-fill--good { background: #3b82f6; }
+.pw-fill--strong { background: #10b981; }
+.pw-strength-label {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+.pw-label--weak { color: #dc2626; }
+.pw-label--fair { color: #d97706; }
+.pw-label--good { color: #2563eb; }
+.pw-label--strong { color: #059669; }
+.pw-rules {
+    list-style: none;
+    margin: 0.5rem 0 0;
+    padding: 0;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+.pw-rules li {
+    padding: 0.15rem 0 0.15rem 1.1rem;
+    position: relative;
+}
+.pw-rules li::before {
+    content: '○';
+    position: absolute;
+    left: 0;
+    color: #94a3b8;
+}
+.pw-rule--ok { color: #059669; }
+.pw-rule--ok::before { content: '●'; color: #10b981; }
+.careers-logged-banner {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 0;
+    border-color: rgba(37, 99, 235, 0.25);
+    background: linear-gradient(180deg, rgba(37, 99, 235, 0.06), #fff);
+}
+.careers-logged-banner h3 { margin: 0.15rem 0 0.25rem; }
 .form-alert--success {
     display: block;
     margin-top: 0.75rem;
