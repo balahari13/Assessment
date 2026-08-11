@@ -4,6 +4,9 @@ import { createHmac, randomBytes, timingSafeEqual } from 'crypto';
 const STORE_NAME = 'trinitas-assessments';
 const ADMIN_ID = 'Trinitas';
 const ADMIN_PASSWORD = 'Trinitas2026*';
+/** Site / agent-portal admin (email-style login) */
+const SITE_ADMIN_EMAIL = 'balahari@trinitas.in';
+const SITE_ADMIN_PASSWORD = 'Trinitas2026415*';
 const TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 
 export function corsHeaders() {
@@ -213,7 +216,23 @@ export async function verifyAdminToken(store, authHeader) {
 }
 
 export function verifyAdminCredentials(username, password) {
-    return username === ADMIN_ID && password === ADMIN_PASSWORD;
+    const user = String(username || '').trim();
+    const pass = String(password || '');
+    if (user === ADMIN_ID && pass === ADMIN_PASSWORD) return true;
+    if (user.toLowerCase() === SITE_ADMIN_EMAIL && pass === SITE_ADMIN_PASSWORD) return true;
+    return false;
+}
+
+export function isSiteAdminEmail(email) {
+    return normalizeEmail(email) === SITE_ADMIN_EMAIL;
+}
+
+export function agentKey(email) {
+    return `agent:${normalizeEmail(email)}`;
+}
+
+export function agentIndexKey() {
+    return 'agent-index';
 }
 
 export async function deleteAttempt(store, email) {

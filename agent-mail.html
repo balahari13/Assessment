@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Mail | Trinitas</title>
+    <meta name="robots" content="noindex">
+    <meta name="theme-color" content="#020617">
+    <link rel="icon" href="logo-icon.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="careers.css">
+</head>
+<body class="admin-body">
+    <div class="admin-page agent-mail-page">
+        <div class="agent-mail-wrap">
+            <div class="agent-mail-brand">
+                <img src="logo-icon.png" alt="" width="40" height="40">
+                <div>
+                    <p class="eyebrow">Trinitas Internal</p>
+                    <h1>Agent Mail</h1>
+                </div>
+            </div>
+            <p class="section-desc">Register with your full name to receive an internal agent email (generated from letters in your name). Use it to track applications and your to-do list.</p>
+
+            <div class="agent-mail-tabs">
+                <button type="button" class="agent-tab agent-tab--active" data-tab="register">Register</button>
+                <button type="button" class="agent-tab" data-tab="login">Sign in</button>
+            </div>
+
+            <div class="careers-card" id="panel-register">
+                <form id="agent-register-form" novalidate>
+                    <div class="form-field">
+                        <label for="regName">Full Name</label>
+                        <input type="text" id="regName" name="fullName" required placeholder="Your full name" autocomplete="name">
+                    </div>
+                    <div class="form-field">
+                        <label for="regPhone">Phone (optional)</label>
+                        <input type="tel" id="regPhone" name="phone" placeholder="+91 …" autocomplete="tel">
+                    </div>
+                    <div class="form-field">
+                        <label for="regPass">Password</label>
+                        <input type="password" id="regPass" name="password" required minlength="6" autocomplete="new-password">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Create agent mail</button>
+                </form>
+                <div id="reg-alert" class="form-alert" hidden></div>
+                <div id="reg-success" class="form-alert form-alert--success" hidden></div>
+            </div>
+
+            <div class="careers-card" id="panel-login" hidden>
+                <form id="agent-login-form" novalidate>
+                    <div class="form-field">
+                        <label for="loginEmail">Agent email</label>
+                        <input type="email" id="loginEmail" name="email" required placeholder="you@agent.trinitas.in" autocomplete="username">
+                    </div>
+                    <div class="form-field">
+                        <label for="loginPass">Password</label>
+                        <input type="password" id="loginPass" name="password" required autocomplete="current-password">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Sign in</button>
+                </form>
+                <div id="login-alert" class="form-alert" hidden></div>
+            </div>
+
+            <p class="agent-mail-foot"><a href="index.html">← Back to website</a> · <a href="about.html">About / CEO desk</a></p>
+        </div>
+    </div>
+    <script src="agent-mail.js"></script>
+</body>
+</html>

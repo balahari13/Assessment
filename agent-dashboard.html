@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Dashboard | Trinitas</title>
+    <meta name="robots" content="noindex">
+    <meta name="theme-color" content="#020617">
+    <link rel="icon" href="logo-icon.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="careers.css">
+</head>
+<body class="admin-body">
+    <div class="admin-page">
+        <div class="admin-dashboard agent-dash" id="agent-dash">
+            <header class="admin-header">
+                <div class="admin-header-left">
+                    <img src="logo-icon.png" alt="" class="admin-header-logo" width="32" height="32">
+                    <div>
+                        <h1 id="dash-title">My Agent Mail</h1>
+                        <p id="dash-sub">Loading…</p>
+                    </div>
+                </div>
+                <div class="admin-header-actions">
+                    <a href="careers.html" class="btn btn-secondary btn-sm">Careers</a>
+                    <a href="healthcare.html" class="btn btn-secondary btn-sm">Healthcare path</a>
+                    <button type="button" class="btn btn-secondary btn-sm" id="agent-logout">Sign out</button>
+                </div>
+            </header>
+
+            <div id="agent-toast" class="admin-toast" hidden></div>
+
+            <div id="agent-view" hidden>
+                <div class="agent-email-banner">
+                    <span class="meta-label">Your agent mail</span>
+                    <strong id="agent-email-display">—</strong>
+                </div>
+
+                <div class="agent-dash-grid">
+                    <section class="admin-table-card agent-panel">
+                        <div class="admin-section-title-row">
+                            <h2 class="admin-section-title">My applications</h2>
+                        </div>
+                        <div class="agent-panel-body">
+                            <form id="apply-form" class="agent-inline-form">
+                                <select id="apply-role" required>
+                                    <option value="">Select a role to apply…</option>
+                                    <option value="Healthcare Agent (Arise / Trinitas)">Healthcare Agent (Arise / Trinitas)</option>
+                                    <option value="Customer Support Agent">Customer Support Agent</option>
+                                    <option value="Back Office Operations">Back Office Operations</option>
+                                    <option value="Preliminary Skills Assessment track">Preliminary Skills Assessment track</option>
+                                </select>
+                                <button type="submit" class="btn btn-primary btn-sm">Apply</button>
+                            </form>
+                            <ul class="agent-list" id="apps-list"></ul>
+                        </div>
+                    </section>
+
+                    <section class="admin-table-card agent-panel">
+                        <div class="admin-section-title-row">
+                            <h2 class="admin-section-title">To-do list</h2>
+                        </div>
+                        <div class="agent-panel-body">
+                            <form id="todo-form" class="agent-inline-form">
+                                <input type="text" id="todo-text" placeholder="Add a task…" maxlength="200" required>
+                                <button type="submit" class="btn btn-primary btn-sm">Add</button>
+                            </form>
+                            <ul class="agent-list" id="todos-list"></ul>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <div id="admin-view" hidden>
+                <section class="admin-table-card">
+                    <div class="admin-section-title-row">
+                        <h2 class="admin-section-title">Registered agents</h2>
+                    </div>
+                    <div class="results-table-wrap">
+                        <table class="results-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Agent email</th>
+                                    <th>Phone</th>
+                                    <th>Applications</th>
+                                    <th>Open todos</th>
+                                    <th>Joined</th>
+                                </tr>
+                            </thead>
+                            <tbody id="agents-admin-body">
+                                <tr><td colspan="6">Loading…</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+    <script src="agent-dashboard.js"></script>
+</body>
+</html>

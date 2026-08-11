@@ -1274,6 +1274,130 @@ body.admin-modal-open {
     font-size: 0.85rem;
 }
 .admin-paused-card { margin-bottom: 0.25rem; }
+
+/* Agent Mail portal */
+.agent-mail-page { display: flex; justify-content: center; }
+.agent-mail-wrap {
+    width: min(440px, 100%);
+    margin: 2rem auto;
+}
+.agent-mail-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+.agent-mail-brand h1 { font-size: 1.4rem; margin: 0.15rem 0 0; color: var(--navy); }
+.agent-mail-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin: 1.25rem 0 0.85rem;
+}
+.agent-tab {
+    flex: 1;
+    border: 1px solid var(--border);
+    background: var(--white);
+    border-radius: 99px;
+    padding: 0.5rem 0.75rem;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+.agent-tab--active {
+    background: rgba(37, 99, 235, 0.1);
+    border-color: var(--blue);
+    color: var(--blue);
+}
+.agent-mail-foot {
+    text-align: center;
+    margin-top: 1.25rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+.agent-mail-foot a { color: var(--blue); font-weight: 600; }
+.agent-email-banner {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.9rem 1.15rem;
+    margin-bottom: 1rem;
+}
+.agent-email-banner .meta-label {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin-bottom: 0.2rem;
+}
+.agent-email-banner strong {
+    font-size: 1.05rem;
+    color: var(--navy);
+    word-break: break-all;
+}
+.agent-dash-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+.agent-panel-body { padding: 0 1.15rem 1.15rem; }
+.agent-inline-form {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.85rem;
+    flex-wrap: wrap;
+}
+.agent-inline-form select,
+.agent-inline-form input[type="text"] {
+    flex: 1;
+    min-width: 160px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.5rem 0.65rem;
+    font-size: 0.88rem;
+}
+.agent-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.agent-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--off-white);
+    font-size: 0.88rem;
+}
+.agent-meta {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.2rem;
+}
+.agent-list-empty {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    padding: 0.5rem 0;
+}
+.agent-todo label {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    cursor: pointer;
+    flex: 1;
+}
+.agent-todo--done span { text-decoration: line-through; color: var(--text-muted); }
+@media (max-width: 800px) {
+    .agent-dash-grid { grid-template-columns: 1fr; }
+}
 .otp-code-display {
     font-family: ui-monospace, monospace;
     font-weight: 800;
