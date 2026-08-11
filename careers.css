@@ -1255,6 +1255,35 @@ body.admin-modal-open {
     border-color: rgba(37, 99, 235, 0.25);
 }
 .careers-resume-card h3 { margin-bottom: 0.35rem; }
+.careers-cv-card {
+    margin-top: 1rem;
+    border-color: rgba(16, 185, 129, 0.3);
+    background: linear-gradient(180deg, rgba(16, 185, 129, 0.04), #fff);
+}
+.careers-cv-card h3 { margin-bottom: 0.35rem; }
+.careers-cv-card textarea {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.65rem 0.75rem;
+    font-family: inherit;
+    font-size: 0.9rem;
+    resize: vertical;
+}
+.careers-cv-card input[type="file"] {
+    font-size: 0.85rem;
+    width: 100%;
+}
+.form-alert--success {
+    display: block;
+    margin-top: 0.75rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: 8px;
+    background: rgba(16, 185, 129, 0.1);
+    color: #047857;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    font-size: 0.88rem;
+}
 .admin-section-title-row {
     display: flex;
     align-items: center;

@@ -352,6 +352,21 @@
                 headers: { Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ email })
             });
+        },
+
+        async adminResumes(token) {
+            return request('/admin-resumes', {
+                method: 'GET',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+        },
+
+        async adminResumeDownload(token, id) {
+            return request('/admin-resumes', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ id })
+            });
         }
     };
 })();

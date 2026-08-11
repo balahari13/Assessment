@@ -477,6 +477,67 @@
         renderTable(data.results);
         document.getElementById('export-csv').onclick = () => exportCsv(data.results);
         loadPaused();
+        loadResumes();
+    }
+
+    async function handleResumeDownload(id) {
+        const token = sessionStorage.getItem(TOKEN_KEY);
+        const { ok, data } = await window.TrinitasAPI.adminResumeDownload(token, id);
+        if (!ok || !data.fileBase64) {
+            showToast(data.error || 'Download failed.', 'error');
+            return;
+        }
+        try {
+            const b64 = String(data.fileBase64).replace(/^data:[^;]+;base64,/, '');
+            const bin = atob(b64);
+            const bytes = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            const blob = new Blob([bytes], { type: data.fileType || 'application/pdf' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = data.fileName || `resume-${id}.pdf`;
+            a.click();
+            URL.revokeObjectURL(a.href);
+            showToast('Download started.', 'success');
+        } catch {
+            showToast('Could not open file.', 'error');
+        }
+    }
+
+    function renderResumes(resumes) {
+        const tbody = document.getElementById('resumes-body');
+        if (!tbody) return;
+        if (!resumes || !resumes.length) {
+            tbody.innerHTML = '<tr><td colspan="7">No resumes yet.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = resumes.map(r => `
+            <tr>
+                <td>${r.fullName || '—'}</td>
+                <td>${r.email || '—'}</td>
+                <td>${r.phone || '—'}</td>
+                <td>${r.role || '—'}</td>
+                <td>${r.fileName || '—'} ${r.sizeKb ? `(${r.sizeKb} KB)` : ''}</td>
+                <td>${formatPausedDate(r.submittedAt)}</td>
+                <td><button type="button" class="btn-admin btn-admin--reattempt" data-resume-id="${r.id}">Download</button></td>
+            </tr>
+            ${r.notes ? `<tr><td colspan="7" style="font-size:0.8rem;color:var(--text-muted)">Note: ${String(r.notes).replace(/</g, '&lt;')}</td></tr>` : ''}
+        `).join('');
+        tbody.querySelectorAll('[data-resume-id]').forEach(btn => {
+            btn.addEventListener('click', () => handleResumeDownload(btn.dataset.resumeId));
+        });
+    }
+
+    async function loadResumes() {
+        const token = sessionStorage.getItem(TOKEN_KEY);
+        const tbody = document.getElementById('resumes-body');
+        if (!tbody) return;
+        const { ok, data } = await window.TrinitasAPI.adminResumes(token);
+        if (!ok) {
+            tbody.innerHTML = '<tr><td colspan="7">Could not load resumes.</td></tr>';
+            return;
+        }
+        renderResumes(data.resumes || []);
     }
 
     function formatPausedDate(iso) {
@@ -585,6 +646,8 @@
         document.getElementById('admin-refresh').addEventListener('click', loadResults);
         const refreshPaused = document.getElementById('refresh-paused');
         if (refreshPaused) refreshPaused.addEventListener('click', loadPaused);
+        const refreshResumes = document.getElementById('refresh-resumes');
+        if (refreshResumes) refreshResumes.addEventListener('click', loadResumes);
 
         const practiceBtn = document.getElementById('admin-practice');
         if (practiceBtn) {

@@ -76,6 +76,32 @@
 
             <section class="admin-table-card admin-paused-card">
                 <div class="admin-section-title-row">
+                    <h2 class="admin-section-title">Resume submissions</h2>
+                    <button type="button" class="btn btn-secondary btn-sm" id="refresh-resumes">Refresh resumes</button>
+                </div>
+                <p class="section-desc admin-paused-desc">CVs submitted from the Careers page. Download to review offline.</p>
+                <div class="results-table-wrap">
+                    <table class="results-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Role</th>
+                                <th>File</th>
+                                <th>Submitted</th>
+                                <th>Download</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resumes-body">
+                            <tr><td colspan="7">No resumes yet.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="admin-table-card admin-paused-card">
+                <div class="admin-section-title-row">
                     <h2 class="admin-section-title">Paused assessments</h2>
                     <button type="button" class="btn btn-secondary btn-sm" id="refresh-paused">Refresh paused</button>
                 </div>

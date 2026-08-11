@@ -118,6 +118,81 @@
         syncHash();
     }
 
+    function initCvSubmit() {
+        const form = document.getElementById('cv-form');
+        const alert = document.getElementById('cv-alert');
+        if (!form) return;
+
+        form.addEventListener('submit', async e => {
+            e.preventDefault();
+            if (alert) alert.hidden = true;
+
+            const fullName = form.fullName.value.trim();
+            const email = form.email.value.trim().toLowerCase();
+            const phone = form.phone.value.trim();
+            const role = form.role.value;
+            const notes = form.notes.value.trim();
+            const consent = form.consent.checked;
+            const fileInput = document.getElementById('cvFile');
+            const file = fileInput && fileInput.files && fileInput.files[0];
+
+            if (!fullName || !email || !phone || !consent) {
+                showAlert(alert, 'Please complete all required fields and accept the consent.', 'error');
+                return;
+            }
+            if (!file) {
+                showAlert(alert, 'Please attach your resume (PDF or Word).', 'error');
+                return;
+            }
+            if (file.size > 1.5 * 1024 * 1024) {
+                showAlert(alert, 'File is too large. Please keep your resume under 1.5 MB.', 'error');
+                return;
+            }
+
+            const button = form.querySelector('button[type="submit"]');
+            const label = button.textContent;
+            button.disabled = true;
+            button.textContent = 'Uploading…';
+
+            try {
+                const fileBase64 = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(String(reader.result || ''));
+                    reader.onerror = () => reject(new Error('read-failed'));
+                    reader.readAsDataURL(file);
+                });
+
+                const res = await fetch('/.netlify/functions/submit-resume', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        fullName,
+                        email,
+                        phone,
+                        role,
+                        notes,
+                        fileName: file.name,
+                        fileType: file.type || 'application/pdf',
+                        fileBase64
+                    })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok || !data.success) {
+                    showAlert(alert, data.message || data.error || 'Submission failed. Please try again.', 'error');
+                    button.disabled = false;
+                    button.textContent = label;
+                    return;
+                }
+                showAlert(alert, data.message || 'Resume submitted successfully.', 'success');
+                form.reset();
+            } catch {
+                showAlert(alert, 'Unable to submit right now. Please try again shortly.', 'error');
+            }
+            button.disabled = false;
+            button.textContent = label;
+        });
+    }
+
     function initResume() {
         const form = document.getElementById('resume-form');
         const alert = document.getElementById('resume-alert');
@@ -162,6 +237,7 @@
         initNav();
         initRegistration();
         initAttempt2Nav();
+        initCvSubmit();
         initResume();
     });
 })();

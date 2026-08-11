@@ -105,6 +105,50 @@
                         </form>
                         <a href="#attempt2" class="btn btn-secondary btn-full attempt2-link" id="attempt2-trigger">Second Attempt</a>
                     </div>
+                    <div class="careers-card careers-cv-card" id="submit-resume">
+                        <h3>Submit your resume</h3>
+                        <p class="section-desc">Share your CV for recruitment review. We handle your document with care and use it only for hiring.</p>
+                        <form class="register-form" id="cv-form" novalidate>
+                            <div class="form-field">
+                                <label for="cvName">Full Name</label>
+                                <input type="text" id="cvName" name="fullName" required placeholder="Your full name" autocomplete="name">
+                            </div>
+                            <div class="form-field">
+                                <label for="cvEmail">Email Address</label>
+                                <input type="email" id="cvEmail" name="email" required placeholder="you@email.com" autocomplete="email">
+                            </div>
+                            <div class="form-field">
+                                <label for="cvPhone">Phone Number</label>
+                                <input type="tel" id="cvPhone" name="phone" required placeholder="+91 XXXXX XXXXX" autocomplete="tel">
+                            </div>
+                            <div class="form-field">
+                                <label for="cvRole">Role of interest</label>
+                                <select id="cvRole" name="role">
+                                    <option value="General application">General application</option>
+                                    <option value="Healthcare Agent (Arise)">Healthcare Agent (Arise)</option>
+                                    <option value="Customer Support">Customer Support</option>
+                                    <option value="Back Office Operations">Back Office Operations</option>
+                                    <option value="Voice / Support Agent">Voice / Support Agent</option>
+                                </select>
+                            </div>
+                            <div class="form-field">
+                                <label for="cvFile">Resume (PDF or Word, max 1.5 MB)</label>
+                                <input type="file" id="cvFile" name="resume" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" required>
+                            </div>
+                            <div class="form-field">
+                                <label for="cvNotes">Cover note (optional)</label>
+                                <textarea id="cvNotes" name="notes" rows="3" placeholder="Brief note for the hiring team"></textarea>
+                            </div>
+                            <div class="form-field">
+                                <label class="consent-label">
+                                    <input type="checkbox" name="consent" required>
+                                    <span>I agree that Trinitas may store and review my resume for recruitment only, with care for my personal data.</span>
+                                </label>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-full">Submit resume</button>
+                        </form>
+                        <div id="cv-alert" class="form-alert" hidden></div>
+                    </div>
                     <div class="careers-card careers-resume-card" id="resume">
                         <h3>Resume paused assessment</h3>
                         <p class="section-desc">If you paused mid-assessment, ask recruitment to generate an OTP for your email, then enter it below.</p>
