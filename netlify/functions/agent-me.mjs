@@ -29,6 +29,7 @@ function publicAgent(agent) {
         phone: agent.phone || '',
         applications: agent.applications || [],
         todos: agent.todos || [],
+        messages: agent.messages || [],
         createdAt: agent.createdAt
     };
 }
@@ -46,8 +47,10 @@ export default async (req, context) => {
             return jsonResponse(401, { error: 'Unauthorized' });
         }
 
+        const isAdmin = !!(session.isAdmin || isSiteAdminEmail(session.email));
+
         if (req.method === 'GET') {
-            if (session.isAdmin || isSiteAdminEmail(session.email)) {
+            if (isAdmin) {
                 const idxRaw = await store.get(agentIndexKey(), { type: 'text' });
                 const index = idxRaw ? JSON.parse(idxRaw) : [];
                 const agents = [];
@@ -75,10 +78,45 @@ export default async (req, context) => {
         }
 
         if (req.method === 'POST') {
-            if (session.isAdmin) {
-                return jsonResponse(400, { error: 'Admin cannot update agent profile this way' });
-            }
             const body = await req.json();
+
+            // Admin: send message to agent inbox
+            if (isAdmin && body.sendMessage) {
+                const to = normalizeEmail(body.sendMessage.to);
+                const subject = String(body.sendMessage.subject || 'Message from Trinitas').slice(0, 160);
+                const text = String(body.sendMessage.body || '').slice(0, 4000);
+                if (!to || !text.trim()) {
+                    return jsonResponse(400, { error: 'Recipient and message body are required' });
+                }
+                const raw = await store.get(agentKey(to), { type: 'text' });
+                if (!raw) {
+                    return jsonResponse(404, { error: 'Agent not found' });
+                }
+                const agent = JSON.parse(raw);
+                agent.messages = agent.messages || [];
+                agent.messages.unshift({
+                    id: `m-${Date.now()}`,
+                    from: 'Trinitas HR <balahari@trinitas.in>',
+                    subject,
+                    body: text.trim(),
+                    at: new Date().toISOString(),
+                    read: false
+                });
+                // keep last 50
+                agent.messages = agent.messages.slice(0, 50);
+                agent.updatedAt = new Date().toISOString();
+                await store.set(agentKey(to), JSON.stringify(agent));
+                return jsonResponse(200, {
+                    success: true,
+                    message: `Message sent to ${to}`,
+                    agent: publicAgent(agent)
+                });
+            }
+
+            if (isAdmin) {
+                return jsonResponse(400, { error: 'Unknown admin action' });
+            }
+
             const raw = await store.get(agentKey(session.email), { type: 'text' });
             if (!raw) return jsonResponse(404, { error: 'Agent not found' });
             const agent = JSON.parse(raw);
@@ -122,6 +160,11 @@ export default async (req, context) => {
             }
             if (body.removeTodoId) {
                 agent.todos = (agent.todos || []).filter(t => t.id !== body.removeTodoId);
+            }
+            if (body.markMessageRead) {
+                agent.messages = (agent.messages || []).map(m =>
+                    m.id === body.markMessageRead ? { ...m, read: true } : m
+                );
             }
 
             agent.updatedAt = new Date().toISOString();

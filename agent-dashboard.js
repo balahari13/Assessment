@@ -4,6 +4,7 @@
     const TOKEN_KEY = 'trinitas_agent_token';
     const API = '/.netlify/functions';
     let agent = null;
+    let agentsList = [];
 
     async function request(path, options = {}) {
         const token = sessionStorage.getItem(TOKEN_KEY);
@@ -29,7 +30,7 @@
         el.hidden = false;
         el.className = `admin-toast admin-toast--${type || 'success'}`;
         el.textContent = msg;
-        setTimeout(() => { el.hidden = true; }, 3500);
+        setTimeout(() => { el.hidden = true; }, 4000);
     }
 
     function formatDate(iso) {
@@ -39,6 +40,45 @@
         } catch {
             return iso;
         }
+    }
+
+    function escapeHtml(s) {
+        return String(s || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+
+    function renderInbox() {
+        const list = document.getElementById('inbox-list');
+        const messages = agent.messages || [];
+        if (!messages.length) {
+            list.innerHTML = '<li class="agent-list-empty">No messages yet. HR emails will appear here.</li>';
+            return;
+        }
+        list.innerHTML = messages.map(m => `
+            <li class="agent-list-item agent-msg ${m.read ? '' : 'agent-msg--unread'}" data-msg-id="${m.id}">
+                <div>
+                    <strong>${escapeHtml(m.subject || '(No subject)')}</strong>
+                    <span class="agent-meta">${escapeHtml(m.from || 'Trinitas')} · ${formatDate(m.at)}</span>
+                    <p class="agent-msg-body">${escapeHtml(m.body)}</p>
+                </div>
+            </li>
+        `).join('');
+
+        list.querySelectorAll('[data-msg-id]').forEach(el => {
+            el.addEventListener('click', async () => {
+                const id = el.dataset.msgId;
+                const { ok, data } = await request('/agent-me', {
+                    method: 'POST',
+                    body: JSON.stringify({ markMessageRead: id })
+                });
+                if (ok && data.agent) {
+                    agent = data.agent;
+                    renderInbox();
+                }
+            });
+        });
     }
 
     function renderApps() {
@@ -51,8 +91,8 @@
         list.innerHTML = apps.map(a => `
             <li class="agent-list-item">
                 <div>
-                    <strong>${a.role}</strong>
-                    <span class="agent-meta">${a.status} · ${formatDate(a.appliedAt)}</span>
+                    <strong>${escapeHtml(a.role)}</strong>
+                    <span class="agent-meta">${escapeHtml(a.status)} · ${formatDate(a.appliedAt)}</span>
                 </div>
             </li>
         `).join('');
@@ -69,7 +109,7 @@
             <li class="agent-list-item agent-todo ${t.done ? 'agent-todo--done' : ''}">
                 <label>
                     <input type="checkbox" data-toggle-todo="${t.id}" ${t.done ? 'checked' : ''}>
-                    <span>${t.text}</span>
+                    <span>${escapeHtml(t.text)}</span>
                 </label>
                 <button type="button" class="btn-admin" data-remove-todo="${t.id}">Remove</button>
             </li>
@@ -102,19 +142,27 @@
     }
 
     function renderAdminAgents(agents) {
+        agentsList = agents;
         const tbody = document.getElementById('agents-admin-body');
+        const select = document.getElementById('msg-to');
+        if (select) {
+            select.innerHTML = '<option value="">Select agent…</option>' +
+                agents.map(a => `<option value="${escapeHtml(a.email)}">${escapeHtml(a.fullName)} — ${escapeHtml(a.email)}</option>`).join('');
+        }
         if (!agents.length) {
-            tbody.innerHTML = '<tr><td colspan="6">No agents registered yet.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7">No employees registered yet.</td></tr>';
             return;
         }
         tbody.innerHTML = agents.map(a => {
             const openTodos = (a.todos || []).filter(t => !t.done).length;
+            const unread = (a.messages || []).filter(m => !m.read).length;
             return `
                 <tr>
-                    <td>${a.fullName || '—'}</td>
-                    <td>${a.email || '—'}</td>
-                    <td>${a.phone || '—'}</td>
+                    <td>${escapeHtml(a.fullName || '—')}</td>
+                    <td>${escapeHtml(a.email || '—')}</td>
+                    <td>${escapeHtml(a.phone || '—')}</td>
                     <td>${(a.applications || []).length}</td>
+                    <td>${(a.messages || []).length}${unread ? ` (${unread} unread)` : ''}</td>
                     <td>${openTodos}</td>
                     <td>${formatDate(a.createdAt)}</td>
                 </tr>
@@ -140,20 +188,43 @@
         });
 
         if (data.isAdmin) {
-            document.getElementById('dash-title').textContent = 'Agent directory';
+            document.getElementById('dash-title').textContent = 'Employee admin';
             document.getElementById('dash-sub').textContent = `${data.fullName} · ${data.email}`;
             document.getElementById('admin-view').hidden = false;
             document.getElementById('agent-view').hidden = true;
             renderAdminAgents(data.agents || []);
+
+            document.getElementById('admin-send-form').addEventListener('submit', async e => {
+                e.preventDefault();
+                const to = document.getElementById('msg-to').value;
+                const subject = document.getElementById('msg-subject').value.trim();
+                const body = document.getElementById('msg-body').value.trim();
+                if (!to || !body) return;
+                const { ok: ok2, data: d2 } = await request('/agent-me', {
+                    method: 'POST',
+                    body: JSON.stringify({ sendMessage: { to, subject, body } })
+                });
+                if (ok2) {
+                    toast(d2.message || 'Message sent.', 'success');
+                    document.getElementById('msg-subject').value = '';
+                    document.getElementById('msg-body').value = '';
+                    // refresh list
+                    const reload = await request('/agent-me', { method: 'GET' });
+                    if (reload.ok) renderAdminAgents(reload.data.agents || []);
+                } else {
+                    toast(d2.error || 'Send failed.', 'error');
+                }
+            });
             return;
         }
 
         agent = data.agent;
-        document.getElementById('dash-title').textContent = agent.fullName || 'Agent';
-        document.getElementById('dash-sub').textContent = 'Your applications and tasks';
+        document.getElementById('dash-title').textContent = agent.fullName || 'Employee';
+        document.getElementById('dash-sub').textContent = 'Inbox · applications · tasks';
         document.getElementById('agent-email-display').textContent = agent.email;
         document.getElementById('agent-view').hidden = false;
         document.getElementById('admin-view').hidden = true;
+        renderInbox();
         renderApps();
         renderTodos();
 

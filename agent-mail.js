@@ -64,7 +64,7 @@
                 body: JSON.stringify({ fullName, phone, password })
             });
             btn.disabled = false;
-            btn.textContent = 'Create agent mail';
+            btn.textContent = 'Create employee email';
             if (!ok) {
                 show(alert, data.message || data.error || 'Registration failed.', 'error');
                 return;
@@ -72,7 +72,7 @@
             sessionStorage.setItem(TOKEN_KEY, data.token);
             success.hidden = false;
             success.className = 'form-alert form-alert--success';
-            success.innerHTML = `<strong>Your agent mail:</strong> ${data.email}<br><span style="font-size:0.88rem">Save this email — it was generated from letters in your name. Redirecting to your dashboard…</span>`;
+            success.innerHTML = `<strong>Your employee email:</strong> ${data.email}<br><span style="font-size:0.88rem">Save this email — it was generated from letters in your name. Redirecting…</span>`;
             setTimeout(() => { window.location.href = 'agent-dashboard.html'; }, 2200);
         });
     }

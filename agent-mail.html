@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agent Mail | Trinitas</title>
+    <title>Employee Login | Trinitas</title>
     <meta name="robots" content="noindex">
     <meta name="theme-color" content="#020617">
     <link rel="icon" href="logo-icon.png" type="image/png">
@@ -20,14 +20,14 @@
                 <img src="logo-icon.png" alt="" width="40" height="40">
                 <div>
                     <p class="eyebrow">Trinitas Internal</p>
-                    <h1>Agent Mail</h1>
+                    <h1>Employee Login</h1>
                 </div>
             </div>
-            <p class="section-desc">Register with your full name to receive an internal agent email (generated from letters in your name). Use it to track applications and your to-do list.</p>
+            <p class="section-desc">Register with your full name to receive an internal employee email (generated from letters in your name). Sign in for inbox, applications, and your to-do list.</p>
 
             <div class="agent-mail-tabs">
                 <button type="button" class="agent-tab agent-tab--active" data-tab="register">Register</button>
-                <button type="button" class="agent-tab" data-tab="login">Sign in</button>
+                <button type="button" class="agent-tab" data-tab="login">Employee sign in</button>
             </div>
 
             <div class="careers-card" id="panel-register">
@@ -44,7 +44,7 @@
                         <label for="regPass">Password</label>
                         <input type="password" id="regPass" name="password" required minlength="6" autocomplete="new-password">
                     </div>
-                    <button type="submit" class="btn btn-primary btn-full">Create agent mail</button>
+                    <button type="submit" class="btn btn-primary btn-full">Create employee email</button>
                 </form>
                 <div id="reg-alert" class="form-alert" hidden></div>
                 <div id="reg-success" class="form-alert form-alert--success" hidden></div>
@@ -53,8 +53,8 @@
             <div class="careers-card" id="panel-login" hidden>
                 <form id="agent-login-form" novalidate>
                     <div class="form-field">
-                        <label for="loginEmail">Agent email</label>
-                        <input type="email" id="loginEmail" name="email" required placeholder="you@agent.trinitas.in" autocomplete="username">
+                        <label for="loginEmail">Employee email</label>
+                        <input type="email" id="loginEmail" name="email" required placeholder="you@agent.trinitas.in or balahari@trinitas.in" autocomplete="username">
                     </div>
                     <div class="form-field">
                         <label for="loginPass">Password</label>

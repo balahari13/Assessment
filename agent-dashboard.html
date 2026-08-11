@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agent Dashboard | Trinitas</title>
+    <title>Employee Dashboard | Trinitas</title>
     <meta name="robots" content="noindex">
     <meta name="theme-color" content="#020617">
     <link rel="icon" href="logo-icon.png" type="image/png">
@@ -20,13 +20,13 @@
                 <div class="admin-header-left">
                     <img src="logo-icon.png" alt="" class="admin-header-logo" width="32" height="32">
                     <div>
-                        <h1 id="dash-title">My Agent Mail</h1>
+                        <h1 id="dash-title">Employee portal</h1>
                         <p id="dash-sub">Loading…</p>
                     </div>
                 </div>
                 <div class="admin-header-actions">
                     <a href="careers.html" class="btn btn-secondary btn-sm">Careers</a>
-                    <a href="healthcare.html" class="btn btn-secondary btn-sm">Healthcare path</a>
+                    <a href="healthcare.html" class="btn btn-secondary btn-sm">Healthcare</a>
                     <button type="button" class="btn btn-secondary btn-sm" id="agent-logout">Sign out</button>
                 </div>
             </header>
@@ -35,11 +35,20 @@
 
             <div id="agent-view" hidden>
                 <div class="agent-email-banner">
-                    <span class="meta-label">Your agent mail</span>
+                    <span class="meta-label">Your employee email</span>
                     <strong id="agent-email-display">—</strong>
                 </div>
 
-                <div class="agent-dash-grid">
+                <div class="agent-dash-grid agent-dash-grid--3">
+                    <section class="admin-table-card agent-panel">
+                        <div class="admin-section-title-row">
+                            <h2 class="admin-section-title">Inbox</h2>
+                        </div>
+                        <div class="agent-panel-body">
+                            <ul class="agent-list" id="inbox-list"></ul>
+                        </div>
+                    </section>
+
                     <section class="admin-table-card agent-panel">
                         <div class="admin-section-title-row">
                             <h2 class="admin-section-title">My applications</h2>
@@ -75,24 +84,50 @@
             </div>
 
             <div id="admin-view" hidden>
+                <section class="admin-table-card agent-panel" style="margin-bottom:1rem">
+                    <div class="admin-section-title-row">
+                        <h2 class="admin-section-title">Send email to agent</h2>
+                    </div>
+                    <div class="agent-panel-body">
+                        <form id="admin-send-form" class="agent-compose-form">
+                            <div class="form-field">
+                                <label for="msg-to">To (agent email)</label>
+                                <select id="msg-to" required>
+                                    <option value="">Select agent…</option>
+                                </select>
+                            </div>
+                            <div class="form-field">
+                                <label for="msg-subject">Subject</label>
+                                <input type="text" id="msg-subject" required placeholder="Subject" maxlength="160">
+                            </div>
+                            <div class="form-field">
+                                <label for="msg-body">Message</label>
+                                <textarea id="msg-body" rows="4" required placeholder="Write your message…" maxlength="4000"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Send to inbox</button>
+                        </form>
+                    </div>
+                </section>
+
                 <section class="admin-table-card">
                     <div class="admin-section-title-row">
-                        <h2 class="admin-section-title">Registered agents</h2>
+                        <h2 class="admin-section-title">Registered employees</h2>
                     </div>
                     <div class="results-table-wrap">
                         <table class="results-table">
                             <thead>
                                 <tr>
                                     <th>Name</th>
-                                    <th>Agent email</th>
+                                    <th>Employee email</th>
                                     <th>Phone</th>
                                     <th>Applications</th>
+                                    <th>Inbox</th>
                                     <th>Open todos</th>
                                     <th>Joined</th>
                                 </tr>
                             </thead>
                             <tbody id="agents-admin-body">
-                                <tr><td colspan="6">Loading…</td></tr>
+                                <tr><td colspan="7">Loading…</td></tr>
                             </tbody>
                         </table>
                     </div>

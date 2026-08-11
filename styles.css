@@ -212,10 +212,36 @@ button, input, select, textarea { font: inherit; color: inherit; border: none; b
     color: var(--white); font-weight: 700; border-radius: var(--radius-sm);
 }
 
+/* Homepage / minimal header: hamburger-first */
+.nav--minimal .nav-links { display: none !important; }
+.nav--minimal .nav-toggle { display: flex; }
+.nav-minimal-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-left: auto;
+}
+.nav-cta--compact {
+    padding: 0.55rem 0.95rem;
+    font-size: 0.78rem;
+}
+.mobile-menu-close {
+    position: absolute;
+    top: 1.15rem;
+    right: 1.25rem;
+    border: none;
+    background: transparent;
+    font-size: 2rem;
+    line-height: 1;
+    color: var(--navy);
+    cursor: pointer;
+}
+
 @media (max-width: 960px) {
-    .nav-links, .nav-cta { display: none; }
+    .nav-links, .nav:not(.nav--minimal) .nav-cta { display: none; }
     .nav-toggle { display: flex; }
     .nav-wordmark span { display: none; }
+    .nav-cta--compact { display: none; }
 }
 
 /* Typography */
@@ -1059,11 +1085,12 @@ a.contact-value:hover { color: var(--blue); }
 .back-top.show { opacity: 1; visibility: visible; }
 .back-top:hover { transform: translateY(-3px); }
 
-/* Voice agent */
+/* Voice agent — left side so it never overlaps sticky Request Proposal (right) */
 .voice-agent-fab {
     position: fixed;
-    bottom: 5.5rem;
-    right: 1.25rem;
+    bottom: 1.5rem;
+    left: 1.25rem;
+    right: auto;
     z-index: 950;
     width: 52px;
     height: 52px;
@@ -1080,8 +1107,9 @@ a.contact-value:hover { color: var(--blue); }
 .voice-agent-fab:hover { transform: translateY(-2px); }
 .voice-agent {
     position: fixed;
-    bottom: 5.5rem;
-    right: 1.25rem;
+    bottom: 5rem;
+    left: 1.25rem;
+    right: auto;
     z-index: 960;
     width: min(340px, calc(100vw - 2rem));
     background: var(--white);
@@ -1165,8 +1193,8 @@ a.contact-value:hover { color: var(--blue); }
 .voice-agent-mic--active { background: rgba(244, 63, 94, 0.12); border-color: #f43f5e; }
 .voice-agent-send { background: var(--blue); color: var(--white); border-color: var(--blue); font-weight: 700; }
 @media (max-width: 560px) {
-    .voice-agent-fab { bottom: 1rem; right: 1rem; }
-    .voice-agent { bottom: 4.5rem; right: 1rem; }
+    .voice-agent-fab { bottom: 1rem; left: 0.85rem; }
+    .voice-agent { bottom: 4.5rem; left: 0.85rem; width: min(320px, calc(100vw - 1.5rem)); }
 }
 
 /* Modal */
