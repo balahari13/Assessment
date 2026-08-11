@@ -888,19 +888,43 @@
     }
 
     function showLogin() {
-        document.getElementById('admin-login').hidden = false;
-        document.getElementById('admin-dashboard').hidden = true;
+        const login = document.getElementById('admin-login');
+        const dash = document.getElementById('admin-dashboard');
+        if (login) {
+            login.hidden = false;
+            login.setAttribute('aria-hidden', 'false');
+        }
+        if (dash) {
+            dash.hidden = true;
+            dash.setAttribute('aria-hidden', 'true');
+        }
+        document.body.classList.add('admin-logged-out');
+        document.body.classList.remove('admin-logged-in');
+        // Never leave answer key open after logout
+        const ak = document.getElementById('answer-key-panel');
+        if (ak) ak.hidden = true;
+        const toggle = document.getElementById('toggle-answer-key');
+        if (toggle) toggle.textContent = 'Answer Key';
     }
 
     async function showDashboard() {
-        document.getElementById('admin-login').hidden = true;
-        document.getElementById('admin-dashboard').hidden = false;
+        const login = document.getElementById('admin-login');
+        const dash = document.getElementById('admin-dashboard');
+        if (login) {
+            login.hidden = true;
+            login.setAttribute('aria-hidden', 'true');
+        }
+        if (dash) {
+            dash.hidden = false;
+            dash.setAttribute('aria-hidden', 'false');
+        }
+        document.body.classList.remove('admin-logged-out');
+        document.body.classList.add('admin-logged-in');
         loadResults();
         loadCandidates();
-        await ensureAssessmentData();
-        if (document.getElementById('answer-key-panel') && !document.getElementById('answer-key-panel').hidden) {
-            renderAnswerKey();
-        }
+        // Answer key data loads on demand when admin opens Answer Key — not at login paint
+        const ak = document.getElementById('answer-key-panel');
+        if (ak) ak.hidden = true;
     }
 
     function renderCandidates(list) {

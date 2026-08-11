@@ -13,10 +13,10 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="careers.css">
 </head>
-<body class="admin-body">
+<body class="admin-body admin-logged-out">
     <div class="admin-page hr-page">
         <!-- Auth -->
-        <div class="admin-login-card hr-auth-card" id="hr-auth">
+        <div class="admin-login-card hr-auth-card" id="hr-auth" aria-hidden="false">
             <div class="admin-login-brand">
                 <img src="logo-icon.png" alt="" width="40" height="40">
                 <div>
@@ -75,7 +75,7 @@
         </div>
 
         <!-- Dashboard -->
-        <div class="admin-dashboard hr-dashboard" id="hr-dashboard" hidden>
+        <div class="admin-dashboard hr-dashboard" id="hr-dashboard" hidden aria-hidden="true">
             <header class="admin-header">
                 <div class="admin-header-left">
                     <img src="logo-icon.png" alt="" class="admin-header-logo" width="32" height="32">

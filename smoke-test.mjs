@@ -92,7 +92,9 @@ mustExist(join(functionsDir, 'pipeline.mjs'), 'function pipeline.mjs');
 mustExist(join(functionsDir, 'admin-hr.mjs'), 'function admin-hr.mjs');
 mustContain(join(functionsDir, 'pipeline.mjs'), ['PIPELINE_STAGES', 'DEFAULT_MEET_LINK', 'verifyStaffAccess'], 'pipeline handler');
 mustContain(join(deploy, 'careers.html'), ['after-attempt-box', 'Assessment process'], 'careers after-attempt copy');
-mustContain(join(deploy, 'admin.html'), ['Assessment data (with answers) loads only after successful admin sign-in'], 'admin does not preload answer key scripts');
+mustContain(join(deploy, 'admin.html'), ['Assessment data (with answers) loads only after successful admin sign-in', 'admin-logged-out', 'id="admin-dashboard" hidden'], 'admin login-gated shell');
+mustContain(join(deploy, 'careers.css'), ['admin-dashboard[hidden]', 'body.admin-logged-out #admin-dashboard'], 'admin dashboard hidden CSS override fix');
+mustContain(join(deploy, 'admin.js'), ['admin-logged-in', 'admin-logged-out', 'showLogin'], 'admin session body classes');
 mustContain(join(deploy, 'assessment.js'), ['Submission received', 'Next steps'], 'professional post-assessment copy');
 
 console.log('\nSmoke test: pause / OTP path');

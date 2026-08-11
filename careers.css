@@ -958,6 +958,22 @@
     background: #f1f5f9;
     min-height: 100vh;
 }
+/* Belt-and-suspenders: never paint dashboard while logged out (even if hidden attr fails) */
+body.admin-logged-out #admin-dashboard,
+body.admin-logged-out #hr-dashboard {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+}
+body.admin-logged-in #admin-login,
+body.admin-logged-in #hr-auth {
+    display: none !important;
+}
 .admin-page {
     min-height: 100vh;
     padding: 1.5rem 1.25rem 2.5rem;
@@ -989,6 +1005,19 @@
 }
 .admin-login-desc { margin: 0.75rem 0 1.35rem; }
 .admin-login-card #admin-error { margin-top: 1rem; }
+
+/* display:flex/grid on these nodes would override the HTML hidden attribute — force hide */
+.admin-login-card[hidden],
+.admin-dashboard[hidden],
+#admin-login[hidden],
+#admin-dashboard[hidden],
+#hr-auth[hidden],
+#hr-dashboard[hidden],
+.answer-key-panel[hidden],
+.admin-toast[hidden],
+.form-alert[hidden] {
+    display: none !important;
+}
 
 .admin-dashboard {
     max-width: 1400px;

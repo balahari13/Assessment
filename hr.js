@@ -49,13 +49,33 @@
     }
 
     function showAuth() {
-        document.getElementById('hr-auth').hidden = false;
-        document.getElementById('hr-dashboard').hidden = true;
+        const authEl = document.getElementById('hr-auth');
+        const dash = document.getElementById('hr-dashboard');
+        if (authEl) {
+            authEl.hidden = false;
+            authEl.setAttribute('aria-hidden', 'false');
+        }
+        if (dash) {
+            dash.hidden = true;
+            dash.setAttribute('aria-hidden', 'true');
+        }
+        document.body.classList.add('admin-logged-out');
+        document.body.classList.remove('admin-logged-in');
     }
 
     function showDashboard() {
-        document.getElementById('hr-auth').hidden = true;
-        document.getElementById('hr-dashboard').hidden = false;
+        const authEl = document.getElementById('hr-auth');
+        const dash = document.getElementById('hr-dashboard');
+        if (authEl) {
+            authEl.hidden = true;
+            authEl.setAttribute('aria-hidden', 'true');
+        }
+        if (dash) {
+            dash.hidden = false;
+            dash.setAttribute('aria-hidden', 'false');
+        }
+        document.body.classList.remove('admin-logged-out');
+        document.body.classList.add('admin-logged-in');
         const auth = getAuth();
         const label = document.getElementById('hr-user-label');
         if (label && auth) {
