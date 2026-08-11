@@ -1653,23 +1653,23 @@
 
         const attemptNum = Number(payload.attemptNumber) || 1;
         const afterMsg = attemptNum === 1
-            ? `<p style="margin-top:0.85rem"><strong>What happens next?</strong></p>
-                <ul style="margin:0.4rem 0 0;padding-left:1.2rem;font-size:0.9rem;line-height:1.55;color:inherit">
-                    <li>You will not see a final score here — recruitment reviews your answers and resume.</li>
-                    <li>If a second sitting is needed, we may enable Attempt 2 for your email.</li>
-                    <li>We contact you only if there is a next step (Attempt 2, interview, or role fit).</li>
-                    <li>Timelines vary by role and hiring volume — check your email for updates.</li>
-                </ul>`
-            : `<p style="margin-top:0.85rem"><strong>What happens next?</strong> Attempt 2 is with recruitment for review alongside your earlier results. We will contact you if there is a further step.</p>`;
+            ? `<div class="assessment-next-steps" style="margin-top:1rem;text-align:left">
+                    <p style="margin:0 0 0.5rem;font-weight:600">Next steps</p>
+                    <p style="margin:0;font-size:0.92rem;line-height:1.6">Your submission has been received and will be reviewed together with your resume by our recruitment team. Individual scores are not shared with candidates. Should a further evaluation be required, Attempt 2 may be enabled for your account, or we may contact you regarding subsequent stages of the process. Please monitor your registered email for any communication from Trinitas.</p>
+                </div>`
+            : `<div class="assessment-next-steps" style="margin-top:1rem;text-align:left">
+                    <p style="margin:0 0 0.5rem;font-weight:600">Next steps</p>
+                    <p style="margin:0;font-size:0.92rem;line-height:1.6">Thank you for completing Attempt 2. Your responses will be reviewed alongside your earlier results. Our team will contact you if there is a further step in the hiring process.</p>
+                </div>`;
 
         panel.innerHTML = `
             <div class="form-alert form-alert--success" style="display:block">
-                <h2 style="margin-bottom:0.5rem">Assessment Submitted</h2>
+                <h2 style="margin-bottom:0.5rem">Submission received</h2>
                 <p>Thank you, ${payload.fullName}. Your Attempt ${attemptNum} has been recorded successfully.</p>
                 ${afterMsg}
-                ${viaEmail ? '<p style="margin-top:0.65rem;font-size:0.88rem">A summary was also sent to our recruitment inbox.</p>' : ''}
+                ${viaEmail ? '<p style="margin-top:0.75rem;font-size:0.88rem">A notification has also been sent to our recruitment team.</p>' : ''}
             </div>
-            <a href="careers.html" class="btn btn-primary" style="margin-top:1.5rem">Back to Careers</a>
+            <a href="careers.html" class="btn btn-primary" style="margin-top:1.5rem">Return to Careers</a>
         `;
     }
 

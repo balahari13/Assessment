@@ -399,6 +399,7 @@
                 <td>
                     <div class="admin-actions">
                         <button type="button" class="btn-admin btn-admin--attempt2" data-action="enable2" data-email="${email}" ${!a1 || r.attempt2Enabled ? 'disabled' : ''}>Enable Att.2</button>
+                        <button type="button" class="btn-admin" data-action="pipeline" data-email="${email}" data-name="${escapeAttr(r.fullName || a1?.fullName)}" data-phone="${escapeAttr(r.phone || a1?.phone)}">To pipeline</button>
                         <button type="button" class="btn-admin btn-admin--delete" data-action="delete" data-email="${email}">Delete</button>
                         <button type="button" class="btn-admin btn-admin--reattempt" data-action="reattempt" data-email="${email}">Reset</button>
                     </div>
@@ -413,9 +414,29 @@
                 if (btn.dataset.action === 'view') openDetailModal(email);
                 else if (btn.dataset.action === 'delete') handleDelete(email);
                 else if (btn.dataset.action === 'enable2') handleEnableAttempt2(email);
+                else if (btn.dataset.action === 'pipeline') handleAssessmentToPipeline(btn);
                 else handleReattempt(email);
             });
         });
+    }
+
+    async function handleAssessmentToPipeline(btn) {
+        const token = sessionStorage.getItem(TOKEN_KEY);
+        const { ok, data } = await window.TrinitasAPI.pipelineUpdate(token, {
+            action: 'create',
+            fullName: btn.dataset.name || 'Candidate',
+            email: btn.dataset.email,
+            phone: btn.dataset.phone || '',
+            stage: 'assessment',
+            nextAction: 'Review assessment results and decide on interview.',
+            source: 'assessment'
+        });
+        if (!ok) {
+            showToast(data.message || data.error || 'Could not add to pipeline.', 'error');
+            return;
+        }
+        showToast('Candidate added to hiring pipeline.', 'success');
+        loadPipeline();
     }
 
     function renderSummary(summary) {
@@ -478,6 +499,9 @@
         document.getElementById('export-csv').onclick = () => exportCsv(data.results);
         loadPaused();
         loadResumes();
+        loadCandidates();
+        loadPipeline();
+        loadHrTeam();
     }
 
     async function handleResumeDownload(id) {
@@ -519,13 +543,237 @@
                 <td>${r.role || '—'}</td>
                 <td>${r.fileName || '—'} ${r.sizeKb ? `(${r.sizeKb} KB)` : ''}</td>
                 <td>${formatPausedDate(r.submittedAt)}</td>
-                <td><button type="button" class="btn-admin btn-admin--reattempt" data-resume-id="${r.id}">Download</button></td>
+                <td>
+                    <div class="admin-actions">
+                        <button type="button" class="btn-admin btn-admin--reattempt" data-resume-dl="${r.id}">Download</button>
+                        <button type="button" class="btn-admin" data-resume-pipe="${r.id}" data-name="${escapeAttr(r.fullName)}" data-email="${escapeAttr(r.email)}" data-phone="${escapeAttr(r.phone)}" data-role="${escapeAttr(r.role)}">To pipeline</button>
+                        <button type="button" class="btn-admin btn-admin--delete" data-resume-del="${r.id}">Delete</button>
+                    </div>
+                </td>
             </tr>
             ${r.notes ? `<tr><td colspan="7" style="font-size:0.8rem;color:var(--text-muted)">Note: ${String(r.notes).replace(/</g, '&lt;')}</td></tr>` : ''}
         `).join('');
-        tbody.querySelectorAll('[data-resume-id]').forEach(btn => {
-            btn.addEventListener('click', () => handleResumeDownload(btn.dataset.resumeId));
+        tbody.querySelectorAll('[data-resume-dl]').forEach(btn => {
+            btn.addEventListener('click', () => handleResumeDownload(btn.dataset.resumeDl));
         });
+        tbody.querySelectorAll('[data-resume-del]').forEach(btn => {
+            btn.addEventListener('click', () => handleResumeDelete(btn.dataset.resumeDel));
+        });
+        tbody.querySelectorAll('[data-resume-pipe]').forEach(btn => {
+            btn.addEventListener('click', () => handleResumeToPipeline(btn));
+        });
+    }
+
+    function escapeAttr(s) {
+        return String(s || '').replace(/"/g, '&quot;').replace(/</g, '');
+    }
+
+    async function handleResumeDelete(id) {
+        if (!confirm('Delete this resume permanently? This cannot be undone.')) return;
+        const token = sessionStorage.getItem(TOKEN_KEY);
+        const { ok, data } = await window.TrinitasAPI.adminResumeDelete(token, id);
+        if (!ok) {
+            showToast(data.message || data.error || 'Delete failed.', 'error');
+            return;
+        }
+        showToast(data.message || 'Resume deleted.', 'success');
+        loadResumes();
+    }
+
+    async function handleResumeToPipeline(btn) {
+        const token = sessionStorage.getItem(TOKEN_KEY);
+        const { ok, data } = await window.TrinitasAPI.pipelineUpdate(token, {
+            action: 'create',
+            fullName: btn.dataset.name || 'Candidate',
+            email: btn.dataset.email,
+            phone: btn.dataset.phone || '',
+            roleInterest: btn.dataset.role || '',
+            stage: 'applied',
+            nextAction: 'Review resume and schedule HR screening.',
+            source: 'resume'
+        });
+        if (!ok) {
+            showToast(data.message || data.error || 'Could not add to pipeline.', 'error');
+            return;
+        }
+        showToast('Added to hiring pipeline.', 'success');
+        loadPipeline();
+    }
+
+    let pipelineStages = [];
+    const DEFAULT_MEET = 'https://meet.google.com/ygi-ejrk-sae';
+
+    function stageLabel(id) {
+        const s = pipelineStages.find(x => x.id === id);
+        return s ? s.label : id;
+    }
+
+    function escapeHtml(s) {
+        return String(s || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    async function loadPipeline() {
+        const board = document.getElementById('admin-pipeline-board');
+        if (!board) return;
+        const token = sessionStorage.getItem(TOKEN_KEY);
+        const { ok, data } = await window.TrinitasAPI.pipelineList(token);
+        if (!ok) {
+            board.innerHTML = '<p class="section-desc">Could not load pipeline.</p>';
+            return;
+        }
+        pipelineStages = data.stages || [];
+        const items = data.items || [];
+        if (!items.length) {
+            board.innerHTML = '<p class="section-desc">No candidates in the pipeline yet.</p>';
+            return;
+        }
+        const byStage = {};
+        pipelineStages.forEach(s => { byStage[s.id] = []; });
+        items.forEach(item => {
+            const key = byStage[item.stage] ? item.stage : 'applied';
+            if (!byStage[key]) byStage[key] = [];
+            byStage[key].push(item);
+        });
+        board.innerHTML = `
+            <div class="pipeline-columns">
+                ${pipelineStages.map(stage => `
+                    <div class="pipeline-column">
+                        <header class="pipeline-column-head">
+                            <h3>${escapeHtml(stage.label)}</h3>
+                            <span class="pipeline-count">${(byStage[stage.id] || []).length}</span>
+                        </header>
+                        <div class="pipeline-cards">
+                            ${(byStage[stage.id] || []).map(item => `
+                                <article class="pipeline-card">
+                                    <h4>${escapeHtml(item.fullName)}</h4>
+                                    <p class="pipeline-meta">${escapeHtml(item.email)}</p>
+                                    <p class="pipeline-next-text"><strong>Next:</strong> ${escapeHtml(item.nextAction || '—')}</p>
+                                    <div class="pipeline-stage-row">
+                                        <select data-admin-stage="${escapeHtml(item.id)}">
+                                            ${pipelineStages.map(s => `<option value="${s.id}" ${s.id === item.stage ? 'selected' : ''}>${escapeHtml(s.label)}</option>`).join('')}
+                                        </select>
+                                    </div>
+                                    <div class="pipeline-card-actions">
+                                        <button type="button" class="btn-admin" data-admin-next="${escapeHtml(item.id)}" data-current="${escapeAttr(item.nextAction)}">Set next action</button>
+                                        <button type="button" class="btn-admin btn-admin--reattempt" data-admin-schedule="${escapeHtml(item.id)}">Schedule Meet</button>
+                                        <a class="btn-admin" href="${escapeHtml(item.meetLink || DEFAULT_MEET)}" target="_blank" rel="noopener">Open Meet</a>
+                                        <button type="button" class="btn-admin btn-admin--delete" data-admin-pipe-del="${escapeHtml(item.id)}">Remove</button>
+                                    </div>
+                                </article>
+                            `).join('') || '<p class="pipeline-empty">Empty</p>'}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        board.querySelectorAll('[data-admin-stage]').forEach(sel => {
+            sel.addEventListener('change', async () => {
+                const { ok: moved, data: res } = await window.TrinitasAPI.pipelineUpdate(token, {
+                    action: 'move',
+                    id: sel.dataset.adminStage,
+                    stage: sel.value
+                });
+                if (!moved) showToast(res.message || 'Move failed.', 'error');
+                else showToast(`Moved to ${stageLabel(sel.value)}.`, 'success');
+                loadPipeline();
+            });
+        });
+        board.querySelectorAll('[data-admin-next]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const next = window.prompt('Next course of action:', btn.dataset.current || '');
+                if (next === null) return;
+                const { ok: saved, data: res } = await window.TrinitasAPI.pipelineUpdate(token, {
+                    action: 'update',
+                    id: btn.dataset.adminNext,
+                    nextAction: next
+                });
+                if (!saved) showToast(res.message || 'Save failed.', 'error');
+                else showToast('Next action updated.', 'success');
+                loadPipeline();
+            });
+        });
+        board.querySelectorAll('[data-admin-schedule]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const { ok: sched, data: res } = await window.TrinitasAPI.pipelineUpdate(token, {
+                    action: 'schedule',
+                    id: btn.dataset.adminSchedule,
+                    interviewAt: new Date().toISOString(),
+                    meetLink: DEFAULT_MEET,
+                    nextAction: 'Conduct interview via Google Meet and record outcome.'
+                });
+                if (!sched) showToast(res.message || 'Schedule failed.', 'error');
+                else showToast('Interview scheduled. Open Google Meet when ready.', 'success');
+                loadPipeline();
+            });
+        });
+        board.querySelectorAll('[data-admin-pipe-del]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                if (!confirm('Remove this pipeline entry permanently?')) return;
+                const { ok: del, data: res } = await window.TrinitasAPI.pipelineUpdate(token, {
+                    action: 'delete',
+                    id: btn.dataset.adminPipeDel
+                });
+                if (!del) showToast(res.message || 'Delete failed.', 'error');
+                else showToast('Pipeline entry removed.', 'success');
+                loadPipeline();
+            });
+        });
+    }
+
+    function renderHrTeam(team) {
+        const tbody = document.getElementById('hr-team-body');
+        if (!tbody) return;
+        if (!team.length) {
+            tbody.innerHTML = '<tr><td colspan="6">No HR accounts yet. Staff can register at hr.html.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = team.map(h => `
+            <tr>
+                <td>${escapeHtml(h.fullName)}</td>
+                <td>${escapeHtml(h.email)}</td>
+                <td>${escapeHtml(h.phone || '—')}</td>
+                <td>${h.active ? '<span class="score-pill score-pill--high">Active</span>' : '<span class="score-pill score-pill--low">Inactive</span>'}</td>
+                <td>${formatPausedDate(h.createdAt)}</td>
+                <td>
+                    <div class="admin-actions">
+                        ${h.active
+                            ? `<button type="button" class="btn-admin" data-hr-action="deactivate" data-email="${escapeAttr(h.email)}">Deactivate</button>`
+                            : `<button type="button" class="btn-admin" data-hr-action="activate" data-email="${escapeAttr(h.email)}">Activate</button>`}
+                        <button type="button" class="btn-admin btn-admin--delete" data-hr-action="delete" data-email="${escapeAttr(h.email)}">Delete</button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+        tbody.querySelectorAll('[data-hr-action]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const action = btn.dataset.hrAction;
+                const email = btn.dataset.email;
+                if (action === 'delete' && !confirm(`Permanently delete HR account ${email}?`)) return;
+                if (action === 'deactivate' && !confirm(`Deactivate HR account ${email}?`)) return;
+                const token = sessionStorage.getItem(TOKEN_KEY);
+                const { ok, data } = await window.TrinitasAPI.adminHrAction(token, { action, email });
+                if (!ok) showToast(data.message || data.error || 'Action failed.', 'error');
+                else showToast(data.message || 'Updated.', 'success');
+                loadHrTeam();
+            });
+        });
+    }
+
+    async function loadHrTeam() {
+        const tbody = document.getElementById('hr-team-body');
+        if (!tbody) return;
+        const token = sessionStorage.getItem(TOKEN_KEY);
+        const { ok, data } = await window.TrinitasAPI.adminHrTeam(token);
+        if (!ok) {
+            tbody.innerHTML = '<tr><td colspan="6">Could not load HR team.</td></tr>';
+            return;
+        }
+        renderHrTeam(data.team || []);
     }
 
     async function loadResumes() {
@@ -606,16 +854,132 @@
         renderPaused(data.sessions || []);
     }
 
+    let assessmentDataReady = false;
+
+    function loadScript(src) {
+        return new Promise((resolve, reject) => {
+            if (document.querySelector(`script[data-admin-src="${src}"]`)) {
+                resolve();
+                return;
+            }
+            const s = document.createElement('script');
+            s.src = src;
+            s.dataset.adminSrc = src;
+            s.onload = () => resolve();
+            s.onerror = () => reject(new Error(`Failed to load ${src}`));
+            document.body.appendChild(s);
+        });
+    }
+
+    async function ensureAssessmentData() {
+        if (assessmentDataReady && window.ASSESSMENT_DATA) return true;
+        try {
+            await loadScript('assessment-aptitude.js');
+            await loadScript('assessment-data.js');
+            await loadScript('assessment-data-attempt2.js');
+            if (window.__attachAssessmentAptitude) window.__attachAssessmentAptitude();
+            assessmentDataReady = true;
+            return true;
+        } catch (err) {
+            console.error(err);
+            showToast('Could not load assessment data for answer key.', 'error');
+            return false;
+        }
+    }
+
     function showLogin() {
         document.getElementById('admin-login').hidden = false;
         document.getElementById('admin-dashboard').hidden = true;
     }
 
-    function showDashboard() {
+    async function showDashboard() {
         document.getElementById('admin-login').hidden = true;
         document.getElementById('admin-dashboard').hidden = false;
-        renderAnswerKey();
         loadResults();
+        loadCandidates();
+        await ensureAssessmentData();
+        if (document.getElementById('answer-key-panel') && !document.getElementById('answer-key-panel').hidden) {
+            renderAnswerKey();
+        }
+    }
+
+    function renderCandidates(list) {
+        const tbody = document.getElementById('candidates-body');
+        if (!tbody) return;
+        if (!list.length) {
+            tbody.innerHTML = '<tr><td colspan="5">No candidate accounts yet.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = list.map(c => `
+            <tr data-username="${c.username}">
+                <td>${c.fullName || '—'}</td>
+                <td>@${c.username}</td>
+                <td>${c.email || '—'}</td>
+                <td>${c.passwordResetEnabled ? '<span class="score-pill score-pill--high">Yes</span>' : 'No'}</td>
+                <td>
+                    <div class="admin-actions">
+                        <button type="button" class="btn-admin" data-action="pw-enable" data-username="${c.username}" ${c.passwordResetEnabled ? 'disabled' : ''}>Enable reset</button>
+                        <button type="button" class="btn-admin" data-action="pw-disable" data-username="${c.username}" ${!c.passwordResetEnabled ? 'disabled' : ''}>Disable</button>
+                        <button type="button" class="btn-admin btn-admin--reattempt" data-action="pw-temp" data-username="${c.username}">Temp password</button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+
+        tbody.querySelectorAll('[data-action]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const username = btn.dataset.username;
+                if (btn.dataset.action === 'pw-enable') handlePasswordReset(username, 'enable');
+                else if (btn.dataset.action === 'pw-disable') handlePasswordReset(username, 'disable');
+                else if (btn.dataset.action === 'pw-temp') handleTempPassword(username);
+            });
+        });
+    }
+
+    async function loadCandidates() {
+        const tbody = document.getElementById('candidates-body');
+        if (!tbody) return;
+        const token = sessionStorage.getItem(TOKEN_KEY);
+        const { ok, data } = await window.TrinitasAPI.adminCandidates(token);
+        if (!ok) {
+            tbody.innerHTML = '<tr><td colspan="5">Could not load candidate accounts.</td></tr>';
+            return;
+        }
+        renderCandidates(data.candidates || []);
+    }
+
+    async function handlePasswordReset(username, action) {
+        const token = sessionStorage.getItem(TOKEN_KEY);
+        const { ok, data } = await window.TrinitasAPI.adminPasswordReset(token, { username, action });
+        if (!ok) {
+            showToast(data.message || data.error || 'Action failed.', 'error');
+            return;
+        }
+        showToast(data.message || 'Updated.', 'success');
+        loadCandidates();
+    }
+
+    async function handleTempPassword(username) {
+        if (!confirm(`Generate a temporary password for @${username}? Share it only with the candidate through a secure channel.`)) return;
+        const token = sessionStorage.getItem(TOKEN_KEY);
+        const { ok, data } = await window.TrinitasAPI.adminPasswordReset(token, { username, action: 'set-temp' });
+        if (!ok) {
+            showToast(data.message || data.error || 'Could not set password.', 'error');
+            return;
+        }
+        const temp = data.temporaryPassword || '';
+        if (temp) {
+            try {
+                await navigator.clipboard.writeText(temp);
+                showToast(`Temporary password copied: ${temp}`, 'success');
+            } catch {
+                window.prompt('Temporary password (copy and share securely):', temp);
+                showToast(data.message || 'Temporary password set.', 'success');
+            }
+        } else {
+            showToast(data.message || 'Temporary password set.', 'success');
+        }
+        loadCandidates();
     }
 
     function initLogin() {
@@ -635,7 +999,7 @@
                 return;
             }
             sessionStorage.setItem(TOKEN_KEY, data.token);
-            showDashboard();
+            await showDashboard();
         });
 
         document.getElementById('admin-logout').addEventListener('click', () => {
@@ -665,13 +1029,51 @@
             });
         }
 
-        document.getElementById('toggle-answer-key').addEventListener('click', () => {
+        document.getElementById('toggle-answer-key').addEventListener('click', async () => {
             const panel = document.getElementById('answer-key-panel');
             const visible = !panel.hidden;
-            panel.hidden = visible;
-            document.getElementById('toggle-answer-key').textContent = visible ? 'Answer Key' : 'Hide Answer Key';
-            if (!visible) renderAnswerKey();
+            if (visible) {
+                panel.hidden = true;
+                document.getElementById('toggle-answer-key').textContent = 'Answer Key';
+                return;
+            }
+            const ready = await ensureAssessmentData();
+            if (!ready) return;
+            panel.hidden = false;
+            document.getElementById('toggle-answer-key').textContent = 'Hide Answer Key';
+            renderAnswerKey();
         });
+
+        const refreshCandidates = document.getElementById('refresh-candidates');
+        if (refreshCandidates) refreshCandidates.addEventListener('click', loadCandidates);
+        const refreshPipeline = document.getElementById('refresh-pipeline');
+        if (refreshPipeline) refreshPipeline.addEventListener('click', loadPipeline);
+        const refreshHr = document.getElementById('refresh-hr');
+        if (refreshHr) refreshHr.addEventListener('click', loadHrTeam);
+
+        const adminPipeAdd = document.getElementById('admin-pipeline-add');
+        if (adminPipeAdd) {
+            adminPipeAdd.addEventListener('submit', async e => {
+                e.preventDefault();
+                const token = sessionStorage.getItem(TOKEN_KEY);
+                const { ok, data } = await window.TrinitasAPI.pipelineUpdate(token, {
+                    action: 'create',
+                    fullName: adminPipeAdd.fullName.value.trim(),
+                    email: adminPipeAdd.email.value.trim().toLowerCase(),
+                    phone: adminPipeAdd.phone.value.trim(),
+                    nextAction: adminPipeAdd.nextAction.value.trim() || 'Review and set screening plan.',
+                    stage: 'applied',
+                    source: 'admin'
+                });
+                if (!ok) {
+                    showToast(data.message || data.error || 'Could not add.', 'error');
+                    return;
+                }
+                adminPipeAdd.reset();
+                showToast('Candidate added to pipeline.', 'success');
+                loadPipeline();
+            });
+        }
     }
 
     function initDetailModal() {
@@ -684,11 +1086,11 @@
         });
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
         initLogin();
         initDetailModal();
         if (sessionStorage.getItem(TOKEN_KEY)) {
-            showDashboard();
+            await showDashboard();
         } else {
             showLogin();
         }

@@ -106,9 +106,7 @@
     function showLoggedIn(candidate) {
         const auth = document.getElementById('auth-panels');
         const panel = document.getElementById('logged-in-panel');
-        const verify = document.getElementById('panel-verify');
         if (auth) auth.hidden = true;
-        if (verify) verify.hidden = true;
         if (panel) panel.hidden = false;
         const nameEl = document.getElementById('logged-name');
         const metaEl = document.getElementById('logged-meta');
@@ -125,26 +123,21 @@
         const panel = document.getElementById('logged-in-panel');
         if (auth) auth.hidden = false;
         if (panel) panel.hidden = true;
-        document.getElementById('panel-verify').hidden = true;
-    }
-
-    function showVerifyPanel({ username, email, fullName, phone }) {
-        const auth = document.getElementById('auth-panels');
-        const logged = document.getElementById('logged-in-panel');
+        const forgot = document.getElementById('panel-forgot');
+        if (forgot) forgot.hidden = true;
         const signup = document.getElementById('panel-signup');
         const signin = document.getElementById('panel-signin');
-        const verify = document.getElementById('panel-verify');
-        if (auth) auth.hidden = false;
-        if (logged) logged.hidden = true;
-        if (signup) signup.hidden = true;
-        if (signin) signin.hidden = true;
-        if (verify) verify.hidden = false;
+        const activeTab = document.querySelector('.careers-tab--active');
+        const panelName = activeTab?.dataset?.panel || 'signup';
+        if (signup) signup.hidden = panelName !== 'signup';
+        if (signin) signin.hidden = panelName !== 'signin';
+    }
+
+    function showForgotPanel() {
+        document.getElementById('panel-signup').hidden = true;
+        document.getElementById('panel-signin').hidden = true;
+        document.getElementById('panel-forgot').hidden = false;
         document.querySelectorAll('.careers-tab').forEach(t => t.classList.remove('careers-tab--active'));
-        const emailEl = document.getElementById('verify-email-display');
-        if (emailEl) emailEl.textContent = email || 'your email';
-        const userEl = document.getElementById('verifyUsername');
-        if (userEl) userEl.value = username || '';
-        sessionStorage.setItem('trinitas_pending_verify', JSON.stringify({ username, email, fullName, phone }));
     }
 
     function initTabs() {
@@ -155,7 +148,8 @@
                 const panel = tab.dataset.panel;
                 document.getElementById('panel-signup').hidden = panel !== 'signup';
                 document.getElementById('panel-signin').hidden = panel !== 'signin';
-                document.getElementById('panel-verify').hidden = true;
+                const forgot = document.getElementById('panel-forgot');
+                if (forgot) forgot.hidden = true;
             });
         });
     }
@@ -234,15 +228,7 @@
                     return;
                 }
 
-                if (data.needsVerification) {
-                    showAlert(alert, data.message || 'Check your email for a verification code.', 'success');
-                    showVerifyPanel({
-                        username: data.username,
-                        email: data.email,
-                        fullName: data.fullName,
-                        phone: data.phone
-                    });
-                } else if (data.token) {
+                if (data.token) {
                     setCandidate({
                         token: data.token,
                         username: data.username,
@@ -251,6 +237,9 @@
                         phone: data.phone
                     });
                     showLoggedIn(getCandidate());
+                } else {
+                    showAlert(alert, data.message || 'Account created. Please sign in.', 'success');
+                    document.querySelector('.careers-tab[data-panel="signin"]')?.click();
                 }
             } catch {
                 showAlert(alert, 'Unable to register right now. Please try again shortly.', 'error');
@@ -258,82 +247,6 @@
             button.disabled = false;
             button.textContent = label;
         });
-    }
-
-    function initVerify() {
-        const form = document.getElementById('verify-form');
-        const alert = document.getElementById('verify-alert');
-        const resend = document.getElementById('resend-verify');
-        if (!form) return;
-
-        form.addEventListener('submit', async e => {
-            e.preventDefault();
-            if (alert) alert.hidden = true;
-            const username = (document.getElementById('verifyUsername')?.value || '').trim().toLowerCase();
-            const code = (document.getElementById('verifyCode')?.value || '').trim();
-            if (!username || !/^\d{6}$/.test(code)) {
-                showAlert(alert, 'Enter the 6-digit code from your email.', 'error');
-                return;
-            }
-            const button = form.querySelector('button[type="submit"]');
-            const label = button.textContent;
-            button.disabled = true;
-            button.textContent = 'Verifying…';
-            try {
-                const res = await fetch('/.netlify/functions/candidate-verify-email', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, code })
-                });
-                const data = await res.json().catch(() => ({}));
-                if (!res.ok || !data.success) {
-                    showAlert(alert, data.message || data.error || 'Verification failed.', 'error');
-                    button.disabled = false;
-                    button.textContent = label;
-                    return;
-                }
-                sessionStorage.removeItem('trinitas_pending_verify');
-                setCandidate({
-                    token: data.token,
-                    username: data.username,
-                    fullName: data.fullName,
-                    email: data.email,
-                    phone: data.phone
-                });
-                showAlert(alert, data.message || 'Email verified.', 'success');
-                showLoggedIn(getCandidate());
-            } catch {
-                showAlert(alert, 'Unable to verify right now.', 'error');
-            }
-            button.disabled = false;
-            button.textContent = label;
-        });
-
-        if (resend) {
-            resend.addEventListener('click', async () => {
-                if (alert) alert.hidden = true;
-                const username = (document.getElementById('verifyUsername')?.value || '').trim().toLowerCase();
-                if (!username) {
-                    showAlert(alert, 'Username missing. Sign up again or enter username on the verify form.', 'error');
-                    return;
-                }
-                resend.disabled = true;
-                resend.textContent = 'Sending…';
-                try {
-                    const res = await fetch('/.netlify/functions/candidate-resend-verify', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ username })
-                    });
-                    const data = await res.json().catch(() => ({}));
-                    showAlert(alert, data.message || (res.ok ? 'Code sent.' : 'Could not resend.'), res.ok ? 'success' : 'error');
-                } catch {
-                    showAlert(alert, 'Could not resend code.', 'error');
-                }
-                resend.disabled = false;
-                resend.textContent = 'Resend code';
-            });
-        }
     }
 
     function initSignin() {
@@ -358,18 +271,6 @@
                     body: JSON.stringify({ username, password })
                 });
                 const data = await res.json().catch(() => ({}));
-                if (res.status === 403 && data.needsVerification) {
-                    showAlert(alert, data.message || 'Verify your email first.', 'error');
-                    showVerifyPanel({
-                        username: data.username || username,
-                        email: data.email,
-                        fullName: data.fullName,
-                        phone: data.phone
-                    });
-                    button.disabled = false;
-                    button.textContent = label;
-                    return;
-                }
                 if (!res.ok || !data.success) {
                     showAlert(alert, data.error || data.message || 'Sign-in failed.', 'error');
                     button.disabled = false;
@@ -389,6 +290,66 @@
             }
             button.disabled = false;
             button.textContent = label;
+        });
+
+        document.getElementById('show-forgot-password')?.addEventListener('click', () => {
+            showForgotPanel();
+        });
+    }
+
+    function initForgotPassword() {
+        const form = document.getElementById('forgot-form');
+        const alert = document.getElementById('forgot-alert');
+        if (!form) return;
+
+        form.addEventListener('submit', async e => {
+            e.preventDefault();
+            if (alert) alert.hidden = true;
+            const username = form.username.value.trim().toLowerCase();
+            const email = form.email.value.trim().toLowerCase();
+            const password = form.password.value;
+            const strength = passwordStrength(password);
+            if (!username || !email) {
+                showAlert(alert, 'Enter your username and registered email.', 'error');
+                return;
+            }
+            if (!strength.valid) {
+                showAlert(alert, 'Password must be at least 12 characters with 1 number and 1 special character.', 'error');
+                return;
+            }
+            const button = form.querySelector('button[type="submit"]');
+            const label = button.textContent;
+            button.disabled = true;
+            button.textContent = 'Updating…';
+            try {
+                const res = await fetch('/.netlify/functions/candidate-reset-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok || !data.success) {
+                    showAlert(alert, data.message || data.error || 'Could not reset password.', 'error');
+                    button.disabled = false;
+                    button.textContent = label;
+                    return;
+                }
+                showAlert(alert, data.message || 'Password updated. You can sign in now.', 'success');
+                form.reset();
+            } catch {
+                showAlert(alert, 'Unable to reset password right now.', 'error');
+            }
+            button.disabled = false;
+            button.textContent = label;
+        });
+
+        document.getElementById('back-to-signin')?.addEventListener('click', () => {
+            document.getElementById('panel-forgot').hidden = true;
+            document.querySelectorAll('.careers-tab').forEach(t => {
+                t.classList.toggle('careers-tab--active', t.dataset.panel === 'signin');
+            });
+            document.getElementById('panel-signup').hidden = true;
+            document.getElementById('panel-signin').hidden = false;
         });
     }
 
@@ -498,8 +459,8 @@
         initTabs();
         initPasswordStrength();
         initSignup();
-        initVerify();
         initSignin();
+        initForgotPassword();
         initAttempts();
         initResume();
 
@@ -508,12 +469,11 @@
             showLoggedIn(existing);
         } else {
             showAuthPanels();
-            try {
-                const pending = JSON.parse(sessionStorage.getItem('trinitas_pending_verify') || 'null');
-                if (pending?.username) showVerifyPanel(pending);
-            } catch {
-                /* ignore */
-            }
+        }
+        try {
+            sessionStorage.removeItem('trinitas_pending_verify');
+        } catch {
+            /* ignore */
         }
     });
 })();

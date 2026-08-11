@@ -68,20 +68,32 @@ mustContain(join(deploy, 'privacy.html'), [
 ], 'privacy.html');
 
 console.log('\nSmoke test: candidate account + resume path');
-mustContain(join(deploy, 'careers.html'), ['id="signup-form"', 'id="signin-form"', 'suPassword', 'Begin Attempt 1'], 'careers account + attempts');
-mustContain(join(deploy, 'careers.js'), ['candidate-register', 'candidate-login', 'passwordStrength', 'btn-attempt1'], 'careers.js account flow');
-mustContain(join(deploy, 'admin.html'), ['id="resumes-body"', 'Resume submissions'], 'admin resumes UI');
-mustContain(join(deploy, 'admin.js'), ['loadResumes', 'adminResumes', 'adminResumeDownload'], 'admin.js resumes');
-mustContain(join(deploy, 'api.js'), ['adminResumes', 'adminResumeDownload'], 'api.js resumes');
+mustContain(join(deploy, 'careers.html'), ['id="signup-form"', 'id="signin-form"', 'suPassword', 'Begin Attempt 1', 'panel-forgot', 'Forgot password'], 'careers account + attempts');
+mustContain(join(deploy, 'careers.js'), ['candidate-register', 'candidate-login', 'passwordStrength', 'btn-attempt1', 'candidate-reset-password'], 'careers.js account flow');
+mustContain(join(deploy, 'admin.html'), ['id="resumes-body"', 'Resume submissions', 'id="candidates-body"', 'Candidate accounts', 'Hiring pipeline', 'hr-team-body', 'admin-pipeline-board'], 'admin resumes + pipeline + HR');
+mustContain(join(deploy, 'admin.js'), ['loadResumes', 'adminResumes', 'adminResumeDownload', 'handleResumeDelete', 'loadPipeline', 'loadHrTeam', 'ensureAssessmentData'], 'admin.js resumes + pipeline');
+mustContain(join(deploy, 'api.js'), ['adminResumes', 'adminResumeDownload', 'adminResumeDelete', 'adminCandidates', 'adminPasswordReset', 'pipelineList', 'hrRegister'], 'api.js resumes + pipeline + HR');
+mustContain(join(deploy, 'careers.html'), ['firstname.lastname'], 'generic username placeholder');
+mustContain(join(deploy, 'hr.html'), ['hr-register-form', 'Google Meet', 'pipeline-board', 'Hiring pipeline'], 'HR portal page');
+mustContain(join(deploy, 'hr.js'), ['hrRegister', 'pipelineList', 'Schedule interview'], 'HR portal script');
 mustExist(join(functionsDir, 'candidate-register.mjs'), 'function candidate-register.mjs');
 mustExist(join(functionsDir, 'candidate-login.mjs'), 'function candidate-login.mjs');
-mustExist(join(functionsDir, 'candidate-verify-email.mjs'), 'function candidate-verify-email.mjs');
-mustExist(join(functionsDir, 'candidate-resend-verify.mjs'), 'function candidate-resend-verify.mjs');
+mustExist(join(functionsDir, 'candidate-reset-password.mjs'), 'function candidate-reset-password.mjs');
+mustExist(join(functionsDir, 'admin-candidates.mjs'), 'function admin-candidates.mjs');
+mustExist(join(functionsDir, 'admin-password-reset.mjs'), 'function admin-password-reset.mjs');
 mustExist(join(functionsDir, 'admin-resumes.mjs'), 'function admin-resumes.mjs');
-mustContain(join(functionsDir, 'candidate-register.mjs'), ['export default', 'fileBase64', 'passwordHash', 'emailVerified', 'needsVerification'], 'candidate-register handler');
-mustContain(join(functionsDir, 'candidate-verify-email.mjs'), ['export default', 'verifyCodeHash', 'emailVerified'], 'candidate-verify-email handler');
-mustContain(join(functionsDir, 'admin-resumes.mjs'), ['export default', 'verifyAdminToken', 'resume-index'], 'admin-resumes handler');
-mustContain(join(deploy, 'careers.html'), ['panel-verify', 'after-attempt-box', 'What happens after Attempt 1'], 'careers verify + after Attempt 1 copy');
+mustContain(join(functionsDir, 'candidate-register.mjs'), ['export default', 'fileBase64', 'passwordHash', 'token'], 'candidate-register handler');
+mustContain(join(functionsDir, 'candidate-reset-password.mjs'), ['export default', 'passwordResetEnabled', 'passwordHash'], 'candidate-reset-password handler');
+mustContain(join(functionsDir, 'admin-password-reset.mjs'), ['export default', 'enable', 'set-temp', 'verifyAdminToken'], 'admin-password-reset handler');
+mustContain(join(functionsDir, 'admin-resumes.mjs'), ['export default', 'verifyAdminToken', 'resume-index', 'delete'], 'admin-resumes handler');
+mustExist(join(functionsDir, 'hr-register.mjs'), 'function hr-register.mjs');
+mustExist(join(functionsDir, 'hr-login.mjs'), 'function hr-login.mjs');
+mustExist(join(functionsDir, 'pipeline.mjs'), 'function pipeline.mjs');
+mustExist(join(functionsDir, 'admin-hr.mjs'), 'function admin-hr.mjs');
+mustContain(join(functionsDir, 'pipeline.mjs'), ['PIPELINE_STAGES', 'DEFAULT_MEET_LINK', 'verifyStaffAccess'], 'pipeline handler');
+mustContain(join(deploy, 'careers.html'), ['after-attempt-box', 'Assessment process'], 'careers after-attempt copy');
+mustContain(join(deploy, 'admin.html'), ['Assessment data (with answers) loads only after successful admin sign-in'], 'admin does not preload answer key scripts');
+mustContain(join(deploy, 'assessment.js'), ['Submission received', 'Next steps'], 'professional post-assessment copy');
 
 console.log('\nSmoke test: pause / OTP path');
 mustContain(join(deploy, 'assessment.html'), ['btn-pause-session', 'btn-end-session'], 'assessment pause/end controls');
@@ -104,9 +116,14 @@ const fnFiles = readdirSync(functionsDir).filter(f => f.endsWith('.mjs'));
 const requiredFns = [
     'candidate-register.mjs',
     'candidate-login.mjs',
-    'candidate-verify-email.mjs',
-    'candidate-resend-verify.mjs',
+    'candidate-reset-password.mjs',
+    'admin-candidates.mjs',
+    'admin-password-reset.mjs',
     'admin-resumes.mjs',
+    'hr-register.mjs',
+    'hr-login.mjs',
+    'pipeline.mjs',
+    'admin-hr.mjs',
     'pause-assessment.mjs',
     'resume-assessment.mjs',
     'admin-paused.mjs',

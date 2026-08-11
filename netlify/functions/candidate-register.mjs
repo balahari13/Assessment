@@ -1,4 +1,4 @@
-import { createHash, randomBytes, randomInt } from 'crypto';
+import { createHash, randomBytes } from 'crypto';
 import {
     corsHeaders,
     jsonResponse,
@@ -8,8 +8,6 @@ import {
 
 const CANDIDATE_INDEX = 'candidate-index';
 const MAX_BYTES = 1.5 * 1024 * 1024;
-const VERIFY_TTL_MS = 24 * 60 * 60 * 1000;
-const FORM_EMAIL = 'info@trinitasnxt.in';
 
 function candidateKey(username) {
     return `candidate:${String(username || '').trim().toLowerCase()}`;
@@ -17,10 +15,6 @@ function candidateKey(username) {
 
 function hashPassword(password, salt) {
     return createHash('sha256').update(`${salt}:${password}`).digest('hex');
-}
-
-function hashCode(code, username) {
-    return createHash('sha256').update(`${code}:${String(username).toLowerCase()}:trinitas-verify`).digest('hex');
 }
 
 function validatePassword(password) {
@@ -36,34 +30,6 @@ function validateUsername(username) {
     if (u.length < 4 || u.length > 32) return 'Username must be 4–32 characters.';
     if (!/^[a-z0-9._-]+$/.test(u)) return 'Username may only use letters, numbers, dots, underscores, and hyphens.';
     return null;
-}
-
-async function sendVerifyEmail(toEmail, fullName, code) {
-    const targets = [toEmail, FORM_EMAIL];
-    let anyOk = false;
-    for (const target of targets) {
-        try {
-            const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(target)}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-                body: JSON.stringify({
-                    _subject: 'Trinitas Careers — verify your email',
-                    _template: 'table',
-                    _captcha: 'false',
-                    name: fullName || 'Candidate',
-                    email: toEmail,
-                    message: `Your Trinitas careers verification code is: ${code}. It is valid for 24 hours. Enter this code on the Careers page to activate your account and start Attempt 1.`,
-                    verification_code: code,
-                    candidate_email: toEmail
-                })
-            });
-            const data = await response.json().catch(() => ({}));
-            if (response.ok && data.success !== false) anyOk = true;
-        } catch {
-            /* try next */
-        }
-    }
-    return anyOk;
 }
 
 export default async (req, context) => {
@@ -114,7 +80,6 @@ export default async (req, context) => {
         const salt = randomBytes(12).toString('hex');
         const passwordHash = hashPassword(password, salt);
         const resumeId = `resume-${Date.now()}-${username.replace(/[^a-z0-9]/g, '')}`;
-        const verifyCode = String(randomInt(100000, 999999));
 
         const resumeRecord = {
             id: resumeId,
@@ -145,9 +110,7 @@ export default async (req, context) => {
             passwordHash,
             resumeId,
             role,
-            emailVerified: false,
-            verifyCodeHash: hashCode(verifyCode, username),
-            verifyExpiresAt: Date.now() + VERIFY_TTL_MS,
+            passwordResetEnabled: false,
             createdAt: new Date().toISOString()
         };
         await store.set(candidateKey(username), JSON.stringify(candidate));
@@ -159,19 +122,23 @@ export default async (req, context) => {
             await store.set(CANDIDATE_INDEX, JSON.stringify(index));
         }
 
-        const emailed = await sendVerifyEmail(email, fullName, verifyCode);
+        const token = randomBytes(24).toString('hex');
+        await store.set(`candidate-session:${token}`, JSON.stringify({
+            username: candidate.username,
+            email: candidate.email,
+            fullName: candidate.fullName,
+            phone: candidate.phone,
+            expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000
+        }));
 
         return jsonResponse(200, {
             success: true,
-            needsVerification: true,
+            token,
             username,
             fullName,
             email,
             phone,
-            emailed,
-            message: emailed
-                ? `Account created and resume submitted. We sent a 6-digit verification code to ${email}. Enter it below to activate your account.`
-                : `Account created and resume submitted. Check your email for a verification code (and spam folder). If it does not arrive, use Resend code or contact info@trinitasnxt.in.`
+            message: 'Account created and resume submitted. You can start Attempt 1 now.'
         });
     } catch (err) {
         console.error('candidate-register error:', err);

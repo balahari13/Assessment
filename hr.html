@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Portal | Trinitas NextGen</title>
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#020617">
+    <link rel="icon" href="logo-icon.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="careers.css">
+</head>
+<body class="admin-body">
+    <div class="admin-page hr-page">
+        <!-- Auth -->
+        <div class="admin-login-card hr-auth-card" id="hr-auth">
+            <div class="admin-login-brand">
+                <img src="logo-icon.png" alt="" width="40" height="40">
+                <div>
+                    <p class="eyebrow">Trinitas HR</p>
+                    <h1>Recruitment Portal</h1>
+                </div>
+            </div>
+            <p class="section-desc admin-login-desc">Register as HR to manage the hiring pipeline and conduct interviews on Google Meet.</p>
+
+            <div class="careers-tabs hr-auth-tabs" role="tablist">
+                <button type="button" class="careers-tab careers-tab--active" data-panel="hr-register">Register</button>
+                <button type="button" class="careers-tab" data-panel="hr-login">Sign in</button>
+            </div>
+
+            <div id="panel-hr-register">
+                <form id="hr-register-form" class="register-form" novalidate>
+                    <div class="form-field">
+                        <label for="hrRegName">Full name</label>
+                        <input type="text" id="hrRegName" name="fullName" required autocomplete="name" placeholder="Your full name">
+                    </div>
+                    <div class="form-field">
+                        <label for="hrRegEmail">Work email</label>
+                        <input type="email" id="hrRegEmail" name="email" required autocomplete="email" placeholder="you@company.com">
+                    </div>
+                    <div class="form-field">
+                        <label for="hrRegPhone">Phone</label>
+                        <input type="tel" id="hrRegPhone" name="phone" autocomplete="tel" placeholder="+91 …">
+                    </div>
+                    <div class="form-field">
+                        <label for="hrRegPass">Password</label>
+                        <input type="password" id="hrRegPass" name="password" required minlength="10" autocomplete="new-password" placeholder="Min. 10 characters, include a number">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Create HR account</button>
+                </form>
+                <div id="hr-reg-alert" class="form-alert" hidden></div>
+            </div>
+
+            <div id="panel-hr-login" hidden>
+                <form id="hr-login-form" class="register-form" novalidate>
+                    <div class="form-field">
+                        <label for="hrLoginEmail">Work email</label>
+                        <input type="email" id="hrLoginEmail" name="email" required autocomplete="username">
+                    </div>
+                    <div class="form-field">
+                        <label for="hrLoginPass">Password</label>
+                        <input type="password" id="hrLoginPass" name="password" required autocomplete="current-password">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Sign in</button>
+                </form>
+                <div id="hr-login-alert" class="form-alert" hidden></div>
+            </div>
+
+            <p class="section-desc" style="margin-top:1.25rem;font-size:0.85rem">
+                <a href="admin.html">Admin portal</a> · <a href="careers.html">Careers</a> · <a href="healthcare.html">Healthcare help</a>
+            </p>
+        </div>
+
+        <!-- Dashboard -->
+        <div class="admin-dashboard hr-dashboard" id="hr-dashboard" hidden>
+            <header class="admin-header">
+                <div class="admin-header-left">
+                    <img src="logo-icon.png" alt="" class="admin-header-logo" width="32" height="32">
+                    <div>
+                        <h1>Hiring pipeline</h1>
+                        <p id="hr-user-label">HR dashboard</p>
+                    </div>
+                </div>
+                <div class="admin-header-actions">
+                    <a href="https://meet.google.com/ygi-ejrk-sae" class="btn btn-primary btn-sm" id="hr-join-meet" target="_blank" rel="noopener">Join Google Meet</a>
+                    <a href="https://wa.me/919790113193" class="btn btn-secondary btn-sm" target="_blank" rel="noopener">Hiring WhatsApp</a>
+                    <button type="button" class="btn btn-secondary btn-sm" id="hr-refresh">Refresh</button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="hr-logout">Sign out</button>
+                </div>
+            </header>
+
+            <div id="hr-toast" class="admin-toast" hidden></div>
+
+            <section class="admin-stats" aria-label="Pipeline summary" id="pipeline-stats">
+                <div class="admin-stat"><strong id="stat-pipe-total">—</strong><span>In pipeline</span></div>
+                <div class="admin-stat"><strong id="stat-pipe-interview">—</strong><span>Interview</span></div>
+                <div class="admin-stat"><strong id="stat-pipe-decision">—</strong><span>Decision</span></div>
+                <div class="admin-stat"><strong id="stat-pipe-hired">—</strong><span>Hired</span></div>
+            </section>
+
+            <section class="admin-table-card">
+                <div class="admin-section-title-row">
+                    <h2 class="admin-section-title">Interview desk</h2>
+                </div>
+                <p class="section-desc admin-paused-desc">
+                    Conduct interviews on the same Google Meet room used for Healthcare help.
+                    Inform the candidate in advance, then join the Meet and update the pipeline outcome.
+                </p>
+                <div class="hr-meet-actions">
+                    <a href="https://wa.me/919790113193?text=Hello%2C%20scheduling%20a%20candidate%20interview%20via%20Google%20Meet." class="btn btn-secondary" target="_blank" rel="noopener">1. Coordinate on WhatsApp</a>
+                    <a href="https://meet.google.com/ygi-ejrk-sae" class="btn btn-primary" target="_blank" rel="noopener">2. Join Google Meet</a>
+                </div>
+            </section>
+
+            <section class="admin-table-card">
+                <div class="admin-section-title-row">
+                    <h2 class="admin-section-title">Add candidate to pipeline</h2>
+                </div>
+                <form id="pipeline-add-form" class="register-form pipeline-add-form" novalidate>
+                    <div class="pipeline-add-grid">
+                        <div class="form-field">
+                            <label for="pName">Full name</label>
+                            <input type="text" id="pName" name="fullName" required>
+                        </div>
+                        <div class="form-field">
+                            <label for="pEmail">Email</label>
+                            <input type="email" id="pEmail" name="email" required>
+                        </div>
+                        <div class="form-field">
+                            <label for="pPhone">Phone</label>
+                            <input type="tel" id="pPhone" name="phone">
+                        </div>
+                        <div class="form-field">
+                            <label for="pRole">Role interest</label>
+                            <input type="text" id="pRole" name="roleInterest" placeholder="e.g. Customer Support">
+                        </div>
+                        <div class="form-field">
+                            <label for="pStage">Starting stage</label>
+                            <select id="pStage" name="stage">
+                                <option value="applied">Applied / Resume</option>
+                                <option value="screening">HR screening</option>
+                                <option value="assessment">Assessment</option>
+                                <option value="interview">Interview (Meet)</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label for="pNext">Next course of action</label>
+                            <input type="text" id="pNext" name="nextAction" placeholder="e.g. Schedule screening call this week">
+                        </div>
+                    </div>
+                    <div class="form-field">
+                        <label for="pNotes">Notes (optional)</label>
+                        <textarea id="pNotes" name="notes" rows="2"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add to pipeline</button>
+                </form>
+                <div id="pipeline-add-alert" class="form-alert" hidden></div>
+            </section>
+
+            <section class="admin-table-card">
+                <div class="admin-section-title-row">
+                    <h2 class="admin-section-title">Pipeline — next course of action</h2>
+                </div>
+                <div class="pipeline-board" id="pipeline-board">
+                    <p class="section-desc">Loading pipeline…</p>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script src="api.js"></script>
+    <script src="hr.js"></script>
+</body>
+</html>

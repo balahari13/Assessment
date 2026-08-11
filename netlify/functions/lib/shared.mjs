@@ -9,11 +9,25 @@ const SITE_ADMIN_EMAIL = 'balahari@trinitas.in';
 const SITE_ADMIN_PASSWORD = 'Trinitas2026415*';
 const TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 
+/** Default Google Meet room for HR interviews (same as Healthcare help desk). */
+export const DEFAULT_MEET_LINK = 'https://meet.google.com/ygi-ejrk-sae';
+export const HIRING_WHATSAPP = '919790113193';
+
+export const PIPELINE_STAGES = [
+    { id: 'applied', label: 'Applied / Resume', order: 1 },
+    { id: 'screening', label: 'HR screening', order: 2 },
+    { id: 'assessment', label: 'Assessment', order: 3 },
+    { id: 'interview', label: 'Interview (Meet)', order: 4 },
+    { id: 'decision', label: 'Decision', order: 5 },
+    { id: 'hired', label: 'Hired / Onboard', order: 6 },
+    { id: 'closed', label: 'Closed / Not selected', order: 7 }
+];
+
 export function corsHeaders() {
     return {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE'
     };
 }
 
@@ -213,6 +227,73 @@ export async function verifyAdminToken(store, authHeader) {
         return false;
     }
     return true;
+}
+
+function hrKey(email) {
+    return `hr:${normalizeEmail(email)}`;
+}
+
+export function hrIndexKey() {
+    return 'hr-index';
+}
+
+export { hrKey };
+
+export async function createHrToken(store, hr) {
+    const token = randomBytes(24).toString('hex');
+    const payload = {
+        role: 'hr',
+        email: normalizeEmail(hr.email),
+        fullName: hr.fullName || '',
+        createdAt: Date.now(),
+        expiresAt: Date.now() + TOKEN_TTL_MS
+    };
+    await store.set(`hr-session:${token}`, JSON.stringify(payload));
+    return { token: `hr.${token}`, expiresAt: payload.expiresAt };
+}
+
+export async function verifyHrToken(store, authHeader) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+    const value = authHeader.slice(7).trim();
+    if (!value.startsWith('hr.')) return null;
+    const token = value.slice(3);
+    if (!token) return null;
+    const raw = await store.get(`hr-session:${token}`, { type: 'text' });
+    if (!raw) return null;
+    const session = JSON.parse(raw);
+    if (Date.now() > session.expiresAt) {
+        await store.delete(`hr-session:${token}`);
+        return null;
+    }
+    return session;
+}
+
+/** Admin or active HR session. */
+export async function verifyStaffAccess(store, authHeader) {
+    if (await verifyAdminToken(store, authHeader)) {
+        return { role: 'admin', email: 'admin', fullName: 'Admin' };
+    }
+    const hr = await verifyHrToken(store, authHeader);
+    if (hr) {
+        const raw = await store.get(hrKey(hr.email), { type: 'text' });
+        if (!raw) return null;
+        const account = JSON.parse(raw);
+        if (account.active === false) return null;
+        return { role: 'hr', email: hr.email, fullName: hr.fullName || account.fullName };
+    }
+    return null;
+}
+
+export function pipelineIndexKey() {
+    return 'pipeline-index';
+}
+
+export function pipelineItemKey(id) {
+    return `pipeline:${id}`;
+}
+
+export function isValidPipelineStage(stage) {
+    return PIPELINE_STAGES.some(s => s.id === stage);
 }
 
 export function verifyAdminCredentials(username, password) {

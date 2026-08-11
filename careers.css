@@ -1387,9 +1387,144 @@ body.admin-modal-open {
     border-left: 4px solid var(--blue);
     margin-bottom: 0;
 }
-.careers-verify-card {
-    border-color: rgba(37, 99, 235, 0.3);
-    background: linear-gradient(180deg, rgba(37, 99, 235, 0.05), #fff);
+.link-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    color: var(--blue, #2563eb);
+    text-decoration: underline;
+    cursor: pointer;
+}
+.link-btn:hover {
+    color: var(--blue-dark, #1d4ed8);
+}
+
+/* Hiring pipeline board */
+.pipeline-add-form { margin-bottom: 1.25rem; }
+.pipeline-add-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.75rem 1rem;
+    margin-bottom: 0.75rem;
+}
+.pipeline-columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 0.85rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+}
+.pipeline-column {
+    background: rgba(15, 23, 42, 0.04);
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 12px;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+}
+.pipeline-column-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 0.9rem;
+    border-bottom: 1px solid var(--border, #e2e8f0);
+}
+.pipeline-column-head h3 {
+    margin: 0;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--navy, #0f172a);
+}
+.pipeline-count {
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: var(--blue, #2563eb);
+    color: #fff;
+    border-radius: 999px;
+    padding: 0.15rem 0.5rem;
+    min-width: 1.4rem;
+    text-align: center;
+}
+.pipeline-cards {
+    padding: 0.65rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    flex: 1;
+}
+.pipeline-card {
+    background: #fff;
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 10px;
+    padding: 0.75rem;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+.pipeline-card h4 {
+    margin: 0 0 0.25rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+.pipeline-meta,
+.pipeline-role,
+.pipeline-notes,
+.pipeline-interview,
+.pipeline-next-text,
+.pipeline-empty {
+    margin: 0.2rem 0;
+    font-size: 0.78rem;
+    color: var(--text-muted, #64748b);
+    line-height: 1.4;
+}
+.pipeline-next {
+    margin: 0.5rem 0;
+}
+.pipeline-next label,
+.pipeline-stage-row label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--text-muted, #64748b);
+    margin-bottom: 0.25rem;
+}
+.pipeline-next input,
+.pipeline-stage-row select {
+    width: 100%;
+    font-size: 0.8rem;
+    padding: 0.4rem 0.5rem;
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 6px;
+    margin-bottom: 0.35rem;
+}
+.pipeline-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.5rem;
+}
+.pipeline-card-actions .btn-admin {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+}
+.hr-meet-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+.hr-auth-tabs {
+    margin: 0 0 1rem;
+}
+.hr-page .admin-login-card {
+    max-width: 440px;
+}
+@media (max-width: 700px) {
+    .pipeline-columns {
+        grid-template-columns: minmax(220px, 1fr);
+    }
 }
 .form-alert--success {
     display: block;

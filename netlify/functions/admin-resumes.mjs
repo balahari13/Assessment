@@ -27,11 +27,24 @@ export default async (req, context) => {
             return jsonResponse(401, { error: 'Unauthorized' });
         }
 
-        // POST: download one resume by id
         if (req.method === 'POST') {
             const body = await req.json();
+            const action = String(body.action || 'download').trim();
             const id = String(body.id || '').trim();
             if (!id) return jsonResponse(400, { error: 'Resume id required' });
+
+            if (action === 'delete') {
+                await store.delete(resumeKey(id));
+                const idxRaw = await store.get(RESUME_INDEX, { type: 'text' });
+                const index = idxRaw ? JSON.parse(idxRaw) : [];
+                await store.set(RESUME_INDEX, JSON.stringify(index.filter(x => x !== id)));
+                return jsonResponse(200, {
+                    success: true,
+                    message: 'Resume deleted.'
+                });
+            }
+
+            // download (default)
             const raw = await store.get(resumeKey(id), { type: 'text' });
             if (!raw) return jsonResponse(404, { error: 'Resume not found' });
             const rec = JSON.parse(raw);

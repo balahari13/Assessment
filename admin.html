@@ -43,11 +43,13 @@
                 <div class="admin-header-left">
                     <img src="logo-icon.png" alt="" class="admin-header-logo" width="32" height="32">
                     <div>
-                        <h1>Assessment Results</h1>
-                        <p>Candidate submissions and section-level performance</p>
+                        <h1>Admin Control Center</h1>
+                        <p>Assessments, resumes, HR team, and hiring pipeline</p>
                     </div>
                 </div>
                 <div class="admin-header-actions">
+                    <a href="hr.html" class="btn btn-secondary btn-sm" target="_blank" rel="noopener">Open HR portal</a>
+                    <a href="https://meet.google.com/ygi-ejrk-sae" class="btn btn-primary btn-sm" target="_blank" rel="noopener">Google Meet</a>
                     <button type="button" class="btn btn-primary btn-sm" id="admin-practice">Take assessment (unlimited)</button>
                     <button type="button" class="btn btn-secondary btn-sm" id="toggle-answer-key">Answer Key</button>
                     <button type="button" class="btn btn-secondary btn-sm" id="admin-refresh">Refresh</button>
@@ -74,6 +76,87 @@
                 <div id="answer-key-content"></div>
             </section>
 
+            <section class="admin-table-card">
+                <div class="admin-section-title-row">
+                    <h2 class="admin-section-title">Hiring pipeline — next course of action</h2>
+                    <button type="button" class="btn btn-secondary btn-sm" id="refresh-pipeline">Refresh pipeline</button>
+                </div>
+                <p class="section-desc admin-paused-desc">Full pipeline visibility for Admin. Move stages, set next actions, schedule Google Meet interviews, or remove entries.</p>
+                <form id="admin-pipeline-add" class="register-form pipeline-add-form" novalidate>
+                    <div class="pipeline-add-grid">
+                        <div class="form-field">
+                            <label for="apName">Name</label>
+                            <input type="text" id="apName" name="fullName" required>
+                        </div>
+                        <div class="form-field">
+                            <label for="apEmail">Email</label>
+                            <input type="email" id="apEmail" name="email" required>
+                        </div>
+                        <div class="form-field">
+                            <label for="apPhone">Phone</label>
+                            <input type="tel" id="apPhone" name="phone">
+                        </div>
+                        <div class="form-field">
+                            <label for="apNext">Next course of action</label>
+                            <input type="text" id="apNext" name="nextAction" placeholder="e.g. HR screening this week">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm">Add to pipeline</button>
+                </form>
+                <div class="pipeline-board" id="admin-pipeline-board">
+                    <p class="section-desc">Loading pipeline…</p>
+                </div>
+            </section>
+
+            <section class="admin-table-card admin-paused-card">
+                <div class="admin-section-title-row">
+                    <h2 class="admin-section-title">HR team</h2>
+                    <button type="button" class="btn btn-secondary btn-sm" id="refresh-hr">Refresh HR</button>
+                </div>
+                <p class="section-desc admin-paused-desc">HR staff who registered on the HR portal. Activate, deactivate, or remove accounts. HR conducts interviews via Google Meet.</p>
+                <div class="results-table-wrap">
+                    <table class="results-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Status</th>
+                                <th>Registered</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="hr-team-body">
+                            <tr><td colspan="6">No HR accounts yet.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="admin-table-card admin-paused-card">
+                <div class="admin-section-title-row">
+                    <h2 class="admin-section-title">Candidate accounts</h2>
+                    <button type="button" class="btn btn-secondary btn-sm" id="refresh-candidates">Refresh accounts</button>
+                </div>
+                <p class="section-desc admin-paused-desc">Enable password reset so a candidate can set a new password on Careers, or generate a temporary password to share securely.</p>
+                <div class="results-table-wrap">
+                    <table class="results-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Reset enabled</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="candidates-body">
+                            <tr><td colspan="5">No candidate accounts yet.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
             <section class="admin-table-card admin-paused-card">
                 <div class="admin-section-title-row">
                     <h2 class="admin-section-title">Resume submissions</h2>
@@ -90,7 +173,7 @@
                                 <th>Role</th>
                                 <th>File</th>
                                 <th>Submitted</th>
-                                <th>Download</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="resumes-body">
@@ -168,10 +251,7 @@
         </div>
     </div>
 
-    <script src="assessment-aptitude.js"></script>
-    <script src="assessment-data.js"></script>
-    <script src="assessment-data-attempt2.js"></script>
-    <script>if (window.__attachAssessmentAptitude) window.__attachAssessmentAptitude();</script>
+    <!-- Assessment data (with answers) loads only after successful admin sign-in — see admin.js -->
     <script src="api.js"></script>
     <script src="admin.js"></script>
 </body>

@@ -71,7 +71,7 @@
                     <h2>Account first, then assessment</h2>
                     <ul class="careers-list">
                         <li><strong>Create account</strong> — username, strong password, resume upload</li>
-                        <li><strong>Verify email</strong> — enter the 6-digit code sent to your email to activate your account</li>
+                        <li><strong>Start immediately</strong> — no email code wait; begin Attempt 1 after registration</li>
                         <li><strong>Sign in</strong> — then start Attempt 1 or Attempt 2 (when enabled)</li>
                         <li><strong>Assessment</strong> — about 75 minutes; pause available with recruitment OTP</li>
                         <li>Use a stable connection and a device with a working microphone</li>
@@ -114,7 +114,7 @@
                                 </div>
                                 <div class="form-field">
                                     <label for="suUsername">Username</label>
-                                    <input type="text" id="suUsername" name="username" required placeholder="e.g. balahari.m" autocomplete="username" minlength="4" maxlength="32" pattern="[A-Za-z0-9._\-]+">
+                                    <input type="text" id="suUsername" name="username" required placeholder="e.g. firstname.lastname" autocomplete="username" minlength="4" maxlength="32" pattern="[A-Za-z0-9._\-]+">
                                     <span class="field-hint">4–32 characters: letters, numbers, . _ -</span>
                                 </div>
                                 <div class="form-field">
@@ -159,24 +159,9 @@
                             <div id="signup-alert" class="form-alert" hidden></div>
                         </div>
 
-                        <div class="careers-card careers-verify-card" id="panel-verify" hidden>
-                            <h3>Verify your email</h3>
-                            <p class="section-desc">Enter the <strong>6-digit code</strong> sent to <span id="verify-email-display">your email</span>. Check spam if you do not see it within a few minutes.</p>
-                            <form class="register-form" id="verify-form" novalidate>
-                                <input type="hidden" id="verifyUsername" name="username">
-                                <div class="form-field">
-                                    <label for="verifyCode">Verification code</label>
-                                    <input type="text" id="verifyCode" name="code" required placeholder="123456" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code">
-                                </div>
-                                <button type="submit" class="btn btn-primary btn-full">Verify &amp; continue</button>
-                            </form>
-                            <button type="button" class="btn btn-secondary btn-full" id="resend-verify" style="margin-top:0.65rem">Resend code</button>
-                            <div id="verify-alert" class="form-alert" hidden></div>
-                        </div>
-
                         <div class="careers-card" id="panel-signin" hidden>
                             <h3>Sign in</h3>
-                            <p class="section-desc">Use the username and password you created (after email verification). Then start Attempt 1 or Attempt 2.</p>
+                            <p class="section-desc">Use the username and password you created when you registered. Then start Attempt 1 or Attempt 2.</p>
                             <form class="register-form" id="signin-form" novalidate>
                                 <div class="form-field">
                                     <label for="siUsername">Username</label>
@@ -188,7 +173,33 @@
                                 </div>
                                 <button type="submit" class="btn btn-primary btn-full">Sign in</button>
                             </form>
+                            <p class="section-desc" style="margin:0.85rem 0 0;font-size:0.88rem">
+                                <button type="button" class="link-btn" id="show-forgot-password">Forgot password?</button>
+                            </p>
                             <div id="signin-alert" class="form-alert" hidden></div>
+                        </div>
+
+                        <div class="careers-card" id="panel-forgot" hidden>
+                            <h3>Reset password</h3>
+                            <p class="section-desc">Password reset is available only after recruitment enables it for your account. Enter your username, registered email, and a new password.</p>
+                            <form class="register-form" id="forgot-form" novalidate>
+                                <div class="form-field">
+                                    <label for="fpUsername">Username</label>
+                                    <input type="text" id="fpUsername" name="username" required autocomplete="username">
+                                </div>
+                                <div class="form-field">
+                                    <label for="fpEmail">Registered email</label>
+                                    <input type="email" id="fpEmail" name="email" required autocomplete="email">
+                                </div>
+                                <div class="form-field">
+                                    <label for="fpPassword">New password</label>
+                                    <input type="password" id="fpPassword" name="password" required placeholder="Min. 12 characters" autocomplete="new-password">
+                                    <span class="field-hint">At least 12 characters, including 1 number and 1 special character.</span>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-full">Set new password</button>
+                            </form>
+                            <button type="button" class="btn btn-secondary btn-full" id="back-to-signin" style="margin-top:0.65rem">Back to sign in</button>
+                            <div id="forgot-alert" class="form-alert" hidden></div>
                         </div>
                     </div>
 
@@ -204,8 +215,8 @@
                         </div>
 
                         <div class="careers-card after-attempt-box after-attempt-box--inline">
-                            <h3>After you finish Attempt 1</h3>
-                            <p class="section-desc" style="margin:0">Results go to recruitment only (no score shown to you). We review your CV and test, then may enable Attempt 2 or contact you about next steps. Check email for updates.</p>
+                            <h3>Assessment process</h3>
+                            <p class="section-desc" style="margin:0">Your responses and resume are reviewed confidentially by our recruitment team. Individual scores are not displayed to candidates. If a further evaluation is required, Attempt 2 may be enabled for your account, or we may contact you regarding next steps in the hiring process. Please monitor your registered email for updates.</p>
                         </div>
 
                         <div class="careers-card" id="attempt1-card">

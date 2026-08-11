@@ -367,6 +367,73 @@
                 headers: { Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ id })
             });
+        },
+
+        async adminCandidates(token) {
+            return request('/admin-candidates', {
+                method: 'GET',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+        },
+
+        async adminPasswordReset(token, payload) {
+            return request('/admin-password-reset', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body: JSON.stringify(payload)
+            });
+        },
+
+        async adminResumeDelete(token, id) {
+            return request('/admin-resumes', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ action: 'delete', id })
+            });
+        },
+
+        async adminHrTeam(token) {
+            return request('/admin-hr', {
+                method: 'GET',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+        },
+
+        async adminHrAction(token, payload) {
+            return request('/admin-hr', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body: JSON.stringify(payload)
+            });
+        },
+
+        async hrRegister(payload) {
+            return request('/hr-register', {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+        },
+
+        async hrLogin(email, password) {
+            return request('/hr-login', {
+                method: 'POST',
+                body: JSON.stringify({ email, password })
+            });
+        },
+
+        async pipelineList(token) {
+            return request('/pipeline', {
+                method: 'GET',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+        },
+
+        async pipelineUpdate(token, payload) {
+            return request('/pipeline', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body: JSON.stringify(payload)
+            });
         }
     };
 })();
