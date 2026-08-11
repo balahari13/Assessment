@@ -106,7 +106,9 @@
     function showLoggedIn(candidate) {
         const auth = document.getElementById('auth-panels');
         const panel = document.getElementById('logged-in-panel');
+        const verify = document.getElementById('panel-verify');
         if (auth) auth.hidden = true;
+        if (verify) verify.hidden = true;
         if (panel) panel.hidden = false;
         const nameEl = document.getElementById('logged-name');
         const metaEl = document.getElementById('logged-meta');
@@ -123,6 +125,26 @@
         const panel = document.getElementById('logged-in-panel');
         if (auth) auth.hidden = false;
         if (panel) panel.hidden = true;
+        document.getElementById('panel-verify').hidden = true;
+    }
+
+    function showVerifyPanel({ username, email, fullName, phone }) {
+        const auth = document.getElementById('auth-panels');
+        const logged = document.getElementById('logged-in-panel');
+        const signup = document.getElementById('panel-signup');
+        const signin = document.getElementById('panel-signin');
+        const verify = document.getElementById('panel-verify');
+        if (auth) auth.hidden = false;
+        if (logged) logged.hidden = true;
+        if (signup) signup.hidden = true;
+        if (signin) signin.hidden = true;
+        if (verify) verify.hidden = false;
+        document.querySelectorAll('.careers-tab').forEach(t => t.classList.remove('careers-tab--active'));
+        const emailEl = document.getElementById('verify-email-display');
+        if (emailEl) emailEl.textContent = email || 'your email';
+        const userEl = document.getElementById('verifyUsername');
+        if (userEl) userEl.value = username || '';
+        sessionStorage.setItem('trinitas_pending_verify', JSON.stringify({ username, email, fullName, phone }));
     }
 
     function initTabs() {
@@ -133,6 +155,7 @@
                 const panel = tab.dataset.panel;
                 document.getElementById('panel-signup').hidden = panel !== 'signup';
                 document.getElementById('panel-signin').hidden = panel !== 'signin';
+                document.getElementById('panel-verify').hidden = true;
             });
         });
     }
@@ -211,6 +234,65 @@
                     return;
                 }
 
+                if (data.needsVerification) {
+                    showAlert(alert, data.message || 'Check your email for a verification code.', 'success');
+                    showVerifyPanel({
+                        username: data.username,
+                        email: data.email,
+                        fullName: data.fullName,
+                        phone: data.phone
+                    });
+                } else if (data.token) {
+                    setCandidate({
+                        token: data.token,
+                        username: data.username,
+                        fullName: data.fullName,
+                        email: data.email,
+                        phone: data.phone
+                    });
+                    showLoggedIn(getCandidate());
+                }
+            } catch {
+                showAlert(alert, 'Unable to register right now. Please try again shortly.', 'error');
+            }
+            button.disabled = false;
+            button.textContent = label;
+        });
+    }
+
+    function initVerify() {
+        const form = document.getElementById('verify-form');
+        const alert = document.getElementById('verify-alert');
+        const resend = document.getElementById('resend-verify');
+        if (!form) return;
+
+        form.addEventListener('submit', async e => {
+            e.preventDefault();
+            if (alert) alert.hidden = true;
+            const username = (document.getElementById('verifyUsername')?.value || '').trim().toLowerCase();
+            const code = (document.getElementById('verifyCode')?.value || '').trim();
+            if (!username || !/^\d{6}$/.test(code)) {
+                showAlert(alert, 'Enter the 6-digit code from your email.', 'error');
+                return;
+            }
+            const button = form.querySelector('button[type="submit"]');
+            const label = button.textContent;
+            button.disabled = true;
+            button.textContent = 'Verifying…';
+            try {
+                const res = await fetch('/.netlify/functions/candidate-verify-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, code })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok || !data.success) {
+                    showAlert(alert, data.message || data.error || 'Verification failed.', 'error');
+                    button.disabled = false;
+                    button.textContent = label;
+                    return;
+                }
+                sessionStorage.removeItem('trinitas_pending_verify');
                 setCandidate({
                     token: data.token,
                     username: data.username,
@@ -218,14 +300,40 @@
                     email: data.email,
                     phone: data.phone
                 });
-                showAlert(alert, data.message || 'Account created.', 'success');
+                showAlert(alert, data.message || 'Email verified.', 'success');
                 showLoggedIn(getCandidate());
             } catch {
-                showAlert(alert, 'Unable to register right now. Please try again shortly.', 'error');
+                showAlert(alert, 'Unable to verify right now.', 'error');
             }
             button.disabled = false;
             button.textContent = label;
         });
+
+        if (resend) {
+            resend.addEventListener('click', async () => {
+                if (alert) alert.hidden = true;
+                const username = (document.getElementById('verifyUsername')?.value || '').trim().toLowerCase();
+                if (!username) {
+                    showAlert(alert, 'Username missing. Sign up again or enter username on the verify form.', 'error');
+                    return;
+                }
+                resend.disabled = true;
+                resend.textContent = 'Sending…';
+                try {
+                    const res = await fetch('/.netlify/functions/candidate-resend-verify', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username })
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    showAlert(alert, data.message || (res.ok ? 'Code sent.' : 'Could not resend.'), res.ok ? 'success' : 'error');
+                } catch {
+                    showAlert(alert, 'Could not resend code.', 'error');
+                }
+                resend.disabled = false;
+                resend.textContent = 'Resend code';
+            });
+        }
     }
 
     function initSignin() {
@@ -250,6 +358,18 @@
                     body: JSON.stringify({ username, password })
                 });
                 const data = await res.json().catch(() => ({}));
+                if (res.status === 403 && data.needsVerification) {
+                    showAlert(alert, data.message || 'Verify your email first.', 'error');
+                    showVerifyPanel({
+                        username: data.username || username,
+                        email: data.email,
+                        fullName: data.fullName,
+                        phone: data.phone
+                    });
+                    button.disabled = false;
+                    button.textContent = label;
+                    return;
+                }
                 if (!res.ok || !data.success) {
                     showAlert(alert, data.error || data.message || 'Sign-in failed.', 'error');
                     button.disabled = false;
@@ -378,6 +498,7 @@
         initTabs();
         initPasswordStrength();
         initSignup();
+        initVerify();
         initSignin();
         initAttempts();
         initResume();
@@ -387,6 +508,12 @@
             showLoggedIn(existing);
         } else {
             showAuthPanels();
+            try {
+                const pending = JSON.parse(sessionStorage.getItem('trinitas_pending_verify') || 'null');
+                if (pending?.username) showVerifyPanel(pending);
+            } catch {
+                /* ignore */
+            }
         }
     });
 })();

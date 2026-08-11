@@ -75,9 +75,13 @@ mustContain(join(deploy, 'admin.js'), ['loadResumes', 'adminResumes', 'adminResu
 mustContain(join(deploy, 'api.js'), ['adminResumes', 'adminResumeDownload'], 'api.js resumes');
 mustExist(join(functionsDir, 'candidate-register.mjs'), 'function candidate-register.mjs');
 mustExist(join(functionsDir, 'candidate-login.mjs'), 'function candidate-login.mjs');
+mustExist(join(functionsDir, 'candidate-verify-email.mjs'), 'function candidate-verify-email.mjs');
+mustExist(join(functionsDir, 'candidate-resend-verify.mjs'), 'function candidate-resend-verify.mjs');
 mustExist(join(functionsDir, 'admin-resumes.mjs'), 'function admin-resumes.mjs');
-mustContain(join(functionsDir, 'candidate-register.mjs'), ['export default', 'fileBase64', 'passwordHash', '12'], 'candidate-register handler');
+mustContain(join(functionsDir, 'candidate-register.mjs'), ['export default', 'fileBase64', 'passwordHash', 'emailVerified', 'needsVerification'], 'candidate-register handler');
+mustContain(join(functionsDir, 'candidate-verify-email.mjs'), ['export default', 'verifyCodeHash', 'emailVerified'], 'candidate-verify-email handler');
 mustContain(join(functionsDir, 'admin-resumes.mjs'), ['export default', 'verifyAdminToken', 'resume-index'], 'admin-resumes handler');
+mustContain(join(deploy, 'careers.html'), ['panel-verify', 'after-attempt-box', 'What happens after Attempt 1'], 'careers verify + after Attempt 1 copy');
 
 console.log('\nSmoke test: pause / OTP path');
 mustContain(join(deploy, 'assessment.html'), ['btn-pause-session', 'btn-end-session'], 'assessment pause/end controls');
@@ -100,6 +104,8 @@ const fnFiles = readdirSync(functionsDir).filter(f => f.endsWith('.mjs'));
 const requiredFns = [
     'candidate-register.mjs',
     'candidate-login.mjs',
+    'candidate-verify-email.mjs',
+    'candidate-resend-verify.mjs',
     'admin-resumes.mjs',
     'pause-assessment.mjs',
     'resume-assessment.mjs',

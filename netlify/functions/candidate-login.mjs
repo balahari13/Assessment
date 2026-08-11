@@ -42,12 +42,31 @@ export default async (req, context) => {
             return jsonResponse(401, { error: 'Invalid username or password.' });
         }
 
+        // Legacy accounts created before email verification
+        if (candidate.emailVerified === undefined) {
+            candidate.emailVerified = true;
+            await store.set(candidateKey(username), JSON.stringify(candidate));
+        }
+
+        if (!candidate.emailVerified) {
+            return jsonResponse(403, {
+                error: 'email_unverified',
+                needsVerification: true,
+                username: candidate.username,
+                email: candidate.email,
+                fullName: candidate.fullName,
+                phone: candidate.phone,
+                message: 'Please verify your email with the 6-digit code we sent before signing in.'
+            });
+        }
+
         const token = randomBytes(24).toString('hex');
         await store.set(`candidate-session:${token}`, JSON.stringify({
             username: candidate.username,
             email: candidate.email,
             fullName: candidate.fullName,
             phone: candidate.phone,
+            emailVerified: true,
             expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000
         }));
 

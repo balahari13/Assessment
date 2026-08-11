@@ -70,12 +70,22 @@
                     <p class="eyebrow">How it works</p>
                     <h2>Account first, then assessment</h2>
                     <ul class="careers-list">
-                        <li><strong>Create account</strong> — choose a username and a strong password, then upload your resume</li>
-                        <li><strong>Password rules</strong> — at least 12 characters, including 1 number and 1 special character</li>
-                        <li><strong>Sign in</strong> — access Attempt 1 and Attempt 2 only after login</li>
+                        <li><strong>Create account</strong> — username, strong password, resume upload</li>
+                        <li><strong>Verify email</strong> — enter the 6-digit code sent to your email to activate your account</li>
+                        <li><strong>Sign in</strong> — then start Attempt 1 or Attempt 2 (when enabled)</li>
                         <li><strong>Assessment</strong> — about 75 minutes; pause available with recruitment OTP</li>
                         <li>Use a stable connection and a device with a working microphone</li>
                     </ul>
+                    <div class="after-attempt-box">
+                        <h3>What happens after Attempt 1?</h3>
+                        <ol class="after-attempt-list">
+                            <li>Your answers are stored for recruitment review. You will <strong>not</strong> see a final score on screen.</li>
+                            <li>Our team reviews your assessment, resume, and fit for open roles.</li>
+                            <li>If shortlisted or if a second sitting is needed, recruitment may <strong>enable Attempt 2</strong> for your email.</li>
+                            <li>We contact you by email/phone only if there is a next step (Attempt 2, interview, or offer path).</li>
+                            <li>No news does not always mean rejection — timelines vary by role and hiring volume.</li>
+                        </ol>
+                    </div>
                 </div>
 
                 <div class="careers-register-stack">
@@ -149,9 +159,24 @@
                             <div id="signup-alert" class="form-alert" hidden></div>
                         </div>
 
+                        <div class="careers-card careers-verify-card" id="panel-verify" hidden>
+                            <h3>Verify your email</h3>
+                            <p class="section-desc">Enter the <strong>6-digit code</strong> sent to <span id="verify-email-display">your email</span>. Check spam if you do not see it within a few minutes.</p>
+                            <form class="register-form" id="verify-form" novalidate>
+                                <input type="hidden" id="verifyUsername" name="username">
+                                <div class="form-field">
+                                    <label for="verifyCode">Verification code</label>
+                                    <input type="text" id="verifyCode" name="code" required placeholder="123456" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code">
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-full">Verify &amp; continue</button>
+                            </form>
+                            <button type="button" class="btn btn-secondary btn-full" id="resend-verify" style="margin-top:0.65rem">Resend code</button>
+                            <div id="verify-alert" class="form-alert" hidden></div>
+                        </div>
+
                         <div class="careers-card" id="panel-signin" hidden>
                             <h3>Sign in</h3>
-                            <p class="section-desc">Use the username and password you created. Then start Attempt 1 or Attempt 2.</p>
+                            <p class="section-desc">Use the username and password you created (after email verification). Then start Attempt 1 or Attempt 2.</p>
                             <form class="register-form" id="signin-form" novalidate>
                                 <div class="form-field">
                                     <label for="siUsername">Username</label>
@@ -178,15 +203,20 @@
                             <button type="button" class="btn btn-secondary" id="candidate-logout">Sign out</button>
                         </div>
 
+                        <div class="careers-card after-attempt-box after-attempt-box--inline">
+                            <h3>After you finish Attempt 1</h3>
+                            <p class="section-desc" style="margin:0">Results go to recruitment only (no score shown to you). We review your CV and test, then may enable Attempt 2 or contact you about next steps. Check email for updates.</p>
+                        </div>
+
                         <div class="careers-card" id="attempt1-card">
                             <h3>Attempt 1</h3>
-                            <p class="section-desc">Preliminary skills assessment. One submission per email.</p>
+                            <p class="section-desc">Preliminary skills assessment. One submission per email. Complete in one sitting when possible (~75 min).</p>
                             <button type="button" class="btn btn-primary btn-full" id="btn-attempt1">Begin Attempt 1</button>
                         </div>
 
                         <div class="careers-card careers-card--advanced" id="attempt2-card">
                             <h3>Attempt 2</h3>
-                            <p class="section-desc">Available after Attempt 1 when recruitment enables it for your email.</p>
+                            <p class="section-desc">Only if recruitment enables it for your email after reviewing Attempt 1. Sign in with the same account.</p>
                             <button type="button" class="btn btn-secondary btn-full" id="btn-attempt2">Begin Attempt 2</button>
                         </div>
 
