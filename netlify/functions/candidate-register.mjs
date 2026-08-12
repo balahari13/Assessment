@@ -48,6 +48,9 @@ export default async (req, context) => {
         const username = String(body.username || '').trim().toLowerCase();
         const password = String(body.password || '');
         const role = String(body.role || 'General application').trim().slice(0, 120);
+        const ALLOWED_SOURCES = ['Job portal', 'LinkedIn', 'Friends', 'Word of mouth', 'Employee referral'];
+        const referredBy = String(body.referredBy || '').trim();
+        const referredDetail = String(body.referredDetail || '').trim().slice(0, 120);
         const notes = String(body.notes || '').trim().slice(0, 1000);
         const fileName = String(body.fileName || '').trim().slice(0, 180);
         const fileType = String(body.fileType || 'application/pdf').trim().slice(0, 80);
@@ -60,6 +63,9 @@ export default async (req, context) => {
         if (userErr) return jsonResponse(400, { error: 'validation', message: userErr }, origin);
         const passErr = validatePassword(password);
         if (passErr) return jsonResponse(400, { error: 'validation', message: passErr }, origin);
+        if (!ALLOWED_SOURCES.includes(referredBy)) {
+            return jsonResponse(400, { error: 'validation', message: 'Please select how you heard about us.' }, origin);
+        }
         if (!fileBase64 || fileBase64.length < 20) {
             return jsonResponse(400, { error: 'validation', message: 'Please attach your resume (PDF or Word).' }, origin);
         }
@@ -87,6 +93,8 @@ export default async (req, context) => {
             email,
             phone,
             role,
+            referredBy,
+            referredDetail,
             notes,
             fileName,
             fileType,
@@ -111,6 +119,8 @@ export default async (req, context) => {
             passwordHash,
             resumeId,
             role,
+            referredBy,
+            referredDetail,
             referenceId,
             passwordResetEnabled: false,
             createdAt: new Date().toISOString()

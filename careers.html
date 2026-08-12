@@ -145,6 +145,21 @@
                                     </select>
                                 </div>
                                 <div class="form-field">
+                                    <label for="suReferredBy">How did you hear about us?</label>
+                                    <select id="suReferredBy" name="referredBy" required>
+                                        <option value="" disabled selected>Select an option</option>
+                                        <option value="Job portal">Job portal</option>
+                                        <option value="LinkedIn">LinkedIn</option>
+                                        <option value="Friends">Friends</option>
+                                        <option value="Word of mouth">Word of mouth</option>
+                                        <option value="Employee referral">Employee referral</option>
+                                    </select>
+                                </div>
+                                <div class="form-field" id="referred-detail-wrap" hidden>
+                                    <label for="suReferredDetail">Referred by (name)</label>
+                                    <input type="text" id="suReferredDetail" name="referredDetail" maxlength="120" placeholder="Employee or friend name (optional)">
+                                </div>
+                                <div class="form-field">
                                     <label for="suFile">Resume (PDF or Word, max 1.5 MB)</label>
                                     <input type="file" id="suFile" name="resume" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" required>
                                 </div>

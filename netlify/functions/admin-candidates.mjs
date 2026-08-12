@@ -40,6 +40,8 @@ export default async (req, context) => {
                     email: c.email || '',
                     phone: c.phone || '',
                     role: c.role || '',
+                    referredBy: c.referredBy || '',
+                    referredDetail: c.referredDetail || '',
                     passwordResetEnabled: !!c.passwordResetEnabled,
                     createdAt: c.createdAt || null
                 });

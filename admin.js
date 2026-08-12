@@ -10,6 +10,13 @@
         return 'score-pill--low';
     }
 
+    function formatReferral(item) {
+        const src = item?.referredBy || '';
+        const detail = item?.referredDetail || '';
+        if (!src) return '—';
+        return detail ? `${src} (${detail})` : src;
+    }
+
     function formatDate(iso) {
         if (!iso) return '—';
         return new Date(iso).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
@@ -606,7 +613,7 @@
         const tbody = document.getElementById('resumes-body');
         if (!tbody) return;
         if (!resumes || !resumes.length) {
-            tbody.innerHTML = '<tr><td colspan="7">No resumes yet.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8">No resumes yet.</td></tr>';
             return;
         }
         tbody.innerHTML = resumes.map(r => `
@@ -615,6 +622,7 @@
                 <td>${r.email || '—'}</td>
                 <td>${r.phone || '—'}</td>
                 <td>${r.role || '—'}</td>
+                <td>${formatReferral(r)}</td>
                 <td>${r.fileName || '—'} ${r.sizeKb ? `(${r.sizeKb} KB)` : ''}</td>
                 <td>${formatPausedDate(r.submittedAt)}</td>
                 <td>
@@ -625,7 +633,7 @@
                     </div>
                 </td>
             </tr>
-            ${r.notes ? `<tr><td colspan="7" style="font-size:0.8rem;color:var(--text-muted)">Note: ${String(r.notes).replace(/</g, '&lt;')}</td></tr>` : ''}
+            ${r.notes ? `<tr><td colspan="8" style="font-size:0.8rem;color:var(--text-muted)">Note: ${String(r.notes).replace(/</g, '&lt;')}</td></tr>` : ''}
         `).join('');
         tbody.querySelectorAll('[data-resume-dl]').forEach(btn => {
             btn.addEventListener('click', () => handleResumeDownload(btn.dataset.resumeDl));
@@ -1005,7 +1013,7 @@
         const tbody = document.getElementById('candidates-body');
         if (!tbody) return;
         if (!list.length) {
-            tbody.innerHTML = '<tr><td colspan="5">No candidate accounts yet.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6">No candidate accounts yet.</td></tr>';
             return;
         }
         tbody.innerHTML = list.map(c => `
@@ -1013,6 +1021,7 @@
                 <td>${c.fullName || '—'}</td>
                 <td>@${c.username}</td>
                 <td>${c.email || '—'}</td>
+                <td>${formatReferral(c)}</td>
                 <td>${c.passwordResetEnabled ? '<span class="score-pill score-pill--high">Yes</span>' : 'No'}</td>
                 <td>
                     <div class="admin-actions">

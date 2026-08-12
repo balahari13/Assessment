@@ -180,6 +180,18 @@
         const alert = document.getElementById('signup-alert');
         if (!form) return;
 
+        const referredSelect = document.getElementById('suReferredBy');
+        const detailWrap = document.getElementById('referred-detail-wrap');
+        if (referredSelect && detailWrap) {
+            const toggleDetail = () => {
+                const v = referredSelect.value;
+                const show = v === 'Employee referral' || v === 'Friends';
+                detailWrap.hidden = !show;
+            };
+            referredSelect.addEventListener('change', toggleDetail);
+            toggleDetail();
+        }
+
         form.addEventListener('submit', async e => {
             e.preventDefault();
             if (alert) alert.hidden = true;
@@ -190,6 +202,8 @@
             const username = form.username.value.trim().toLowerCase();
             const password = form.password.value;
             const role = form.role.value;
+            const referredBy = (form.referredBy?.value || '').trim();
+            const referredDetail = (form.referredDetail?.value || '').trim();
             const notes = form.notes.value.trim();
             const consent = form.consent.checked;
             const file = document.getElementById('suFile')?.files?.[0];
@@ -197,6 +211,10 @@
             const strength = passwordStrength(password);
             if (!fullName || !email || !phone || !username || !consent) {
                 showAlert(alert, 'Please complete all required fields and accept the consent.', 'error');
+                return;
+            }
+            if (!referredBy) {
+                showAlert(alert, 'Please tell us how you heard about Trinitas.', 'error');
                 return;
             }
             if (!strength.valid) {
@@ -235,6 +253,8 @@
                         username,
                         password,
                         role,
+                        referredBy,
+                        referredDetail,
                         notes,
                         fileName: file.name,
                         fileType: file.type || 'application/pdf',

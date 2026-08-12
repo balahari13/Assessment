@@ -75,7 +75,8 @@ mustContain(join(deploy, 'careers.js'), ['candidate-register', 'candidate-login'
 mustContain(join(deploy, 'admin.html'), ['id="resumes-body"', 'Resume submissions', 'id="candidates-body"', 'Candidate accounts', 'Hiring pipeline', 'hr-team-body', 'admin-pipeline-board', 'admin-tabs', 'audit-body', 'btn-hr-invite', 'results-search'], 'admin tabs + pipeline + HR + audit');
 mustContain(join(deploy, 'admin.js'), ['loadResumes', 'handleResumeDelete', 'loadPipeline', 'loadHrTeam', 'loadAudit', 'initAdminTabs', 'ensureAssessmentData'], 'admin.js product UX');
 mustContain(join(deploy, 'api.js'), ['adminResumes', 'adminResumeDelete', 'adminCandidates', 'pipelineList', 'hrRegister', 'adminHrInvite', 'adminAudit'], 'api.js full admin/HR surface');
-mustContain(join(deploy, 'careers.html'), ['firstname.lastname', 'careers-progress-checklist'], 'careers checklist + generic username');
+mustContain(join(deploy, 'careers.html'), ['firstname.lastname', 'careers-progress-checklist', 'suReferredBy', 'Employee referral'], 'careers referral source');
+mustContain(join(functionsDir, 'candidate-register.mjs'), ['referredBy', 'ALLOWED_SOURCES', 'Employee referral'], 'register stores referral source');
 mustContain(join(deploy, 'hr.html'), ['hr-register-form', 'Google Meet', 'pipeline-board', 'inviteCode'], 'HR invite-only portal');
 mustContain(join(deploy, 'hr.js'), ['hrRegister', 'pipelineList', 'inviteCode'], 'HR portal script');
 mustContain(join(deploy, 'assessment.js'), ['gate-consent', 'assessment-gate', 'referenceId'], 'assessment consent gate + ref');

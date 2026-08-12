@@ -89,6 +89,8 @@ export default async (req, context) => {
                     email: rec.email,
                     phone: rec.phone,
                     role: rec.role,
+                    referredBy: rec.referredBy || '',
+                    referredDetail: rec.referredDetail || '',
                     notes: rec.notes || '',
                     fileName: rec.fileName,
                     fileType: rec.fileType,
