@@ -41,6 +41,7 @@
     --radius-md: 12px;
     --radius-lg: 16px;
     --nav-height: 80px;
+    --argentina-blue: #74acdf;
     --ease: cubic-bezier(0.16, 1, 0.3, 1);
     --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -51,10 +52,10 @@ body {
     font-family: var(--font-sans);
     color: var(--text-body);
     background:
-        radial-gradient(ellipse 55% 40% at 100% 0%, rgba(37, 99, 235, 0.07) 0%, transparent 55%),
-        radial-gradient(ellipse 50% 35% at 0% 100%, rgba(6, 182, 212, 0.06) 0%, transparent 50%),
-        radial-gradient(ellipse 40% 30% at 80% 90%, rgba(124, 58, 237, 0.05) 0%, transparent 50%),
-        var(--white);
+        radial-gradient(ellipse 55% 40% at 100% 0%, rgba(255, 255, 255, 0.22) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 35% at 0% 100%, rgba(56, 189, 248, 0.18) 0%, transparent 50%),
+        radial-gradient(ellipse 40% 30% at 80% 90%, rgba(124, 58, 237, 0.08) 0%, transparent 50%),
+        var(--argentina-blue);
     line-height: 1.65;
 }
 
@@ -146,7 +147,11 @@ button, input, select, textarea { font: inherit; color: inherit; border: none; b
 .nav:not(.scrolled) .nav-link.active { color: var(--white); }
 .nav:not(.scrolled) .nav-toggle span { background: var(--white); }
 .nav-brand { display: flex; align-items: center; gap: 0.85rem; min-width: 0; }
-.nav-icon { height: 40px; width: auto; flex-shrink: 0; }
+.nav-icon {
+    height: 44px; width: auto; flex-shrink: 0;
+    object-fit: contain;
+    background: transparent;
+}
 .nav-wordmark { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
 .nav-wordmark strong {
     font-family: var(--font-display);
@@ -203,7 +208,7 @@ button, input, select, textarea { font: inherit; color: inherit; border: none; b
     transition: opacity 0.3s, visibility 0.3s;
 }
 .mobile-menu.open { opacity: 1; visibility: visible; }
-.mobile-menu-logo { height: 72px; width: auto; max-width: 280px; object-fit: contain; }
+.mobile-menu-logo { height: 88px; width: auto; max-width: 280px; object-fit: contain; background: transparent; }
 .mobile-menu-nav { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
 .mobile-menu-link { font-family: var(--font-display); font-size: 1.35rem; font-weight: 700; color: var(--navy); }
 .mobile-menu-cta {
@@ -226,21 +231,33 @@ button, input, select, textarea { font: inherit; color: inherit; border: none; b
     font-size: 0.78rem;
 }
 .nav-cta--careers {
-    background: transparent;
-    color: var(--navy);
-    border: 1.5px solid rgba(15, 23, 42, 0.18);
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+    border: 1.5px solid rgba(255, 255, 255, 0.75);
     box-shadow: none;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 .nav.scrolled .nav-cta--careers,
-.nav--minimal.scrolled .nav-cta--careers {
+.nav--minimal.scrolled .nav-cta--careers,
+.page-about .nav-cta--careers {
     color: var(--navy);
-    border-color: rgba(15, 23, 42, 0.2);
+    border-color: rgba(15, 23, 42, 0.22);
     background: #fff;
 }
-.nav-cta--careers:hover {
+.nav:not(.scrolled) .nav-cta--careers:hover {
+    background: rgba(255, 255, 255, 0.24);
+    color: #fff;
+    border-color: #fff;
+}
+.nav.scrolled .nav-cta--careers:hover,
+.page-about .nav-cta--careers:hover {
     border-color: var(--blue);
     color: var(--blue);
-    background: rgba(37, 99, 235, 0.06);
+    background: #fff;
 }
 .mobile-menu-cta-row {
     display: flex;
@@ -271,9 +288,8 @@ button, input, select, textarea { font: inherit; color: inherit; border: none; b
     .nav-toggle { display: flex; }
     .nav-wordmark span { display: none; }
     .nav-cta--compact:not(.nav-cta--careers) { display: none; }
-    /* Keep Careers button visible on mobile header */
     .nav-cta--careers {
-        display: inline-flex;
+        display: inline-flex !important;
         padding: 0.5rem 0.85rem;
         font-size: 0.78rem;
     }
@@ -692,10 +708,7 @@ h2 {
 /* Sections */
 .section { padding: 6rem 0; position: relative; }
 .section-light {
-    background: var(--off-white);
-    background-image:
-        radial-gradient(ellipse 60% 40% at 100% 0%, rgba(37, 99, 235, 0.06) 0%, transparent 60%),
-        radial-gradient(ellipse 50% 35% at 0% 100%, rgba(6, 182, 212, 0.05) 0%, transparent 55%);
+    background: transparent;
 }
 .section-dark {
     background:
@@ -1012,7 +1025,7 @@ h2 {
 @media (max-width: 900px) { .faq-grid { grid-template-columns: 1fr; } }
 
 /* Contact */
-.contact-section { background: var(--off-white); }
+.contact-section { background: transparent; }
 .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: start; }
 .contact-info { margin-top: 2rem; display: flex; flex-direction: column; gap: 1.25rem; }
 .contact-item { display: flex; flex-direction: column; gap: 0.25rem; }
@@ -1096,9 +1109,9 @@ a.contact-value:hover { color: var(--blue); }
     gap: 2rem; margin-bottom: 2.5rem;
 }
 .footer-logo {
-    height: 54px; width: auto; max-width: 240px; object-fit: contain;
-    background: var(--white); border-radius: 8px;
-    padding: 0.5rem 0.75rem; margin-bottom: 1rem;
+    height: 64px; width: auto; max-width: 260px; object-fit: contain;
+    background: transparent;
+    margin-bottom: 1rem;
 }
 .footer-brand p { font-size: 0.9rem; line-height: 1.7; max-width: 34ch; margin-bottom: 0.85rem; }
 .footer-email { font-weight: 600; color: var(--sky); font-size: 0.95rem; }
