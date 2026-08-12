@@ -41,7 +41,6 @@
     --radius-md: 12px;
     --radius-lg: 16px;
     --nav-height: 80px;
-    --argentina-blue: #74acdf;
     --ease: cubic-bezier(0.16, 1, 0.3, 1);
     --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -52,10 +51,10 @@ body {
     font-family: var(--font-sans);
     color: var(--text-body);
     background:
-        radial-gradient(ellipse 55% 40% at 100% 0%, rgba(255, 255, 255, 0.22) 0%, transparent 55%),
-        radial-gradient(ellipse 50% 35% at 0% 100%, rgba(56, 189, 248, 0.18) 0%, transparent 50%),
-        radial-gradient(ellipse 40% 30% at 80% 90%, rgba(124, 58, 237, 0.08) 0%, transparent 50%),
-        var(--argentina-blue);
+        radial-gradient(ellipse 55% 40% at 100% 0%, rgba(37, 99, 235, 0.07) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 35% at 0% 100%, rgba(6, 182, 212, 0.06) 0%, transparent 50%),
+        radial-gradient(ellipse 40% 30% at 80% 90%, rgba(124, 58, 237, 0.05) 0%, transparent 50%),
+        var(--white);
     line-height: 1.65;
 }
 
@@ -708,7 +707,10 @@ h2 {
 /* Sections */
 .section { padding: 6rem 0; position: relative; }
 .section-light {
-    background: transparent;
+    background: var(--off-white);
+    background-image:
+        radial-gradient(ellipse 60% 40% at 100% 0%, rgba(37, 99, 235, 0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 35% at 0% 100%, rgba(6, 182, 212, 0.05) 0%, transparent 55%);
 }
 .section-dark {
     background:
@@ -1025,7 +1027,7 @@ h2 {
 @media (max-width: 900px) { .faq-grid { grid-template-columns: 1fr; } }
 
 /* Contact */
-.contact-section { background: transparent; }
+.contact-section { background: var(--off-white); }
 .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: start; }
 .contact-info { margin-top: 2rem; display: flex; flex-direction: column; gap: 1.25rem; }
 .contact-item { display: flex; flex-direction: column; gap: 0.25rem; }
