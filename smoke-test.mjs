@@ -56,8 +56,10 @@ mustContain(join(deploy, 'index.html'), [
     'Request a Proposal',
     'nav--minimal',
     'privacy.html',
-    'sticky-cta--single'
-], 'index.html CTA / privacy links');
+    'nav-cta--careers',
+    'careers.html',
+    'sticky-cta-secondary'
+], 'index.html CTA / Careers button / privacy links');
 
 console.log('\nSmoke test: privacy page');
 mustContain(join(deploy, 'privacy.html'), [

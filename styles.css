@@ -225,6 +225,35 @@ button, input, select, textarea { font: inherit; color: inherit; border: none; b
     padding: 0.55rem 0.95rem;
     font-size: 0.78rem;
 }
+.nav-cta--careers {
+    background: transparent;
+    color: var(--navy);
+    border: 1.5px solid rgba(15, 23, 42, 0.18);
+    box-shadow: none;
+}
+.nav.scrolled .nav-cta--careers,
+.nav--minimal.scrolled .nav-cta--careers {
+    color: var(--navy);
+    border-color: rgba(15, 23, 42, 0.2);
+    background: #fff;
+}
+.nav-cta--careers:hover {
+    border-color: var(--blue);
+    color: var(--blue);
+    background: rgba(37, 99, 235, 0.06);
+}
+.mobile-menu-cta-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    width: min(100%, 280px);
+    margin-top: 1rem;
+}
+.mobile-menu-cta--secondary {
+    background: transparent !important;
+    color: var(--navy) !important;
+    border: 1.5px solid rgba(15, 23, 42, 0.18);
+}
 .mobile-menu-close {
     position: absolute;
     top: 1.15rem;
@@ -238,10 +267,16 @@ button, input, select, textarea { font: inherit; color: inherit; border: none; b
 }
 
 @media (max-width: 960px) {
-    .nav-links, .nav:not(.nav--minimal) .nav-cta { display: none; }
+    .nav-links, .nav:not(.nav--minimal) .nav-cta:not(.nav-cta--careers) { display: none; }
     .nav-toggle { display: flex; }
     .nav-wordmark span { display: none; }
-    .nav-cta--compact { display: none; }
+    .nav-cta--compact:not(.nav-cta--careers) { display: none; }
+    /* Keep Careers button visible on mobile header */
+    .nav-cta--careers {
+        display: inline-flex;
+        padding: 0.5rem 0.85rem;
+        font-size: 0.78rem;
+    }
 }
 
 /* Typography */
