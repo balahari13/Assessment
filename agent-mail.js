@@ -24,59 +24,6 @@
         el.textContent = msg;
     }
 
-    function initTabs() {
-        const tabs = document.querySelectorAll('.agent-tab');
-        const reg = document.getElementById('panel-register');
-        const login = document.getElementById('panel-login');
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                tabs.forEach(t => t.classList.remove('agent-tab--active'));
-                tab.classList.add('agent-tab--active');
-                const which = tab.dataset.tab;
-                reg.hidden = which !== 'register';
-                login.hidden = which !== 'login';
-            });
-        });
-    }
-
-    function initRegister() {
-        const form = document.getElementById('agent-register-form');
-        const alert = document.getElementById('reg-alert');
-        const success = document.getElementById('reg-success');
-        if (!form) return;
-
-        form.addEventListener('submit', async e => {
-            e.preventDefault();
-            alert.hidden = true;
-            success.hidden = true;
-            const fullName = form.fullName.value.trim();
-            const phone = form.phone.value.trim();
-            const password = form.password.value;
-            if (fullName.length < 3 || password.length < 6) {
-                show(alert, 'Enter full name and a password of at least 6 characters.', 'error');
-                return;
-            }
-            const btn = form.querySelector('button[type="submit"]');
-            btn.disabled = true;
-            btn.textContent = 'Creating…';
-            const { ok, data } = await request('/agent-register', {
-                method: 'POST',
-                body: JSON.stringify({ fullName, phone, password })
-            });
-            btn.disabled = false;
-            btn.textContent = 'Create employee email';
-            if (!ok) {
-                show(alert, data.message || data.error || 'Registration failed.', 'error');
-                return;
-            }
-            sessionStorage.setItem(TOKEN_KEY, data.token);
-            success.hidden = false;
-            success.className = 'form-alert form-alert--success';
-            success.innerHTML = `<strong>Your employee email:</strong> ${data.email}<br><span style="font-size:0.88rem">Save this email — it was generated from letters in your name. Redirecting…</span>`;
-            setTimeout(() => { window.location.href = 'agent-dashboard.html'; }, 2200);
-        });
-    }
-
     function initLogin() {
         const form = document.getElementById('agent-login-form');
         const alert = document.getElementById('login-alert');
@@ -97,7 +44,7 @@
             btn.disabled = false;
             btn.textContent = 'Sign in';
             if (!ok) {
-                show(alert, data.error || 'Sign-in failed.', 'error');
+                show(alert, data.error || data.message || 'Sign-in failed.', 'error');
                 return;
             }
             sessionStorage.setItem(TOKEN_KEY, data.token);
@@ -110,9 +57,5 @@
         return;
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        initTabs();
-        initRegister();
-        initLogin();
-    });
+    document.addEventListener('DOMContentLoaded', initLogin);
 })();

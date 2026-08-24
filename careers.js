@@ -21,6 +21,26 @@
                 document.body.style.overflow = open ? 'hidden' : '';
             });
         }
+
+        const groups = document.querySelectorAll('.nav-group');
+        groups.forEach(group => {
+            const btn = group.querySelector('.nav-group-toggle');
+            if (!btn) return;
+            btn.addEventListener('click', e => {
+                e.stopPropagation();
+                const open = !group.classList.contains('open');
+                groups.forEach(g => g.classList.remove('open'));
+                group.classList.toggle('open', open);
+                btn.setAttribute('aria-expanded', String(open));
+            });
+        });
+        document.addEventListener('click', () => {
+            groups.forEach(g => {
+                g.classList.remove('open');
+                const b = g.querySelector('.nav-group-toggle');
+                if (b) b.setAttribute('aria-expanded', 'false');
+            });
+        });
     }
 
     function showAlert(el, message, type) {

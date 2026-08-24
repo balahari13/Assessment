@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create employee account | Trinitas</title>
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#020617">
+    <link rel="icon" href="logo-icon.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="careers.css">
+</head>
+<body class="admin-body">
+    <div class="admin-page">
+        <div class="admin-login-card" id="staff-gate" hidden>
+            <div class="admin-login-brand">
+                <img src="logo-icon.png" alt="" width="40" height="40">
+                <div>
+                    <p class="eyebrow">Restricted</p>
+                    <h1>Employee accounts</h1>
+                </div>
+            </div>
+            <p class="section-desc admin-login-desc">Only Admin or HR can create employee email addresses. Sign in first, then return to this page.</p>
+            <a href="admin.html" class="btn btn-primary btn-full">Admin sign in</a>
+            <a href="hr.html" class="btn btn-secondary btn-full" style="margin-top:0.65rem">HR sign in</a>
+        </div>
+
+        <div class="admin-dashboard" id="staff-dash" hidden>
+            <header class="admin-header">
+                <div class="admin-header-left">
+                    <img src="logo-icon.png" alt="" class="admin-header-logo" width="32" height="32">
+                    <div>
+                        <h1>Create employee account</h1>
+                        <p id="staff-role-label">Issue an @agent.trinitas.in email and password</p>
+                    </div>
+                </div>
+                <div class="admin-header-actions">
+                    <a href="admin.html" class="btn btn-secondary btn-sm">Admin</a>
+                    <a href="hr.html" class="btn btn-secondary btn-sm">HR portal</a>
+                    <button type="button" class="btn btn-secondary btn-sm" id="staff-refresh">Refresh list</button>
+                </div>
+            </header>
+
+            <div id="staff-toast" class="admin-toast" hidden></div>
+
+            <section class="admin-table-card">
+                <div class="admin-section-title-row">
+                    <h2 class="admin-section-title">New employee</h2>
+                </div>
+                <p class="section-desc admin-paused-desc">Create a login for staff. Share the email and password with them through a secure channel. Employees cannot self-register.</p>
+                <form id="staff-create-form" class="register-form pipeline-add-form" novalidate>
+                    <div class="pipeline-add-grid">
+                        <div class="form-field">
+                            <label for="empName">Full name</label>
+                            <input type="text" id="empName" name="fullName" required autocomplete="name">
+                        </div>
+                        <div class="form-field">
+                            <label for="empPhone">Phone (optional)</label>
+                            <input type="tel" id="empPhone" name="phone" autocomplete="tel">
+                        </div>
+                        <div class="form-field">
+                            <label for="empLocal">Email prefix (optional)</label>
+                            <input type="text" id="empLocal" name="emailLocal" placeholder="e.g. priya.k" autocomplete="off">
+                            <span class="field-hint">Becomes prefix@agent.trinitas.in. Leave blank to auto-generate.</span>
+                        </div>
+                        <div class="form-field">
+                            <label for="empPass">Password</label>
+                            <input type="text" id="empPass" name="password" placeholder="Leave blank to auto-generate" autocomplete="off">
+                            <span class="field-hint">Minimum 8 characters if you set one.</span>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create account</button>
+                </form>
+                <div id="staff-create-result" class="form-alert form-alert--success" hidden></div>
+                <div id="staff-create-alert" class="form-alert" hidden></div>
+            </section>
+
+            <section class="admin-table-card">
+                <div class="admin-section-title-row">
+                    <h2 class="admin-section-title">Employee accounts</h2>
+                </div>
+                <div class="results-table-wrap">
+                    <table class="results-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Created</th>
+                                <th>By</th>
+                            </tr>
+                        </thead>
+                        <tbody id="staff-list-body">
+                            <tr><td colspan="5">Loading…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+    <script src="api.js"></script>
+    <script src="staff-employees.js"></script>
+</body>
+</html>

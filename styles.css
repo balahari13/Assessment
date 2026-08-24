@@ -47,6 +47,34 @@
 
 html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
 
+/* Compact homepage — less scroll */
+.page-home .hero {
+    padding: calc(var(--nav-height) + 2.25rem) 0 2.5rem;
+}
+.page-home .hero-actions { margin-bottom: 1.15rem; }
+.page-home .lead-light { margin-bottom: 1.15rem; max-width: 52ch; }
+.page-home .section { padding: 2.5rem 0; }
+.page-home .section-head { margin-bottom: 1.35rem; }
+.page-home .section-head h2 { margin-bottom: 0.4rem; }
+.page-home .section-desc { margin-bottom: 0; }
+.page-home .service-card { padding: 1.15rem 1.2rem 1.25rem; }
+.page-home .service-card p { margin-bottom: 0.5rem; }
+.page-home .trust-bar { padding: 0.75rem 0; }
+.page-home .process-card { padding: 1.15rem 1.2rem; }
+.page-home .contact-section { padding-top: 2.5rem; padding-bottom: 2.75rem; }
+.page-home .footer { padding-top: 2.25rem; }
+.page-home .home-why-note {
+    margin: 1.35rem 0 0;
+    text-align: center;
+    font-size: 0.88rem;
+    color: rgba(255, 255, 255, 0.62);
+}
+.page-home .home-why-note a { color: var(--sky); text-decoration: underline; text-underline-offset: 2px; }
+@media (max-width: 900px) {
+    .page-home .hero { padding: calc(var(--nav-height) + 1.5rem) 0 2rem; }
+    .page-home .section { padding: 2rem 0; }
+}
+
 body {
     font-family: var(--font-sans);
     color: var(--text-body);
@@ -126,7 +154,10 @@ button, input, select, textarea { font: inherit; color: inherit; border: none; b
 .nav {
     position: fixed; inset: 0 0 auto 0; z-index: 1000;
     height: var(--nav-height);
-    display: flex; align-items: center; justify-content: space-between;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: stretch;
+    column-gap: 1.25rem;
     padding: 0 clamp(1.25rem, 4vw, 2.5rem);
     background: transparent;
     border-bottom: 1px solid transparent;
@@ -141,11 +172,20 @@ button, input, select, textarea { font: inherit; color: inherit; border: none; b
 }
 .nav:not(.scrolled) .nav-wordmark strong { color: var(--white); }
 .nav:not(.scrolled) .nav-wordmark span { color: var(--sky); }
-.nav:not(.scrolled) .nav-link { color: rgba(255, 255, 255, 0.65); }
+.nav:not(.scrolled) .nav-link,
+.nav:not(.scrolled) .nav-group-toggle { color: rgba(255, 255, 255, 0.65); }
 .nav:not(.scrolled) .nav-link:hover,
-.nav:not(.scrolled) .nav-link.active { color: var(--white); }
+.nav:not(.scrolled) .nav-link.active,
+.nav:not(.scrolled) .nav-group-toggle:hover,
+.nav:not(.scrolled) .nav-group-toggle.active { color: var(--white); }
 .nav:not(.scrolled) .nav-toggle span { background: var(--white); }
-.nav-brand { display: flex; align-items: center; gap: 0.85rem; min-width: 0; }
+.nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    min-width: 0;
+    justify-self: start;
+}
 .nav-icon {
     height: 44px; width: auto; flex-shrink: 0;
     object-fit: contain;
@@ -161,20 +201,121 @@ button, input, select, textarea { font: inherit; color: inherit; border: none; b
     letter-spacing: 0.04em; text-transform: uppercase;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.nav-links { display: flex; gap: 2rem; }
-.nav-link {
-    font-size: 0.82rem; font-weight: 600; color: var(--text-muted);
-    letter-spacing: 0.04em; text-transform: uppercase;
-    transition: color 0.2s; position: relative;
+.nav-links {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    gap: 0.15rem;
+    height: 100%;
+    justify-self: center;
 }
-.nav-link::after {
-    content: ''; position: absolute; left: 0; bottom: -4px;
-    width: 0; height: 2px;
+.nav-group {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    height: 100%;
+}
+.nav-link,
+.nav-group-toggle {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    height: 100%;
+    padding: 0 0.9rem;
+    white-space: nowrap;
+    background: none;
+    border: none;
+    cursor: pointer;
+    line-height: 1;
+}
+.nav-group-toggle {
+    gap: 0.4rem;
+}
+.nav-link:not(.nav-group-toggle)::after {
+    content: '';
+    position: absolute;
+    left: 0.9rem;
+    right: 0.9rem;
+    bottom: 18px;
+    width: auto;
+    height: 2px;
     background: var(--gradient-gold);
-    transition: width 0.25s var(--ease);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.25s var(--ease);
 }
-.nav-link:hover, .nav-link.active { color: var(--navy); }
-.nav-link:hover::after, .nav-link.active::after { width: 100%; }
+.nav-link:not(.nav-group-toggle):hover::after,
+.nav-link:not(.nav-group-toggle).active::after { transform: scaleX(1); }
+.nav-group-toggle::after {
+    content: '';
+    display: inline-block;
+    width: 0;
+    height: 0;
+    margin-left: 0.15rem;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid currentColor;
+    opacity: 0.65;
+    position: static;
+    background: none;
+    transform: none;
+}
+.nav-link:hover,
+.nav-link.active,
+.nav-group-toggle:hover,
+.nav-group-toggle.active,
+.nav-group.open .nav-group-toggle { color: var(--navy); }
+.nav-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 220px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
+    padding: 0.4rem;
+    margin: 0;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.12s ease, visibility 0.12s ease;
+    z-index: 80;
+}
+.nav-dropdown::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -12px;
+    height: 12px;
+    background: transparent;
+}
+.nav-group.open .nav-dropdown,
+.nav-group:hover .nav-dropdown,
+.nav-group:focus-within .nav-dropdown {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+.nav-dropdown a {
+    display: block;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--navy);
+    text-transform: none;
+    letter-spacing: 0;
+    border-radius: 7px;
+    line-height: 1.3;
+}
+.nav-dropdown a:hover { background: var(--off-white); color: var(--blue); }
 .nav-cta {
     font-family: var(--font-display);
     font-size: 0.82rem; font-weight: 700; color: var(--white);
@@ -215,8 +356,30 @@ button, input, select, textarea { font: inherit; color: inherit; border: none; b
     object-fit: contain;
     background: transparent;
 }
-.mobile-menu-nav { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
-.mobile-menu-link { font-family: var(--font-display); font-size: 1.35rem; font-weight: 700; color: var(--navy); }
+.mobile-menu-nav {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.15rem;
+    width: min(280px, calc(100% - 2.5rem));
+    text-align: left;
+}
+.mobile-menu-label {
+    margin: 0.95rem 0 0.2rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+.mobile-menu-label:first-child { margin-top: 0; }
+.mobile-menu-link {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--navy);
+    padding: 0.4rem 0;
+}
 .mobile-menu-cta {
     padding: 0.85rem 1.5rem;
     background: var(--gradient-brand);
@@ -229,8 +392,10 @@ button, input, select, textarea { font: inherit; color: inherit; border: none; b
 .nav-minimal-actions {
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 0.75rem;
-    margin-left: auto;
+    justify-self: end;
+    margin-left: 0;
 }
 .nav-cta--compact {
     padding: 0.55rem 0.95rem;
@@ -290,12 +455,16 @@ button, input, select, textarea { font: inherit; color: inherit; border: none; b
 }
 
 @media (max-width: 960px) {
-    .nav-links, .nav:not(.nav--minimal) .nav-cta:not(.nav-cta--careers) { display: none; }
+    .nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .nav-links { display: none; }
     .nav-toggle { display: flex; }
     .nav-wordmark span { display: none; }
-    .nav-cta--compact:not(.nav-cta--careers) { display: none; }
-    .nav-cta--careers {
-        display: inline-flex !important;
+    .nav-cta--compact {
+        display: inline-flex;
         padding: 0.5rem 0.85rem;
         font-size: 0.78rem;
     }

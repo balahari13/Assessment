@@ -14,7 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="page-home">
     <div class="preloader" id="preloader" aria-hidden="true">
         <div class="preloader-inner">
             <img src="logo-icon.png" alt="" class="preloader-logo">
@@ -22,7 +22,7 @@
         </div>
     </div>
 
-    <header class="nav nav--minimal" id="nav">
+    <header class="nav" id="nav">
         <a href="index.html" class="nav-brand">
             <img src="logo-icon.png" alt="" class="nav-icon">
             <span class="nav-wordmark">
@@ -30,9 +30,27 @@
                 <span>NextGen Business Solutions</span>
             </span>
         </a>
+        <nav class="nav-links" aria-label="Primary">
+            <div class="nav-group">
+                <button type="button" class="nav-link nav-group-toggle" aria-expanded="false" aria-haspopup="true">Company</button>
+                <div class="nav-dropdown">
+                    <a href="about.html">About</a>
+                    <a href="index.html#why">Engagement model</a>
+                    <a href="privacy.html">Privacy</a>
+                </div>
+            </div>
+            <a href="index.html#services" class="nav-link">Services</a>
+            <div class="nav-group">
+                <button type="button" class="nav-link nav-group-toggle" aria-expanded="false" aria-haspopup="true">Careers</button>
+                <div class="nav-dropdown">
+                    <a href="careers.html">Open roles</a>
+                    <a href="healthcare.html">Healthcare WFH</a>
+                </div>
+            </div>
+            <a href="agent-mail.html" class="nav-link">Employee Login</a>
+        </nav>
         <div class="nav-minimal-actions">
-            <a href="careers.html" class="nav-cta nav-cta--compact nav-cta--careers">Careers</a>
-            <a href="#contact" class="nav-cta nav-cta--compact">Request a Proposal</a>
+            <a href="#contact" class="nav-cta nav-cta--compact">Request a proposal</a>
             <button class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false">
                 <span></span><span></span><span></span>
             </button>
@@ -43,19 +61,20 @@
         <button type="button" class="mobile-menu-close" id="mobile-menu-close" aria-label="Close menu">&times;</button>
         <img src="logo-full.png" alt="Trinitas NextGen Business Solutions" class="mobile-menu-logo">
         <nav class="mobile-menu-nav" aria-label="Site">
-            <a href="#services" class="mobile-menu-link">Services</a>
+            <p class="mobile-menu-label">Company</p>
             <a href="about.html" class="mobile-menu-link">About</a>
-            <a href="careers.html" class="mobile-menu-link">Careers</a>
-            <a href="healthcare.html" class="mobile-menu-link">Healthcare</a>
-            <a href="#india" class="mobile-menu-link">India Delivery</a>
-            <a href="#process" class="mobile-menu-link">Process</a>
-            <a href="#contact" class="mobile-menu-link">Contact</a>
+            <a href="#why" class="mobile-menu-link">Engagement model</a>
             <a href="privacy.html" class="mobile-menu-link">Privacy</a>
+            <p class="mobile-menu-label">Services</p>
+            <a href="#services" class="mobile-menu-link">BPO services</a>
+            <p class="mobile-menu-label">Careers</p>
+            <a href="careers.html" class="mobile-menu-link">Open roles</a>
+            <a href="healthcare.html" class="mobile-menu-link">Healthcare WFH</a>
+            <p class="mobile-menu-label">Staff</p>
             <a href="agent-mail.html" class="mobile-menu-link">Employee Login</a>
         </nav>
         <div class="mobile-menu-cta-row">
-            <a href="careers.html" class="mobile-menu-cta mobile-menu-cta--secondary">Careers</a>
-            <a href="#contact" class="mobile-menu-cta">Request a Proposal</a>
+            <a href="#contact" class="mobile-menu-cta">Request a proposal</a>
         </div>
     </div>
 
@@ -77,32 +96,25 @@
             </div>
             <div class="container hero-grid">
                 <div class="hero-content reveal">
-                    <p class="eyebrow eyebrow-light">Trinitas NextGen Business Solutions</p>
-                    <h1>Enterprise BPO, <span class="text-accent-light">delivered with discipline.</span></h1>
-                    <p class="lead lead-light">Enterprise-grade outsourcing from India through a 100% work-from-home model — combining remote-trained talent, proven methodologies, and intelligent technology so your operations run smarter, faster, and at lower cost.</p>
+                    <p class="eyebrow eyebrow-light">India · remote BPO operations</p>
+                    <h1>Work-from-home BPO, <span class="text-accent-light">governed by SLA.</span></h1>
+                    <p class="lead lead-light">Support, finance, HR, IT, and back office delivered from India. Remote workforce, documented controls, target go-live within four weeks.</p>
                     <div class="hero-actions">
-                        <a href="#contact" class="btn btn-primary">Request a Proposal</a>
+                        <a href="#contact" class="btn btn-primary">Request a proposal</a>
                         <a href="careers.html" class="btn btn-outline-light">Careers</a>
                     </div>
-                    <p class="hero-secondary-links">
-                        <a href="#services">See services</a>
-                        <span aria-hidden="true">·</span>
-                        <a href="careers.html">Careers</a>
-                        <span aria-hidden="true">·</span>
-                        <a href="privacy.html">Your data, protected</a>
-                    </p>
                     <div class="hero-highlights">
                         <div class="hero-highlight">
                             <strong>4 Weeks</strong>
-                            <span>Average go-live timeline</span>
+                            <span>Target go-live</span>
                         </div>
                         <div class="hero-highlight">
                             <strong>48 Hours</strong>
-                            <span>Custom proposal turnaround</span>
+                            <span>Written proposal</span>
                         </div>
                         <div class="hero-highlight">
                             <strong>100%</strong>
-                            <span>Work-from-home model</span>
+                            <span>Remote delivery</span>
                         </div>
                     </div>
                 </div>
@@ -135,41 +147,19 @@
 
         <section class="trust-bar" aria-label="Key differentiators">
             <div class="container trust-grid">
-                <span class="trust-pill trust-pill--blue">Security-First</span>
-                <span class="trust-pill trust-pill--cyan">Your Data, Protected</span>
-                <span class="trust-pill trust-pill--violet">India-Based</span>
-                <span class="trust-pill trust-pill--emerald">100% Work-from-Home</span>
+                <span class="trust-pill trust-pill--blue">Security controls</span>
+                <span class="trust-pill trust-pill--cyan">Data protection</span>
+                <span class="trust-pill trust-pill--violet">India operations</span>
+                <span class="trust-pill trust-pill--emerald">Remote delivery</span>
                 <span class="trust-pill trust-pill--amber">Est. 2026</span>
-            </div>
-        </section>
-
-        <section class="stats-bar">
-            <div class="container stats-grid">
-                <div class="stat reveal">
-                    <span class="stat-value" data-target="50" data-suffix="+">50+</span>
-                    <span class="stat-label">Trained Agents</span>
-                </div>
-                <div class="stat reveal">
-                    <span class="stat-value" data-target="95" data-suffix="%">95%</span>
-                    <span class="stat-label">CSAT Target</span>
-                </div>
-                <div class="stat reveal">
-                    <span class="stat-value" data-target="40" data-suffix="%">40%</span>
-                    <span class="stat-label">Average Cost Saving</span>
-                </div>
-                <div class="stat reveal">
-                    <span class="stat-value stat-static">24/7</span>
-                    <span class="stat-label">India Coverage</span>
-                </div>
             </div>
         </section>
 
         <section class="section section-light" id="services">
             <div class="container">
                 <div class="section-head reveal">
-                    <div class="section-label"><span>01</span> What We Offer</div>
-                    <h2>End-to-End BPO Services <span class="text-gradient">Built to Scale</span></h2>
-                    <p class="section-desc">From front-line customer engagement to complex back-office processing, we manage the full spectrum of business operations with precision, accountability, and measurable outcomes.</p>
+                    <h2>Services</h2>
+                    <p class="section-desc">Coverage across customer operations and back office.</p>
                 </div>
                 <div class="services-grid reveal-stagger">
                     <article class="service-card reveal" data-service="0" data-accent="blue">
@@ -178,7 +168,7 @@
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 11h2l2-7h10l2 7h2v2h-1a3 3 0 01-3 3H7a3 3 0 01-3-3H3v-2z"/><path d="M7 16a3 3 0 006 0"/></svg>
                         </div>
                         <h3>Customer Support</h3>
-                        <p>Omnichannel support across voice, chat, email, and social media with trained agents representing your brand 24/7.</p>
+                        <p>Voice, chat, email, and social — trained agents on your brand, 24/7.</p>
                         <span class="card-link">View details →</span>
                     </article>
                     <article class="service-card reveal" data-service="1" data-accent="cyan">
@@ -187,7 +177,7 @@
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10M7 12h6M7 16h8"/></svg>
                         </div>
                         <h3>Finance &amp; Accounting</h3>
-                        <p>AP/AR management, payroll processing, financial reporting, and regulatory support delivered by trained professionals.</p>
+                        <p>AP/AR, payroll, reporting, and regulatory support.</p>
                         <span class="card-link">View details →</span>
                     </article>
                     <article class="service-card reveal" data-service="2" data-accent="violet">
@@ -196,7 +186,7 @@
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2"/><path d="M3 20a6 6 0 0112 0M14 20a4 4 0 018 0"/></svg>
                         </div>
                         <h3>Human Resources</h3>
-                        <p>Recruitment outsourcing, onboarding, benefits administration, and full employee lifecycle management.</p>
+                        <p>Recruitment, onboarding, benefits, and employee lifecycle.</p>
                         <span class="card-link">View details →</span>
                     </article>
                     <article class="service-card reveal" data-service="3" data-accent="emerald">
@@ -205,7 +195,7 @@
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 20h8M12 18v2"/></svg>
                         </div>
                         <h3>IT Help Desk</h3>
-                        <p>Tier 1–3 technical support, incident management, and infrastructure monitoring for seamless operations.</p>
+                        <p>Tier 1–3 support, incidents, and infrastructure monitoring.</p>
                         <span class="card-link">View details →</span>
                     </article>
                     <article class="service-card reveal" data-service="4" data-accent="amber">
@@ -214,7 +204,7 @@
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 17l6-6 4 4 8-10"/><path d="M14 5h7v7"/></svg>
                         </div>
                         <h3>Sales &amp; Lead Generation</h3>
-                        <p>Outbound sales, appointment setting, lead qualification, and CRM management that drives pipeline growth.</p>
+                        <p>Outbound sales, appointments, qualification, and CRM.</p>
                         <span class="card-link">View details →</span>
                     </article>
                     <article class="service-card reveal" data-service="5" data-accent="coral">
@@ -223,7 +213,7 @@
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 7h16M4 12h16M4 17h10"/><rect x="2" y="3" width="20" height="18" rx="2"/></svg>
                         </div>
                         <h3>Back Office Operations</h3>
-                        <p>Data entry, document processing, order management, and workflow automation to remove operational bottlenecks.</p>
+                        <p>Data, documents, orders, and workflow automation.</p>
                         <span class="card-link">View details →</span>
                     </article>
                 </div>
@@ -231,136 +221,27 @@
         </section>
 
         <section class="section section-dark" id="why">
-            <div class="container why-grid">
-                <div class="reveal">
-                    <p class="eyebrow">Why Trinitas</p>
-                    <h2>Performance-First Outsourcing</h2>
-                    <p class="section-desc">We architect high-performance teams backed by structured training, quality frameworks, and transparent reporting — so your operations improve continuously, not just at launch.</p>
-                    <div class="metrics">
-                        <div class="metric"><span>First Call Resolution</span><div class="metric-track"><div class="metric-fill" data-width="85"></div></div><strong>85%</strong></div>
-                        <div class="metric"><span>CSAT Target</span><div class="metric-track"><div class="metric-fill" data-width="95"></div></div><strong>95%</strong></div>
-                        <div class="metric"><span>SLA Target</span><div class="metric-track"><div class="metric-fill" data-width="99"></div></div><strong>99%</strong></div>
-                        <div class="metric"><span>Agent Retention</span><div class="metric-track"><div class="metric-fill" data-width="88"></div></div><strong>88%</strong></div>
-                    </div>
-                </div>
-                <div class="feature-list">
-                    <div class="feature-item reveal">
-                        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20"/></svg></div>
-                        <div><h4>100% Work-from-Home Model</h4><p>Every agent in India works exclusively from home — lowering overhead, improving retention, and delivering consistent quality through secure remote operations.</p></div>
-                    </div>
-                    <div class="feature-item reveal">
-                        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4z"/></svg></div>
-                        <div><h4>Your Data, Protected with Care</h4><p>We treat every client record like a trust, not a commodity — role-based access, careful handling of personal information, secure endpoints, and clear workflows so your data stays where it belongs.</p></div>
-                    </div>
-                    <div class="feature-item reveal">
-                        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12h8M12 8v8"/></svg></div>
-                        <div><h4>AI-Augmented Workflows</h4><p>Automation and AI-assisted tools integrated into processes to improve speed, accuracy, and consistency.</p></div>
-                    </div>
-                    <div class="feature-item reveal">
-                        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19V5M4 19h16M8 15l3-3 3 2 4-5"/></svg></div>
-                        <div><h4>Real-Time Reporting</h4><p>Live dashboards and structured business reviews provide full visibility into KPIs and operational performance.</p></div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="section section-light" id="india">
-            <div class="container">
-                <div class="global-grid">
-                    <div class="reveal">
-                        <p class="eyebrow">India Delivery</p>
-                        <h2>100% Work-from-Home, Based in India</h2>
-                        <p class="section-desc">Every Trinitas agent is based in India and works exclusively from home — with unified quality frameworks and secure remote infrastructure. We do not operate call centers, branch offices, or physical delivery facilities outside India.</p>
-                        <ul class="global-list">
-                            <li><strong>India</strong> — All operations, headquarters, and workforce</li>
-                            <li><strong>Pan-India talent</strong> — Remote agents recruited across major cities</li>
-                            <li><strong>100% work-from-home</strong> — No shared offices or call center floors</li>
-                            <li><strong>Extended hours</strong> — Flexible coverage aligned to client schedules</li>
-                        </ul>
-                    </div>
-                    <div class="global-cards reveal">
-                        <div class="global-card">
-                            <span class="global-card-val">5+</span>
-                            <span class="global-card-label">Languages Supported</span>
-                        </div>
-                        <div class="global-card">
-                            <span class="global-card-val">Pan-India</span>
-                            <span class="global-card-label">Remote Workforce</span>
-                        </div>
-                        <div class="global-card">
-                            <span class="global-card-val">4 Wk</span>
-                            <span class="global-card-label">Typical Ramp-Up</span>
-                        </div>
-                        <div class="global-card">
-                            <span class="global-card-val">24/7</span>
-                            <span class="global-card-label">Operations Coverage</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="section section-dark" id="process">
             <div class="container">
                 <div class="section-head reveal">
-                    <p class="eyebrow">How It Works</p>
-                    <h2>From Discovery to Full Delivery</h2>
-                    <p class="section-desc">A structured engagement model designed to go live in as little as four weeks with minimal disruption to your business.</p>
+                    <h2>Engagement model</h2>
+                    <p class="section-desc">India-based remote delivery. Assess, design, pilot, then scale — typically within four weeks.</p>
                 </div>
                 <div class="process-grid">
-                    <div class="process-card reveal"><span class="step">01</span><h3>Discovery &amp; Scoping</h3><p>We assess your processes, volumes, and objectives to define a clear operational baseline.</p></div>
-                    <div class="process-card reveal"><span class="step">02</span><h3>Solution Design</h3><p>We design staffing, technology, workflows, and governance aligned to your KPIs.</p></div>
-                    <div class="process-card reveal"><span class="step">03</span><h3>Pilot &amp; Ramp-Up</h3><p>Controlled pilot launch, feedback integration, and structured scale-up of teams and processes.</p></div>
-                    <div class="process-card reveal"><span class="step">04</span><h3>Optimize &amp; Grow</h3><p>Continuous QA, coaching, and process improvements to sustain long-term performance gains.</p></div>
+                    <div class="process-card reveal"><span class="step">01</span><h3>Assess</h3><p>Scope, volumes, and KPIs.</p></div>
+                    <div class="process-card reveal"><span class="step">02</span><h3>Design</h3><p>Staffing, systems, and controls.</p></div>
+                    <div class="process-card reveal"><span class="step">03</span><h3>Pilot</h3><p>Controlled launch and ramp.</p></div>
+                    <div class="process-card reveal"><span class="step">04</span><h3>Operate</h3><p>QA, coaching, and reporting.</p></div>
                 </div>
-            </div>
-        </section>
-
-        <section class="cta-banner">
-            <div class="cta-glow" aria-hidden="true"></div>
-            <div class="container cta-banner-inner reveal">
-                <div>
-                    <p class="eyebrow eyebrow-light">Next step</p>
-                    <h2>Ready for a clear proposal?</h2>
-                    <p>Share your goals — we respond within one business day and prepare a tailored proposal within 48 hours.</p>
-                </div>
-                <a href="#contact" class="btn btn-primary btn-lg btn-shine">Request a Proposal</a>
-            </div>
-        </section>
-
-        <section class="section" id="faq">
-            <div class="container">
-                <div class="faq-grid">
-                    <div class="reveal">
-                        <p class="eyebrow">FAQ</p>
-                        <h2>Quick answers</h2>
-                        <p class="section-desc">The essentials before you request a proposal.</p>
-                        <a href="privacy.html" class="faq-email">Your data, protected →</a>
-                    </div>
-                    <div class="accordion reveal">
-                        <div class="accordion-item open">
-                            <button class="accordion-trigger" aria-expanded="true">How quickly can you go live?</button>
-                            <div class="accordion-panel"><p>Most engagements go live within 4–6 weeks: discovery, design, pilot, then scale on validated performance.</p></div>
-                        </div>
-                        <div class="accordion-item">
-                            <button class="accordion-trigger" aria-expanded="false">Is delivery fully work-from-home in India?</button>
-                            <div class="accordion-panel"><p>Yes. 100% work-from-home, India-based agents — no call-center floors or offshore delivery centers.</p></div>
-                        </div>
-                        <div class="accordion-item">
-                            <button class="accordion-trigger" aria-expanded="false">How do you protect our data?</button>
-                            <div class="accordion-panel"><p>Need-to-know access, careful handling of personal and customer data, secure remote endpoints, and documented workflows. Read our <a href="privacy.html">Privacy notice</a>.</p></div>
-                        </div>
-                    </div>
-                </div>
+                <p class="home-why-note reveal">SLA reporting · <a href="privacy.html">Data protection</a> · <a href="about.html">Company overview</a></p>
             </div>
         </section>
 
         <section class="section contact-section" id="contact">
             <div class="container contact-grid">
                 <div class="reveal">
-                    <p class="eyebrow">Contact Us</p>
-                    <h2>Let's Discuss Your Requirements</h2>
-                    <p class="section-desc">Share your operational goals and our solutions team will prepare a tailored proposal within 48 hours.</p>
+                    <p class="eyebrow">Contact</p>
+                    <h2>Request a proposal</h2>
+                    <p class="section-desc">Submit an enquiry. We acknowledge within one business day and issue a proposal within 48 hours.</p>
                     <div class="contact-info">
                         <div class="contact-item">
                             <span class="contact-label">Email</span>
@@ -376,7 +257,7 @@
                         </div>
                     </div>
                     <div class="cert-row">
-                        <span>Secure Remote Ops</span><span>Your Data, Protected</span><span>India-Based</span>
+                        <span>Secure remote operations</span><span>Data protection</span><span>India-based</span>
                     </div>
                 </div>
                 <form class="contact-form reveal" id="contact-form" name="contact" method="POST" action="https://formsubmit.co/info@trinitasnxt.in" novalidate>
@@ -414,9 +295,9 @@
                     </div>
                     <div class="form-field">
                         <label for="message">Project Details</label>
-                        <textarea id="message" name="message" rows="4" required placeholder="Briefly describe your outsourcing requirements"></textarea>
+                        <textarea id="message" name="message" rows="3" required placeholder="Briefly describe your outsourcing requirements"></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary btn-full">Submit Inquiry</button>
+                    <button type="submit" class="btn btn-primary btn-full">Submit enquiry</button>
                     <div class="form-success" id="form-success" hidden>
                         <p>Thank you. Your inquiry was received. Our team will reply within 48 hours.</p>
                     </div>
@@ -432,7 +313,7 @@
         <div class="container footer-grid">
             <div class="footer-brand">
                 <img src="logo-full.png" alt="Trinitas NextGen Business Solutions" class="footer-logo">
-                <p>Enterprise business process outsourcing through a 100% work-from-home model — for organizations that require performance, security, and scalable remote delivery.</p>
+                <p>Work-from-home BPO from India — SLA-governed delivery, documented security controls, and a remote workforce.</p>
                 <a href="mailto:info@trinitasnxt.in" class="footer-email">info@trinitasnxt.in</a>
             </div>
             <div class="footer-col">
@@ -452,13 +333,13 @@
         </div>
         <div class="container footer-bottom">
             <span>© 2026 Trinitas NextGen Business Solutions Private Limited. All rights reserved.</span>
-            <div class="footer-certs"><span>Secure Remote Ops</span><span><a href="privacy.html" style="color:inherit">Your Data, Protected</a></span><span>India-Based</span></div>
+            <div class="footer-certs"><span>Secure remote operations</span><span><a href="privacy.html" style="color:inherit">Data protection</a></span><span>India-based</span></div>
         </div>
     </footer>
 
     <aside class="sticky-cta" id="sticky-cta" aria-label="Quick actions" hidden>
         <a href="careers.html" class="sticky-cta-secondary">Careers</a>
-        <a href="#contact" class="sticky-cta-primary">Request a Proposal</a>
+        <a href="#contact" class="sticky-cta-primary">Request a proposal</a>
     </aside>
 
     <button class="back-top" id="back-top" aria-label="Back to top" hidden>↑</button>

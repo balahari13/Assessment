@@ -436,6 +436,21 @@
             });
         },
 
+        async staffEmployeesList(token) {
+            return request('/staff-employees', {
+                method: 'GET',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+        },
+
+        async staffEmployeeCreate(token, payload) {
+            return request('/staff-employees', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body: JSON.stringify(payload)
+            });
+        },
+
         async adminHrInvite(token, payload = {}) {
             return request('/admin-hr-invite', {
                 method: 'POST',

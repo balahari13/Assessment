@@ -23,34 +23,9 @@
                     <h1>Employee Login</h1>
                 </div>
             </div>
-            <p class="section-desc">Register with your full name to receive an internal employee email (generated from letters in your name). Sign in for inbox, applications, and your to-do list.</p>
+            <p class="section-desc">Sign in with the employee email issued by HR. New staff cannot create an account here — contact HR to be registered.</p>
 
-            <div class="agent-mail-tabs">
-                <button type="button" class="agent-tab agent-tab--active" data-tab="register">Register</button>
-                <button type="button" class="agent-tab" data-tab="login">Employee sign in</button>
-            </div>
-
-            <div class="careers-card" id="panel-register">
-                <form id="agent-register-form" novalidate>
-                    <div class="form-field">
-                        <label for="regName">Full Name</label>
-                        <input type="text" id="regName" name="fullName" required placeholder="Your full name" autocomplete="name">
-                    </div>
-                    <div class="form-field">
-                        <label for="regPhone">Phone (optional)</label>
-                        <input type="tel" id="regPhone" name="phone" placeholder="+91 …" autocomplete="tel">
-                    </div>
-                    <div class="form-field">
-                        <label for="regPass">Password</label>
-                        <input type="password" id="regPass" name="password" required minlength="6" autocomplete="new-password">
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-full">Create employee email</button>
-                </form>
-                <div id="reg-alert" class="form-alert" hidden></div>
-                <div id="reg-success" class="form-alert form-alert--success" hidden></div>
-            </div>
-
-            <div class="careers-card" id="panel-login" hidden>
+            <div class="careers-card" id="panel-login">
                 <form id="agent-login-form" novalidate>
                     <div class="form-field">
                         <label for="loginEmail">Employee email</label>
@@ -65,7 +40,16 @@
                 <div id="login-alert" class="form-alert" hidden></div>
             </div>
 
-            <p class="agent-mail-foot"><a href="index.html">← Back to website</a> · <a href="about.html">About / CEO desk</a></p>
+            <div class="careers-card" id="panel-hr-contact" style="margin-top:1rem">
+                <h3 style="margin-bottom:0.5rem">New employee?</h3>
+                <p class="section-desc" style="margin:0 0 0.85rem">Ask HR to create your account and issue your employee email. Do not self-register.</p>
+                <p class="section-desc" style="margin:0">
+                    Email <a href="mailto:info@trinitasnxt.in">info@trinitasnxt.in</a>
+                    · WhatsApp <a href="https://wa.me/919790113193" target="_blank" rel="noopener">9790113193</a>
+                </p>
+            </div>
+
+            <p class="agent-mail-foot"><a href="index.html">← Back to website</a></p>
         </div>
     </div>
     <script src="agent-mail.js"></script>

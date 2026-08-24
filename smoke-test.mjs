@@ -53,13 +53,16 @@ mustExist(deploy, 'deploy/ folder');
 
 console.log('\nSmoke test: homepage CTA focus');
 mustContain(join(deploy, 'index.html'), [
-    'Request a Proposal',
-    'nav--minimal',
+    'Request a proposal',
     'privacy.html',
-    'nav-cta--careers',
     'careers.html',
-    'sticky-cta-secondary'
-], 'index.html CTA / Careers button / privacy links');
+    'Employee Login',
+    'Open roles',
+    'page-home',
+    'Engagement model',
+    'nav-group',
+    'Company'
+], 'index.html CTA / grouped nav / compact homepage');
 
 console.log('\nSmoke test: privacy page');
 mustContain(join(deploy, 'privacy.html'), [
@@ -77,7 +80,10 @@ mustContain(join(deploy, 'admin.js'), ['loadResumes', 'handleResumeDelete', 'loa
 mustContain(join(deploy, 'api.js'), ['adminResumes', 'adminResumeDelete', 'adminCandidates', 'pipelineList', 'hrRegister', 'adminHrInvite', 'adminAudit'], 'api.js full admin/HR surface');
 mustContain(join(deploy, 'careers.html'), ['firstname.lastname', 'careers-progress-checklist', 'suReferredBy', 'Employee referral'], 'careers referral source');
 mustContain(join(functionsDir, 'candidate-register.mjs'), ['referredBy', 'ALLOWED_SOURCES', 'Employee referral'], 'register stores referral source');
-mustContain(join(deploy, 'hr.html'), ['hr-register-form', 'Google Meet', 'pipeline-board', 'inviteCode'], 'HR invite-only portal');
+mustContain(join(deploy, 'hr.html'), ['hr-register-form', 'Google Meet', 'pipeline-board', 'inviteCode', 'staff-employees.html'], 'HR invite-only portal + employee create');
+mustContain(join(deploy, 'staff-employees.html'), ['staff-create-form', 'agent.trinitas.in', 'staff-list-body'], 'staff employee provision page');
+mustExist(join(functionsDir, 'staff-employees.mjs'), 'function staff-employees.mjs');
+mustContain(join(functionsDir, 'staff-employees.mjs'), ['verifyStaffAccess', 'agent.trinitas.in', 'employee_create'], 'staff-employees handler');
 mustContain(join(deploy, 'hr.js'), ['hrRegister', 'pipelineList', 'inviteCode'], 'HR portal script');
 mustContain(join(deploy, 'assessment.js'), ['gate-consent', 'assessment-gate', 'referenceId'], 'assessment consent gate + ref');
 mustExist(join(root, 'README.md'), 'README.md');
@@ -147,7 +153,8 @@ const requiredFns = [
     'admin-paused.mjs',
     'admin-generate-otp.mjs',
     'submit-assessment.mjs',
-    'check-eligibility.mjs'
+    'check-eligibility.mjs',
+    'staff-employees.mjs'
 ];
 for (const f of requiredFns) {
     if (fnFiles.includes(f)) ok(`function present: ${f}`);
