@@ -1517,6 +1517,7 @@
             referenceId: session.referenceId || null,
             consentAccepted: !!session.consentAccepted,
             deviceWarningAcknowledged: !!session.deviceWarningAcknowledged,
+            wfhRequirements: session.wfhRequirements || null,
             oddman: {
                 answers: state.oddman.answers || [],
                 score: state.oddman.score || 0,
@@ -1885,49 +1886,131 @@
 
         const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
             (window.matchMedia && window.matchMedia('(max-width: 768px)').matches);
+        const ua = navigator.userAgent || '';
+        const isMac = /Macintosh|Mac OS X|MacIntel/i.test(ua);
         const panel = document.getElementById('assessment-content');
-        panel.innerHTML = `
-            <div class="assessment-gate">
-                <h2>Before you begin</h2>
-                <p class="section-desc">Please confirm the following. Your responses are reviewed confidentially; individual scores are not shown on completion.</p>
-                ${isMobile ? `<div class="form-alert form-alert--error" style="display:block;margin-bottom:1rem">Mobile device detected. Typing and voice sections work best on a <strong>desktop or laptop</strong> with a keyboard and microphone. Continue only if you cannot use another device.</div>` : ''}
-                <ul>
-                    <li>Allow about <strong>${data.totalMinutes || 75} minutes</strong> uninterrupted</li>
-                    <li>Stay on this browser tab (leaving the tab is monitored)</li>
-                    <li>Use headphones/mic if available for voice prompts</li>
-                    <li>Do not share questions or receive assistance during the test</li>
-                </ul>
-                <div class="form-field">
-                    <label class="consent-label">
-                        <input type="checkbox" id="gate-consent" required>
-                        <span>I consent to Trinitas processing my assessment responses and contact details for recruitment only, in line with the privacy notice.</span>
-                    </label>
+        const reqItems = [
+            { id: 'win11', label: 'Windows 11 with all current updates installed' },
+            { id: 'cpu', label: 'Processor: Intel i3 10th Gen, Intel i5 8th Gen, or AMD Ryzen 5 (or better)' },
+            { id: 'ram', label: 'RAM: 8 GB or more' },
+            { id: 'windowsOnly', label: 'I am using Windows (macOS is not supported)' },
+            { id: 'lan', label: 'Wired LAN connection (Wi‑Fi is not permitted)' }
+        ];
+
+        function radioRow(id, label) {
+            return `
+                <div class="wfh-req-row" data-req="${id}">
+                    <p class="wfh-req-label">${label}</p>
+                    <div class="wfh-req-options">
+                        <label><input type="radio" name="req-${id}" value="yes" required> Yes</label>
+                        <label><input type="radio" name="req-${id}" value="no"> No</label>
+                    </div>
                 </div>
-                <div class="form-field">
-                    <label class="consent-label">
-                        <input type="checkbox" id="gate-device" ${isMobile ? '' : 'checked'}>
-                        <span>I understand the device recommendations and integrity rules.</span>
-                    </label>
+            `;
+        }
+
+        function renderGate(step) {
+            const arrangeBlock = step === 'arrange'
+                ? `
+                    <div class="form-alert form-alert--error" style="display:block;margin:0 0 1rem">One or more work-from-home requirements are not currently met.</div>
+                    <div class="wfh-req-row">
+                        <p class="wfh-req-label">Are you able to arrange the missing requirement(s) before you start work, if selected?</p>
+                        <div class="wfh-req-options">
+                            <label><input type="radio" name="req-arrange" value="yes"> Yes, I can arrange it</label>
+                            <label><input type="radio" name="req-arrange" value="no"> No</label>
+                        </div>
+                    </div>
+                `
+                : reqItems.map(r => radioRow(r.id, r.label)).join('');
+
+            panel.innerHTML = `
+                <div class="assessment-gate">
+                    <h2>Work-from-home requirements</h2>
+                    <p class="section-desc">Confirm each item before the assessment. A minimum score of <strong>40%</strong> is required to pass. Individual scores are not shown on completion.</p>
+                    ${isMac ? '<div class="form-alert form-alert--error" style="display:block;margin-bottom:1rem">This device appears to be a Mac. macOS is not supported. Use a Windows PC that meets the specifications below.</div>' : ''}
+                    ${isMobile ? '<div class="form-alert form-alert--error" style="display:block;margin-bottom:1rem">Mobile devices are not suitable for this assessment. Use a Windows desktop or laptop on wired LAN.</div>' : ''}
+                    ${arrangeBlock}
+                    ${step !== 'arrange' ? `
+                    <p class="section-desc" style="margin-top:1rem;font-size:0.88rem">Allow about ${data.totalMinutes || 75} minutes uninterrupted. Stay on this tab. Do not receive assistance during the test.</p>
+                    <div class="form-field">
+                        <label class="consent-label">
+                            <input type="checkbox" id="gate-consent">
+                            <span>I consent to Trinitas processing my assessment responses and these requirement answers for recruitment only.</span>
+                        </label>
+                    </div>` : ''}
+                    <button type="button" class="btn btn-primary btn-full" id="gate-start">${step === 'arrange' ? 'Continue' : 'Continue'}</button>
+                    <p class="section-desc" style="margin-top:0.75rem;font-size:0.85rem"><a href="privacy.html" target="_blank" rel="noopener">Privacy notice</a> · <a href="careers.html">Back to Careers</a></p>
+                    <div id="gate-inline-alert" class="form-alert" hidden></div>
                 </div>
-                <button type="button" class="btn btn-primary btn-full" id="gate-start">Start assessment</button>
-                <p class="section-desc" style="margin-top:0.75rem;font-size:0.85rem"><a href="privacy.html" target="_blank" rel="noopener">Privacy notice</a> · <a href="careers.html">Back to Careers</a></p>
-            </div>
-        `;
-        document.getElementById('gate-start')?.addEventListener('click', () => {
-            const consent = document.getElementById('gate-consent')?.checked;
-            const device = document.getElementById('gate-device')?.checked;
-            if (!consent || !device) {
-                alert('Please accept both confirmations to continue.');
-                return;
-            }
-            session.gateAccepted = true;
-            session.consentAccepted = true;
-            session.deviceWarningAcknowledged = true;
-            try {
-                sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
-            } catch { /* ignore */ }
-            beginAssessment();
-        });
+            `;
+
+            document.getElementById('gate-start')?.addEventListener('click', () => {
+                const alertEl = document.getElementById('gate-inline-alert');
+                function gateAlert(msg) {
+                    if (!alertEl) {
+                        window.alert(msg);
+                        return;
+                    }
+                    alertEl.hidden = false;
+                    alertEl.className = 'form-alert form-alert--error';
+                    alertEl.textContent = msg;
+                    alertEl.style.display = 'block';
+                    alertEl.style.marginTop = '0.85rem';
+                }
+
+                if (step === 'arrange') {
+                    const arrange = panel.querySelector('input[name="req-arrange"]:checked')?.value;
+                    if (!arrange) {
+                        gateAlert('Please answer whether you can arrange the missing requirement(s).');
+                        return;
+                    }
+                    if (arrange === 'no') {
+                        panel.innerHTML = `
+                            <div class="assessment-gate">
+                                <h2>Not eligible to continue</h2>
+                                <p class="section-desc">This assessment requires a Windows 11 PC (Intel i3 10th Gen, Intel i5 8th Gen, or AMD Ryzen 5; 8 GB RAM) on wired LAN. macOS is not supported. You indicated the setup cannot be arranged, so the test cannot be started.</p>
+                                <a href="careers.html" class="btn btn-primary">Return to Careers</a>
+                            </div>
+                        `;
+                        return;
+                    }
+                    session.wfhRequirements.canArrange = true;
+                    session.gateAccepted = true;
+                    session.consentAccepted = true;
+                    session.deviceWarningAcknowledged = true;
+                    try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch { /* ignore */ }
+                    beginAssessment();
+                    return;
+                }
+
+                const answers = {};
+                for (const item of reqItems) {
+                    const val = panel.querySelector(`input[name="req-${item.id}"]:checked`)?.value;
+                    if (!val) {
+                        gateAlert('Please answer Yes or No for every requirement.');
+                        return;
+                    }
+                    answers[item.id] = val;
+                }
+                if (!document.getElementById('gate-consent')?.checked) {
+                    gateAlert('Please accept the consent to continue.');
+                    return;
+                }
+                session.wfhRequirements = { ...answers, canArrange: null };
+                const anyNo = Object.values(answers).includes('no') || isMac;
+                if (anyNo) {
+                    renderGate('arrange');
+                    return;
+                }
+                session.gateAccepted = true;
+                session.consentAccepted = true;
+                session.deviceWarningAcknowledged = true;
+                try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch { /* ignore */ }
+                beginAssessment();
+            });
+        }
+
+        renderGate('reqs');
     }
 
     document.addEventListener('DOMContentLoaded', init);

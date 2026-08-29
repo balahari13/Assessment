@@ -534,6 +534,31 @@
         loadPipeline();
         loadHrTeam();
         loadAudit();
+        loadInterviews();
+    }
+
+    async function loadInterviews() {
+        const tbody = document.getElementById('interviews-body');
+        if (!tbody) return;
+        const token = sessionStorage.getItem(TOKEN_KEY);
+        const { ok, data } = await window.TrinitasAPI.interviewBookingsAdmin(token);
+        if (!ok) {
+            tbody.innerHTML = '<tr><td colspan="4">Could not load interview bookings.</td></tr>';
+            return;
+        }
+        const list = data.bookings || [];
+        if (!list.length) {
+            tbody.innerHTML = '<tr><td colspan="4">No bookings yet.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = list.map(b => `
+            <tr>
+                <td>${b.date || '—'} · ${b.slot || '17:00–18:00 IST'}</td>
+                <td>${b.fullName || '—'}</td>
+                <td>${b.email || '—'}</td>
+                <td>${b.meetLink ? `<a href="${b.meetLink}" target="_blank" rel="noopener">Meet</a>` : '—'}</td>
+            </tr>
+        `).join('');
     }
 
     async function loadAudit() {
@@ -1101,7 +1126,9 @@
 
             const { ok, data } = await window.TrinitasAPI.adminLogin(username, password);
             if (!ok) {
-                error.textContent = 'Invalid admin ID or password.';
+                error.textContent = data?.error === 'Invalid credentials'
+                    ? 'Invalid admin ID or password.'
+                    : (data?.message || data?.detail || data?.error || 'Unable to sign in. For local use, run netlify dev and sign in with Trinitas / Trinitas2026*.');
                 error.hidden = false;
                 return;
             }
@@ -1183,6 +1210,7 @@
         }
 
         document.getElementById('refresh-audit')?.addEventListener('click', loadAudit);
+        document.getElementById('refresh-interviews')?.addEventListener('click', loadInterviews);
         document.getElementById('btn-hr-invite')?.addEventListener('click', async () => {
             const token = sessionStorage.getItem(TOKEN_KEY);
             const { ok, data } = await window.TrinitasAPI.adminHrInvite(token, { days: 14 });

@@ -270,6 +270,22 @@
                             <button type="button" class="btn btn-secondary btn-full" id="btn-attempt2">Begin Attempt 2</button>
                         </div>
 
+                        <div class="careers-card" id="interview-card" hidden>
+                            <h3>Next-round interview</h3>
+                            <p class="section-desc" id="interview-copy">If you pass the assessment (minimum 40%), you may book one weekday slot (17:00–18:00 IST) for a Google Meet interview. Saturday and Sunday are not available. One booking per day across all candidates.</p>
+                            <div id="interview-booked" hidden></div>
+                            <form id="interview-form" class="register-form" hidden>
+                                <div class="form-field">
+                                    <label for="interviewDate">Available dates</label>
+                                    <select id="interviewDate" name="date" required>
+                                        <option value="">Select a weekday</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-full">Book 17:00–18:00 IST</button>
+                            </form>
+                            <div id="interview-alert" class="form-alert" hidden></div>
+                        </div>
+
                         <div class="careers-card careers-resume-card" id="resume">
                             <h3>Resume paused assessment</h3>
                             <p class="section-desc">If you paused mid-assessment, ask recruitment to generate an OTP, then enter it below.</p>

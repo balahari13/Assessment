@@ -85,7 +85,7 @@ mustContain(join(deploy, 'staff-employees.html'), ['staff-create-form', 'agent.t
 mustExist(join(functionsDir, 'staff-employees.mjs'), 'function staff-employees.mjs');
 mustContain(join(functionsDir, 'staff-employees.mjs'), ['verifyStaffAccess', 'agent.trinitas.in', 'employee_create'], 'staff-employees handler');
 mustContain(join(deploy, 'hr.js'), ['hrRegister', 'pipelineList', 'inviteCode'], 'HR portal script');
-mustContain(join(deploy, 'assessment.js'), ['gate-consent', 'assessment-gate', 'referenceId'], 'assessment consent gate + ref');
+mustContain(join(deploy, 'assessment.js'), ['gate-consent', 'assessment-gate', 'referenceId', 'Windows 11', 'Wired LAN'], 'assessment WFH requirements gate');
 mustExist(join(root, 'README.md'), 'README.md');
 mustExist(join(functionsDir, 'candidate-register.mjs'), 'function candidate-register.mjs');
 mustExist(join(functionsDir, 'candidate-login.mjs'), 'function candidate-login.mjs');
@@ -111,7 +111,10 @@ mustContain(join(functionsDir, 'pipeline.mjs'), ['PIPELINE_STAGES', 'DEFAULT_MEE
 mustContain(join(functionsDir, 'lib', 'shared.mjs'), ['ADMIN_PASSWORD', 'ALLOWED_ORIGINS', 'generateReferenceId'], 'env secrets + CORS + ref IDs');
 mustContain(join(functionsDir, 'submit-assessment.mjs'), ['serverScoreSubmission', 'referenceId'], 'server-side scoring on submit');
 mustContain(join(functionsDir, 'hr-register.mjs'), ['invite_required', 'inviteCode'], 'HR invite-only');
-mustContain(join(deploy, 'careers.html'), ['after-attempt-box', 'Assessment process'], 'careers after-attempt copy');
+mustContain(join(deploy, 'careers.html'), ['after-attempt-box', 'Assessment process', 'interview-card', '17:00'], 'careers interview scheduler');
+mustExist(join(functionsDir, 'interview-slots.mjs'), 'function interview-slots.mjs');
+mustContain(join(functionsDir, 'interview-slots.mjs'), ['THRESHOLD', '17:00', 'createMeetEvent', 'Asia/Kolkata'], 'interview slots + Meet');
+mustContain(join(functionsDir, 'lib', 'google-calendar.mjs'), ['balahari13@gmail.com', 'hangoutsMeet'], 'Google Meet organizer');
 mustContain(join(deploy, 'admin.html'), ['Assessment data (with answers) loads only after successful admin sign-in', 'admin-logged-out', 'id="admin-dashboard" hidden'], 'admin login-gated shell');
 mustContain(join(deploy, 'careers.css'), ['admin-dashboard[hidden]', 'body.admin-logged-out #admin-dashboard'], 'admin dashboard hidden CSS override fix');
 mustContain(join(deploy, 'admin.js'), ['admin-logged-in', 'admin-logged-out', 'showLogin'], 'admin session body classes');
@@ -154,7 +157,8 @@ const requiredFns = [
     'admin-generate-otp.mjs',
     'submit-assessment.mjs',
     'check-eligibility.mjs',
-    'staff-employees.mjs'
+    'staff-employees.mjs',
+    'interview-slots.mjs'
 ];
 for (const f of requiredFns) {
     if (fnFiles.includes(f)) ok(`function present: ${f}`);

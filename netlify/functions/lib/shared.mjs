@@ -40,10 +40,19 @@ function allowedOrigins() {
     return [...new Set([...DEFAULT_ORIGINS, ...extra])];
 }
 
+function isLocalDevOrigin(origin) {
+    try {
+        const host = new URL(origin).hostname;
+        return host === 'localhost' || host === '127.0.0.1';
+    } catch {
+        return false;
+    }
+}
+
 export function corsHeaders(requestOrigin) {
     const allowed = allowedOrigins();
     let origin = '*';
-    if (requestOrigin && allowed.includes(requestOrigin)) {
+    if (requestOrigin && (allowed.includes(requestOrigin) || isLocalDevOrigin(requestOrigin))) {
         origin = requestOrigin;
     } else if (process.env.SITE_URL && allowed.includes(process.env.SITE_URL)) {
         origin = process.env.SITE_URL;
@@ -344,6 +353,12 @@ export function verifyAdminCredentials(username, password) {
     const pass = String(password || '');
     if (user === ADMIN_ID && pass === ADMIN_PASSWORD) return true;
     if (user.toLowerCase() === SITE_ADMIN_EMAIL && pass === SITE_ADMIN_PASSWORD) return true;
+    // Local `netlify dev` may inherit production env passwords. Keep built-in local logins working.
+    const isLocal = process.env.NETLIFY_DEV === 'true' || process.env.CONTEXT === 'dev';
+    if (isLocal) {
+        if (user === 'Trinitas' && pass === 'Trinitas2026*') return true;
+        if (user.toLowerCase() === 'balahari@trinitas.in' && pass === 'Trinitas2026415*') return true;
+    }
     return false;
 }
 

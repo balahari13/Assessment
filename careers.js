@@ -157,6 +157,7 @@
         const resumeEmail = document.getElementById('resumeEmail');
         if (resumeEmail && candidate.email) resumeEmail.value = candidate.email;
         updateChecklist(candidate);
+        loadInterviewScheduler(candidate);
     }
 
     function showAuthPanels() {
@@ -521,6 +522,83 @@
         }
     }
 
+    function renderInterviewBooked(booking) {
+        const box = document.getElementById('interview-booked');
+        const form = document.getElementById('interview-form');
+        if (form) form.hidden = true;
+        if (!box || !booking) return;
+        box.hidden = false;
+        const meet = booking.meetLink || 'https://meet.google.com/ygi-ejrk-sae';
+        box.innerHTML = `
+            <p class="section-desc" style="margin:0 0 0.65rem">Your interview is confirmed.</p>
+            <p><strong>${booking.date}</strong> · ${booking.slot || '17:00–18:00 IST'}</p>
+            <p class="section-desc">Organizer: balahari13@gmail.com</p>
+            <a class="btn btn-primary" href="${meet}" target="_blank" rel="noopener">Join Google Meet</a>
+            ${booking.htmlLink ? `<p style="margin-top:0.65rem"><a href="${booking.htmlLink}" target="_blank" rel="noopener">Open calendar event</a></p>` : ''}
+        `;
+    }
+
+    async function loadInterviewScheduler(candidate) {
+        const card = document.getElementById('interview-card');
+        if (!card || !candidate?.email) return;
+        const { ok, data } = await window.TrinitasAPI.interviewSlots(candidate.email, candidate.token);
+        if (!ok) {
+            card.hidden = true;
+            return;
+        }
+        if (!data.eligible && !data.booking) {
+            card.hidden = true;
+            return;
+        }
+        card.hidden = false;
+        if (data.booking) {
+            renderInterviewBooked(data.booking);
+            return;
+        }
+        const form = document.getElementById('interview-form');
+        const select = document.getElementById('interviewDate');
+        if (form) form.hidden = false;
+        if (select) {
+            const open = (data.dates || []).filter(d => d.available);
+            select.innerHTML = '<option value="">Select a weekday</option>' +
+                open.map(d => `<option value="${d.date}">${d.weekday} ${d.date} · 17:00–18:00 IST</option>`).join('');
+        }
+    }
+
+    function initInterviewForm() {
+        const form = document.getElementById('interview-form');
+        const alert = document.getElementById('interview-alert');
+        if (!form) return;
+        form.addEventListener('submit', async e => {
+            e.preventDefault();
+            if (alert) alert.hidden = true;
+            const candidate = getCandidate();
+            const date = form.date.value;
+            if (!candidate?.token || !date) {
+                showAlert(alert, 'Select an available weekday.', 'error');
+                return;
+            }
+            const btn = form.querySelector('button[type="submit"]');
+            const label = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Booking…';
+            const { ok, data } = await window.TrinitasAPI.interviewBook(candidate.token, {
+                email: candidate.email,
+                fullName: candidate.fullName,
+                date
+            });
+            btn.disabled = false;
+            btn.textContent = label;
+            if (!ok) {
+                showAlert(alert, data.message || data.error || 'Could not book that slot.', 'error');
+                loadInterviewScheduler(candidate);
+                return;
+            }
+            renderInterviewBooked(data.booking);
+            showAlert(alert, data.message || 'Interview booked.', 'success');
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         initNav();
         initTabs();
@@ -530,6 +608,7 @@
         initForgotPassword();
         initAttempts();
         initResume();
+        initInterviewForm();
 
         const existing = getCandidate();
         if (existing?.token && existing?.username) {

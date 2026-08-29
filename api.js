@@ -464,6 +464,29 @@
                 method: 'GET',
                 headers: { Authorization: `Bearer ${token}` }
             });
+        },
+
+        async interviewSlots(email, candidateToken) {
+            const q = encodeURIComponent(email || '');
+            return request(`/interview-slots?email=${q}`, {
+                method: 'GET',
+                headers: candidateToken ? { Authorization: `Bearer ${candidateToken}` } : {}
+            });
+        },
+
+        async interviewBook(candidateToken, payload) {
+            return request('/interview-slots', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${candidateToken}` },
+                body: JSON.stringify(payload)
+            });
+        },
+
+        async interviewBookingsAdmin(token) {
+            return request('/interview-slots?list=all', {
+                method: 'GET',
+                headers: { Authorization: `Bearer ${token}` }
+            });
         }
     };
 })();

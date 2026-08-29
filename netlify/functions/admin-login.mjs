@@ -7,11 +7,12 @@ import {
 } from './lib/shared.mjs';
 
 export default async (req, context) => {
+    const origin = req.headers.get('origin') || req.headers.get('Origin') || '';
     if (req.method === 'OPTIONS') {
-        return new Response(null, { status: 204, headers: corsHeaders() });
+        return new Response(null, { status: 204, headers: corsHeaders(origin) });
     }
     if (req.method !== 'POST') {
-        return jsonResponse(405, { error: 'Method not allowed' });
+        return jsonResponse(405, { error: 'Method not allowed' }, origin);
     }
 
     try {
@@ -20,7 +21,7 @@ export default async (req, context) => {
         const password = String(body.password || '');
 
         if (!verifyAdminCredentials(username, password)) {
-            return jsonResponse(401, { error: 'Invalid credentials' });
+            return jsonResponse(401, { error: 'Invalid credentials' }, origin);
         }
 
         const store = getAssessmentStore(context);
@@ -30,9 +31,13 @@ export default async (req, context) => {
             success: true,
             token: `${token}.${signature}`,
             expiresInHours: 24
-        });
+        }, origin);
     } catch (err) {
         console.error('admin-login error:', err);
-        return jsonResponse(500, { error: 'Server error', detail: err.message });
+        return jsonResponse(500, {
+            error: 'Server error',
+            message: 'Signed in credentials were accepted, but the session could not be stored. Check Netlify Blobs locally.',
+            detail: err.message
+        }, origin);
     }
 };

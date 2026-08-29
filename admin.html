@@ -68,6 +68,7 @@
                 <button type="button" class="admin-tab" data-admin-panel="resumes">Resumes</button>
                 <button type="button" class="admin-tab" data-admin-panel="accounts">Accounts</button>
                 <button type="button" class="admin-tab" data-admin-panel="hr">HR team</button>
+                <button type="button" class="admin-tab" data-admin-panel="interviews">Interviews</button>
                 <button type="button" class="admin-tab" data-admin-panel="audit">Audit log</button>
             </nav>
 
@@ -263,6 +264,29 @@
                         </thead>
                         <tbody id="results-body">
                             <tr><td colspan="17">Loading…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="admin-table-card" data-admin-section="interviews">
+                <div class="admin-section-title-row">
+                    <h2 class="admin-section-title">Interview slots (17:00–18:00 IST)</h2>
+                    <button type="button" class="btn btn-secondary btn-sm" id="refresh-interviews">Refresh interviews</button>
+                </div>
+                <p class="section-desc admin-paused-desc">Weekday Meet interviews booked by candidates who scored 40% or above. Organizer: balahari13@gmail.com. One slot per day.</p>
+                <div class="results-table-wrap">
+                    <table class="results-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Meet</th>
+                            </tr>
+                        </thead>
+                        <tbody id="interviews-body">
+                            <tr><td colspan="4">No bookings yet.</td></tr>
                         </tbody>
                     </table>
                 </div>

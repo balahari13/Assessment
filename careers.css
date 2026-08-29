@@ -1279,6 +1279,10 @@ body.admin-modal-open {
     color: var(--navy);
     margin: 0.75rem 0 0.5rem;
 }
+#interview-card {
+    border-color: rgba(37, 99, 235, 0.28);
+}
+#interview-booked p { margin: 0.25rem 0; }
 .careers-resume-card {
     margin-top: 1rem;
     border-color: rgba(37, 99, 235, 0.25);
@@ -1644,7 +1648,7 @@ body.admin-modal-open {
     font-size: 0.88rem;
 }
 .assessment-gate {
-    max-width: 560px;
+    max-width: 640px;
     margin: 2rem auto;
     background: #fff;
     border: 1px solid var(--border, #e2e8f0);
@@ -1655,6 +1659,20 @@ body.admin-modal-open {
 .assessment-gate h2 { margin: 0 0 0.75rem; font-size: 1.25rem; }
 .assessment-gate ul { margin: 0.75rem 0 1.25rem; padding-left: 1.2rem; color: var(--text-muted); font-size: 0.92rem; line-height: 1.55; }
 .assessment-gate .form-field { margin-bottom: 0.85rem; }
+.wfh-req-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.75rem 1rem;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border, #e2e8f0);
+}
+.wfh-req-label { margin: 0; font-size: 0.9rem; color: var(--navy); line-height: 1.45; }
+.wfh-req-options { display: flex; gap: 1rem; white-space: nowrap; }
+.wfh-req-options label { font-size: 0.88rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer; }
+@media (max-width: 640px) {
+    .wfh-req-row { grid-template-columns: 1fr; }
+}
 @media (max-width: 700px) {
     .pipeline-columns {
         grid-template-columns: minmax(220px, 1fr);
