@@ -48,14 +48,18 @@
                     </div>
                 </div>
                 <div class="admin-header-actions">
-                    <a href="staff-employees.html" class="btn btn-secondary btn-sm">Create employee</a>
-                    <a href="hr.html" class="btn btn-secondary btn-sm" target="_blank" rel="noopener">Open HR portal</a>
-                    <a href="https://meet.google.com/ygi-ejrk-sae" class="btn btn-primary btn-sm" target="_blank" rel="noopener">Google Meet</a>
-                    <button type="button" class="btn btn-primary btn-sm" id="admin-practice">Take assessment (unlimited)</button>
-                    <button type="button" class="btn btn-secondary btn-sm" id="toggle-answer-key">Answer Key</button>
-                    <button type="button" class="btn btn-secondary btn-sm" id="admin-refresh">Refresh</button>
-                    <button type="button" class="btn btn-primary btn-sm" id="export-csv">Export CSV</button>
-                    <button type="button" class="btn btn-secondary btn-sm" id="admin-logout">Logout</button>
+                    <div class="admin-header-tools">
+                        <a href="staff-employees.html" class="btn btn-secondary btn-sm">Employees</a>
+                        <a href="hr.html" class="btn btn-secondary btn-sm" target="_blank" rel="noopener">HR portal</a>
+                        <a href="https://meet.google.com/ygi-ejrk-sae" class="btn btn-primary btn-sm" target="_blank" rel="noopener">Meet</a>
+                        <button type="button" class="btn btn-secondary btn-sm" id="admin-practice">Practice test</button>
+                        <button type="button" class="btn btn-secondary btn-sm" id="admin-interview-demo">Interview booker</button>
+                    </div>
+                    <div class="admin-header-core">
+                        <button type="button" class="btn btn-secondary btn-sm" id="admin-refresh">Refresh</button>
+                        <button type="button" class="btn btn-primary btn-sm" id="export-csv">Export</button>
+                        <button type="button" class="btn btn-secondary btn-sm" id="admin-logout">Logout</button>
+                    </div>
                 </div>
             </header>
 
@@ -79,13 +83,6 @@
                 <div class="admin-stat"><strong id="stat-workplace">—</strong><span>Avg Workplace</span></div>
                 <div class="admin-stat"><strong id="stat-typing">—</strong><span>Avg Typing WPM</span></div>
                 <div class="admin-stat"><strong id="stat-voice">—</strong><span>Avg Voice</span></div>
-            </section>
-
-            <section class="answer-key-panel" id="answer-key-panel" data-admin-section="results" hidden>
-                <div class="answer-key-panel-head">
-                    <h2>Assessment Answer Key</h2>
-                </div>
-                <div id="answer-key-content"></div>
             </section>
 
             <section class="admin-table-card" data-admin-section="pipeline">
@@ -204,9 +201,9 @@
             <section class="admin-table-card admin-paused-card" data-admin-section="results">
                 <div class="admin-section-title-row">
                     <h2 class="admin-section-title">Paused assessments</h2>
-                    <button type="button" class="btn btn-secondary btn-sm" id="refresh-paused">Refresh paused</button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="refresh-paused">Refresh</button>
                 </div>
-                <p class="section-desc admin-paused-desc">Candidates who paused mid-test. Generate an OTP, then share it with them (or confirm email delivery) so they can resume on Careers.</p>
+                <p class="section-desc admin-paused-desc">Generate an OTP so the candidate can resume from Careers.</p>
                 <div class="results-table-wrap">
                     <table class="results-table">
                         <thead>
@@ -228,10 +225,13 @@
 
             <section class="admin-table-card" data-admin-section="results">
                 <div class="admin-section-title-row">
-                    <h2 class="admin-section-title">Submitted results</h2>
+                    <h2 class="admin-section-title">Candidate results</h2>
+                    <div class="admin-section-title-actions">
+                        <button type="button" class="btn btn-secondary btn-sm" id="toggle-answer-key">Answer key</button>
+                    </div>
                 </div>
                 <div class="admin-filter-bar">
-                    <input type="search" id="results-search" class="admin-filter-input" placeholder="Search name, email, reference…" autocomplete="off">
+                    <input type="search" id="results-search" class="admin-filter-input" placeholder="Search name, email, or reference" autocomplete="off">
                     <select id="results-filter-attempt2" class="admin-filter-select">
                         <option value="all">All candidates</option>
                         <option value="enabled">Attempt 2 enabled</option>
@@ -240,33 +240,29 @@
                     </select>
                 </div>
                 <div class="results-table-wrap">
-                    <table class="results-table results-table--detailed">
+                    <table class="results-table results-table--compact">
                         <thead>
                             <tr>
                                 <th>Ref</th>
-                                <th>Name</th>
-                                <th>Email</th>
+                                <th>Candidate</th>
                                 <th>Overall</th>
-                                <th>English</th>
-                                <th>MCQ</th>
-                                <th>Fill</th>
-                                <th>Reading</th>
-                                <th>Workplace</th>
-                                <th>Email</th>
-                                <th>Typing</th>
-                                <th>Acc%</th>
-                                <th>Voice</th>
-                                <th>Att.2</th>
-                                <th>Enabled</th>
-                                <th>View</th>
+                                <th>Sections</th>
+                                <th>Att. 2</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="results-body">
-                            <tr><td colspan="17">Loading…</td></tr>
+                            <tr><td colspan="6">Loading…</td></tr>
                         </tbody>
                     </table>
                 </div>
+            </section>
+
+            <section class="answer-key-panel" id="answer-key-panel" data-admin-section="results" hidden>
+                <div class="answer-key-panel-head">
+                    <h2>Assessment answer key</h2>
+                </div>
+                <div id="answer-key-content"></div>
             </section>
 
             <section class="admin-table-card" data-admin-section="interviews">
@@ -275,6 +271,24 @@
                     <button type="button" class="btn btn-secondary btn-sm" id="refresh-interviews">Refresh interviews</button>
                 </div>
                 <p class="section-desc admin-paused-desc">Weekday Meet interviews booked by candidates who scored 40% or above. Organizer: balahari13@gmail.com. One slot per day.</p>
+
+                <div class="careers-card assessment-interview-card" id="interview-card">
+                    <p class="eyebrow">Admin preview</p>
+                    <h3>Next-round interview</h3>
+                    <p class="section-desc" id="interview-copy">This is the candidate booker. Assessment is not required in this preview. Booking here does not reserve a live slot. Weekdays only, 17:00–18:00 IST.</p>
+                    <div id="interview-booked" hidden></div>
+                    <form id="interview-form" class="register-form">
+                        <div class="form-field">
+                            <label for="interviewDate">Available dates</label>
+                            <select id="interviewDate" name="date" required>
+                                <option value="">Select a weekday</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full">Book 17:00–18:00 IST</button>
+                    </form>
+                    <div id="interview-alert" class="form-alert" hidden></div>
+                    <button type="button" class="btn btn-secondary" id="interview-demo-reset" style="margin-top:0.85rem">Reset preview</button>
+                </div>
                 <div class="results-table-wrap">
                     <table class="results-table">
                         <thead>

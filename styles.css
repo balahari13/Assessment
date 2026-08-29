@@ -62,7 +62,30 @@ html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
 .page-home .trust-bar { padding: 0.75rem 0; }
 .page-home .process-card { padding: 1.15rem 1.2rem; }
 .page-home .contact-section { padding-top: 2.5rem; padding-bottom: 2.75rem; }
-.page-home .footer { padding-top: 2.25rem; }
+.page-home .footer {
+    padding-top: 2.25rem;
+    background: #fff;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+}
+.page-home .footer-brand p { color: var(--text-muted); }
+.page-home .footer-email { color: var(--blue); }
+.page-home .footer-email:hover { color: var(--navy); }
+.page-home .footer-col h5 { color: var(--navy); }
+.page-home .footer-col a { color: var(--text-muted); }
+.page-home .footer-col a:hover { color: var(--blue); }
+.page-home .footer-bottom {
+    color: var(--text-muted);
+    border-top-color: var(--border);
+}
+.page-home .footer-certs span,
+.page-home .footer-certs span:nth-child(1),
+.page-home .footer-certs span:nth-child(2),
+.page-home .footer-certs span:nth-child(3) {
+    color: var(--navy);
+    border: 1px solid var(--border);
+    background: #fff;
+}
 .page-home .home-why-note {
     margin: 1.35rem 0 0;
     text-align: center;

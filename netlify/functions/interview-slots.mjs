@@ -7,7 +7,7 @@ import {
     verifyStaffAccess,
     DEFAULT_MEET_LINK
 } from './lib/shared.mjs';
-import { createMeetEvent, MEET_ORGANIZER } from './lib/google-calendar.mjs';
+import { createMeetEvent, calendarTemplateUrl, MEET_ORGANIZER } from './lib/google-calendar.mjs';
 import { writeAudit } from './lib/audit.mjs';
 
 const THRESHOLD = 40;
@@ -74,6 +74,31 @@ function qualifyingScore(candidate) {
     return Math.max(...scores);
 }
 
+function publicBooking(record) {
+    if (!record) return null;
+    const out = {
+        date: record.date,
+        meetLink: record.meetLink,
+        htmlLink: record.htmlLink || null,
+        slot: record.slot || `${SLOT_START}–${SLOT_END} IST`
+    };
+    if (record.demo) out.demo = true;
+    return out;
+}
+
+async function datesWithAvailability(store) {
+    const weekdays = openWeekdays();
+    const taken = {};
+    for (const d of weekdays) {
+        const raw = await store.get(slotKey(d.date), { type: 'text' });
+        taken[d.date] = !!raw;
+    }
+    return weekdays.map(d => ({
+        ...d,
+        available: !taken[d.date]
+    }));
+}
+
 async function verifyCandidateSession(store, authHeader, email) {
     if (!authHeader || !authHeader.startsWith('Bearer ')) return false;
     const token = authHeader.slice(7).trim();
@@ -124,6 +149,18 @@ export default async (req, context) => {
             const email = normalizeEmail(url.searchParams.get('email'));
             const staff = await verifyStaffAccess(store, auth);
 
+            if (staff && url.searchParams.get('demo') === '1') {
+                const dates = await datesWithAvailability(store);
+                return jsonResponse(200, {
+                    success: true,
+                    eligible: true,
+                    demo: true,
+                    slot: { start: SLOT_START, end: SLOT_END, timezone: 'IST', onePerDay: true },
+                    booking: null,
+                    dates
+                }, origin);
+            }
+
             if (staff && url.searchParams.get('list') === 'all') {
                 const idxRaw = await store.get(INDEX_KEY, { type: 'text' });
                 const index = idxRaw ? JSON.parse(idxRaw) : [];
@@ -145,37 +182,26 @@ export default async (req, context) => {
                 return jsonResponse(400, { error: 'Email required' }, origin);
             }
 
+            const own = await verifyCandidateSession(store, auth, email);
+            if (!staff && !own) {
+                return jsonResponse(401, {
+                    error: 'Unauthorized',
+                    message: 'Sign in with your careers account to view interview scheduling.'
+                }, origin);
+            }
+
             const candidate = await getCandidate(store, email);
-            const score = qualifyingScore(candidate);
-            const eligible = score >= THRESHOLD;
+            const eligible = qualifyingScore(candidate) >= THRESHOLD;
             const existingRaw = await store.get(bookingKey(email), { type: 'text' });
             const existing = existingRaw ? JSON.parse(existingRaw) : null;
 
-            const weekdays = openWeekdays();
-            const taken = {};
-            for (const d of weekdays) {
-                const raw = await store.get(slotKey(d.date), { type: 'text' });
-                taken[d.date] = !!raw;
-            }
-            const dates = weekdays.map(d => ({
-                ...d,
-                available: !taken[d.date]
-            }));
+            const dates = await datesWithAvailability(store);
 
             return jsonResponse(200, {
                 success: true,
                 eligible,
-                threshold: THRESHOLD,
                 slot: { start: SLOT_START, end: SLOT_END, timezone: 'IST', onePerDay: true },
-                organizer: MEET_ORGANIZER,
-                booking: existing
-                    ? {
-                        date: existing.date,
-                        meetLink: existing.meetLink,
-                        htmlLink: existing.htmlLink || null,
-                        slot: `${SLOT_START}–${SLOT_END} IST`
-                    }
-                    : null,
+                booking: publicBooking(existing),
                 dates: eligible && !existing ? dates : []
             }, origin);
         }
@@ -188,9 +214,39 @@ export default async (req, context) => {
         const email = normalizeEmail(body.email);
         const fullName = String(body.fullName || '').trim();
         const date = String(body.date || '').trim();
+        const staff = await verifyStaffAccess(store, auth);
 
         if (!email || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
             return jsonResponse(400, { error: 'validation', message: 'Email and date (YYYY-MM-DD) are required.' }, origin);
+        }
+
+        if (staff && body.demo === true) {
+            if (isWeekend(date)) {
+                return jsonResponse(400, { error: 'weekend', message: 'Interviews are not scheduled on Saturday or Sunday.' }, origin);
+            }
+            const now = istParts();
+            if (date < now.ymd || (date === now.ymd && now.hour >= 18)) {
+                return jsonResponse(400, { error: 'past', message: 'That slot is no longer available.' }, origin);
+            }
+            const meetLink = DEFAULT_MEET_LINK;
+            const htmlLink = calendarTemplateUrl({
+                dateYmd: date,
+                meetLink,
+                attendeeEmail: email,
+                summary: 'Trinitas interview (admin preview)'
+            });
+            return jsonResponse(200, {
+                success: true,
+                demo: true,
+                booking: publicBooking({
+                    date,
+                    meetLink,
+                    htmlLink,
+                    slot: `${SLOT_START}–${SLOT_END} IST`,
+                    demo: true
+                }),
+                message: 'Preview confirmed. This did not reserve a candidate slot. Use Join Google Meet to test the room.'
+            }, origin);
         }
 
         const own = await verifyCandidateSession(store, auth, email);
@@ -214,7 +270,7 @@ export default async (req, context) => {
         if (qualifyingScore(candidate) < THRESHOLD) {
             return jsonResponse(403, {
                 error: 'not_eligible',
-                message: 'Interview booking opens after you qualify on the assessment. Scores are reviewed internally.'
+                message: 'Interview booking is not available for this account at this time. Recruitment will contact you if there is a next step.'
             }, origin);
         }
 
@@ -224,7 +280,7 @@ export default async (req, context) => {
             return jsonResponse(409, {
                 error: 'already_booked',
                 message: `You already hold the ${prev.date} slot (17:00–18:00 IST).`,
-                booking: prev
+                booking: publicBooking(prev)
             }, origin);
         }
 
@@ -253,13 +309,20 @@ export default async (req, context) => {
         });
 
         const meetLink = meet.ok && meet.meetLink ? meet.meetLink : DEFAULT_MEET_LINK;
+        const htmlLink = meet.htmlLink
+            || calendarTemplateUrl({
+                dateYmd: date,
+                meetLink,
+                attendeeEmail: email,
+                summary: `Trinitas next-round interview — ${fullName || email}`
+            });
         const record = {
             date,
             email,
             fullName: fullName || candidate?.fullName || '',
             phone: candidate?.phone || '',
             meetLink,
-            htmlLink: meet.htmlLink || null,
+            htmlLink,
             eventId: meet.eventId || null,
             organizer: MEET_ORGANIZER,
             meetViaGoogleApi: !!(meet.ok && meet.meetLink),
@@ -288,14 +351,8 @@ export default async (req, context) => {
 
         return jsonResponse(200, {
             success: true,
-            booking: {
-                date: record.date,
-                meetLink: record.meetLink,
-                htmlLink: record.htmlLink,
-                slot: record.slot,
-                organizer: record.organizer
-            },
-            message: `Interview booked for ${date}, 17:00–18:00 IST. Join via Google Meet. Calendar invite is sent when Google is connected.`
+            booking: publicBooking(record),
+            message: `Interview booked for ${date}, 17:00–18:00 IST. Use Join Google Meet at the scheduled time. A calendar event is included with the Meet link.`
         }, origin);
     } catch (err) {
         console.error('interview-slots error:', err);

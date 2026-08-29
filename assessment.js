@@ -57,6 +57,24 @@
         return true;
     }
 
+    function getCandidateAuth() {
+        try {
+            const stored = JSON.parse(sessionStorage.getItem('trinitas_candidate_auth') || 'null');
+            if (stored?.token && stored?.email) return stored;
+        } catch {
+            /* ignore */
+        }
+        if (session?.candidateToken && session?.email) {
+            return {
+                token: session.candidateToken,
+                email: session.email,
+                fullName: session.fullName,
+                username: session.username
+            };
+        }
+        return null;
+    }
+
     function formatTime(seconds) {
         const m = Math.floor(seconds / 60);
         const s = seconds % 60;
@@ -219,7 +237,7 @@
         panel.innerHTML = `
             <div class="section-intro">
                 <h2>Logical Reasoning</h2>
-                <p class="section-desc"><strong>Odd man out:</strong> four figures are shown. Choose the one that does <strong>not</strong> belong with the others. Questions are optional; you may skip. Time: <strong>${section.minutes} minutes</strong>.</p>
+                <p class="section-desc"><strong>Odd man out:</strong> four figures are shown. Choose the one that does <strong>not</strong> belong with the others. Time: <strong>${section.minutes} minutes</strong>.</p>
                 <span class="section-timer">Section time remaining: <span id="section-timer">${formatTime(sectionSecondsLeft || section.minutes * 60)}</span></span>
             </div>
             <div class="grammar-pagination">
@@ -236,7 +254,6 @@
             </div>
             <div class="assessment-actions assessment-actions--triple">
                 <button type="button" class="btn btn-secondary" id="oddman-prev" ${i === 0 ? 'hidden' : ''}>Previous</button>
-                <button type="button" class="btn btn-secondary" id="oddman-skip">Skip</button>
                 <button type="button" class="btn btn-primary" id="oddman-next">${isLast ? 'Continue to Customer Response' : 'Next Question'}</button>
             </div>
         `;
@@ -259,7 +276,6 @@
         }
 
         document.getElementById('oddman-next').addEventListener('click', advance);
-        document.getElementById('oddman-skip').addEventListener('click', advance);
         const prev = document.getElementById('oddman-prev');
         if (prev) {
             prev.addEventListener('click', () => {
@@ -316,7 +332,7 @@
         panel.innerHTML = `
             <div class="section-intro">
                 <h2>Customer Response Ranking</h2>
-                <p class="section-desc">For each scenario, mark <strong>one Best</strong>, <strong>one Neutral</strong>, and <strong>one Worst</strong> response. Each label may be used only once per scenario. You may skip. Time: <strong>${section.minutes} minutes</strong>.</p>
+                <p class="section-desc">For each scenario, mark <strong>one Best</strong>, <strong>one Neutral</strong>, and <strong>one Worst</strong> response. Each label may be used only once per scenario. Time: <strong>${section.minutes} minutes</strong>.</p>
                 <span class="section-timer">Section time remaining: <span id="section-timer">${formatTime(sectionSecondsLeft || section.minutes * 60)}</span></span>
             </div>
             <div class="grammar-pagination">
@@ -341,7 +357,6 @@
             </div>
             <div class="assessment-actions assessment-actions--triple">
                 <button type="button" class="btn btn-secondary" id="scenario-prev" ${i === 0 ? 'hidden' : ''}>Previous</button>
-                <button type="button" class="btn btn-secondary" id="scenario-skip">Skip</button>
                 <button type="button" class="btn btn-primary" id="scenario-next">${isLast ? 'Continue to English' : 'Next Scenario'}</button>
             </div>
         `;
@@ -354,7 +369,7 @@
                 hint.textContent = 'All three labels assigned.';
                 hint.className = 'scenario-hint scenario-hint--ok';
             } else {
-                hint.textContent = 'Assign Best, Neutral, and Worst to three different responses (or skip).';
+                hint.textContent = 'Assign Best, Neutral, and Worst to three different responses.';
                 hint.className = 'scenario-hint';
             }
         }
@@ -390,7 +405,6 @@
         }
 
         document.getElementById('scenario-next').addEventListener('click', advance);
-        document.getElementById('scenario-skip').addEventListener('click', advance);
         const prev = document.getElementById('scenario-prev');
         if (prev) {
             prev.addEventListener('click', () => {
@@ -497,7 +511,6 @@
             <textarea class="email-compose" id="email-compose" placeholder="Write your full email here…" spellcheck="true"></textarea>
             <div class="assessment-actions assessment-actions--triple">
                 <button type="button" class="btn btn-secondary" id="email-prev" ${emailTopicIndex === 0 ? 'hidden' : ''}>Previous</button>
-                <button type="button" class="btn btn-secondary" id="email-skip">Skip</button>
                 <button type="button" class="btn btn-primary" id="email-next">${isLast ? 'Continue to Typing' : 'Next Email'}</button>
             </div>
         `;
@@ -522,8 +535,6 @@
         }
 
         document.getElementById('email-next').addEventListener('click', advanceEmail);
-        const skipEmail = document.getElementById('email-skip');
-        if (skipEmail) skipEmail.addEventListener('click', advanceEmail);
 
         const prev = document.getElementById('email-prev');
         if (prev) {
@@ -648,7 +659,7 @@
             : `
                 <fieldset class="grammar-q fill-blank-q">
                     <legend>${item.q}</legend>
-                    <input type="text" class="fill-blank-input" id="fill-blank-input" value="${state.fillBlank.answers[i] || ''}" placeholder="Type your answer (optional — you may skip)" autocomplete="off" spellcheck="false">
+                    <input type="text" class="fill-blank-input" id="fill-blank-input" value="${state.fillBlank.answers[i] || ''}" placeholder="Type your answer" autocomplete="off" spellcheck="false">
                 </fieldset>
             `;
 
@@ -661,7 +672,7 @@
         panel.innerHTML = `
             <div class="section-intro">
                 <h2>Basic English Assessment</h2>
-                <p class="section-desc">${phaseLabel} — one question per page. Questions are optional; you may skip any item. You have ${section.minutes} minutes for this section. Do not switch tabs — 3 tab switches will end your session.</p>
+                <p class="section-desc">${phaseLabel} — one question per page. You have ${section.minutes} minutes for this section. Do not switch tabs — 3 tab switches will end your session.</p>
                 <span class="section-timer">Section time remaining: <span id="section-timer">${formatTime(sectionSecondsLeft || section.minutes * 60)}</span></span>
             </div>
             <div class="grammar-pagination">
@@ -671,7 +682,6 @@
             ${questionBody}
             <div class="assessment-actions assessment-actions--triple">
                 <button type="button" class="btn btn-secondary" id="english-prev" ${i === 0 && isMcq ? 'hidden' : ''}>Previous</button>
-                <button type="button" class="btn btn-secondary" id="english-skip">Skip</button>
                 <button type="button" class="btn btn-primary" id="english-next">${nextLabel}</button>
             </div>
         `;
@@ -704,7 +714,6 @@
         }
 
         document.getElementById('english-next').addEventListener('click', advanceEnglish);
-        document.getElementById('english-skip').addEventListener('click', advanceEnglish);
 
         const prevBtn = document.getElementById('english-prev');
         if (prevBtn) {
@@ -858,7 +867,6 @@
             </fieldset>
             <div class="assessment-actions assessment-actions--triple">
                 <button type="button" class="btn btn-secondary" id="reading-prev" ${readingPassageIndex === 0 && readingQuestionIndex === 0 ? 'hidden' : ''}>Previous</button>
-                <button type="button" class="btn btn-secondary" id="reading-skip">Skip</button>
                 <button type="button" class="btn btn-primary" id="reading-next">${nextLabel}</button>
             </div>
         `;
@@ -880,7 +888,6 @@
         }
 
         document.getElementById('reading-next').addEventListener('click', advanceReading);
-        document.getElementById('reading-skip').addEventListener('click', advanceReading);
 
         const prevBtn = document.getElementById('reading-prev');
         if (prevBtn) {
@@ -966,7 +973,6 @@
             </fieldset>
             <div class="assessment-actions assessment-actions--triple">
                 <button type="button" class="btn btn-secondary" id="workplace-prev" ${i === 0 ? 'hidden' : ''}>Previous</button>
-                <button type="button" class="btn btn-secondary" id="workplace-skip">Skip</button>
                 <button type="button" class="btn btn-primary" id="workplace-next">${isLast ? 'Continue to Email Writing' : 'Next Question'}</button>
             </div>
         `;
@@ -983,7 +989,6 @@
         }
 
         document.getElementById('workplace-next').addEventListener('click', advanceWorkplace);
-        document.getElementById('workplace-skip').addEventListener('click', advanceWorkplace);
 
         const prevBtn = document.getElementById('workplace-prev');
         if (prevBtn) {
@@ -1182,7 +1187,6 @@
             <audio class="voice-playback" id="voice-playback" controls ${existing && existing.url ? '' : 'hidden'}></audio>
             <div class="assessment-actions assessment-actions--triple">
                 <button type="button" class="btn btn-secondary" id="voice-back" ${voiceRound === 0 ? 'hidden' : ''}>Previous Prompt</button>
-                <button type="button" class="btn btn-secondary" id="voice-skip">Skip</button>
                 <button type="button" class="btn btn-primary" id="voice-next">${voiceRound >= data.voicePrompts.length - 1 ? 'Submit Assessment' : 'Next Prompt'}</button>
             </div>
         `;
@@ -1306,8 +1310,6 @@
         }
 
         nextBtn.addEventListener('click', advanceVoice);
-        const skipBtn = document.getElementById('voice-skip');
-        if (skipBtn) skipBtn.addEventListener('click', advanceVoice);
 
         const backBtn = document.getElementById('voice-back');
         if (backBtn) {
@@ -1627,7 +1629,7 @@
             `;
             document.getElementById('retry-submit').addEventListener('click', () => finishAssessment(timedOut, terminatedReason));
             document.getElementById('copy-backup').addEventListener('click', async () => {
-                const ref = `${payload.fullName} | ${payload.email} | Attempt ${payload.attemptNumber} | Overall ${payload.overallScore}% | ${new Date().toISOString()}`;
+                const ref = `${payload.fullName} | ${payload.email} | Attempt ${payload.attemptNumber} | ${new Date().toISOString()}`;
                 try {
                     await navigator.clipboard.writeText(ref);
                     document.getElementById('copy-backup').textContent = 'Copied';
@@ -1641,6 +1643,7 @@
         try {
             localStorage.removeItem('trinitas_last_submission_backup');
         } catch { /* ignore */ }
+        const candidateAuth = getCandidateAuth();
         sessionStorage.removeItem(SESSION_KEY);
         const viaEmail = res.via === 'email';
 
@@ -1660,11 +1663,11 @@
         const afterMsg = attemptNum === 1
             ? `<div class="assessment-next-steps" style="margin-top:1rem;text-align:left">
                     <p style="margin:0 0 0.5rem;font-weight:600">Next steps</p>
-                    <p style="margin:0;font-size:0.92rem;line-height:1.6">Your submission has been received and will be reviewed together with your resume by our recruitment team. Individual scores are not shared with candidates. Should a further evaluation be required, Attempt 2 may be enabled for your account, or we may contact you regarding subsequent stages of the process. Please monitor your registered email for any communication from Trinitas.</p>
+                    <p style="margin:0;font-size:0.92rem;line-height:1.6">Your submission has been received and will be reviewed together with your resume by our recruitment team. If a further evaluation is required, Attempt 2 may be enabled for your account. Please monitor your registered email for communication from Trinitas.</p>
                 </div>`
             : `<div class="assessment-next-steps" style="margin-top:1rem;text-align:left">
                     <p style="margin:0 0 0.5rem;font-weight:600">Next steps</p>
-                    <p style="margin:0;font-size:0.92rem;line-height:1.6">Thank you for completing Attempt 2. Your responses will be reviewed alongside your earlier results. Our team will contact you if there is a further step in the hiring process.</p>
+                    <p style="margin:0;font-size:0.92rem;line-height:1.6">Thank you for completing Attempt 2. Your responses will be reviewed by our recruitment team. We will contact you if there is a further step in the hiring process.</p>
                 </div>`;
 
         panel.innerHTML = `
@@ -1675,8 +1678,38 @@
                 ${afterMsg}
                 ${viaEmail ? '<p style="margin-top:0.75rem;font-size:0.88rem">A notification has also been sent to our recruitment team.</p>' : ''}
             </div>
+            <div class="careers-card assessment-interview-card" id="interview-card" hidden>
+                <h3>Next-round interview</h3>
+                <p class="section-desc" id="interview-copy">Book one weekday slot (17:00–18:00 IST) for a Google Meet interview. Saturday and Sunday are not available.</p>
+                <div id="interview-booked" hidden></div>
+                <form id="interview-form" class="register-form" hidden>
+                    <div class="form-field">
+                        <label for="interviewDate">Available dates</label>
+                        <select id="interviewDate" name="date" required>
+                            <option value="">Select a weekday</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Book 17:00–18:00 IST</button>
+                </form>
+                <div id="interview-alert" class="form-alert" hidden></div>
+            </div>
             <a href="careers.html" class="btn btn-primary" style="margin-top:1.5rem">Return to Careers</a>
         `;
+
+        if (window.TrinitasInterview && candidateAuth?.token) {
+            window.TrinitasInterview.bindForm(() => candidateAuth);
+            (async () => {
+                let result = await window.TrinitasInterview.loadScheduler(candidateAuth);
+                if (result?.ok && !result.eligible && !result.booking) {
+                    await new Promise(r => setTimeout(r, 1200));
+                    result = await window.TrinitasInterview.loadScheduler(candidateAuth);
+                }
+                if (result?.ok && !result.eligible && !result.booking) {
+                    await new Promise(r => setTimeout(r, 1500));
+                    await window.TrinitasInterview.loadScheduler(candidateAuth);
+                }
+            })();
+        }
     }
 
     function buildSnapshot() {
@@ -1926,7 +1959,7 @@
             panel.innerHTML = `
                 <div class="assessment-gate">
                     <h2>Work-from-home requirements</h2>
-                    <p class="section-desc">Confirm each item before the assessment. A minimum score of <strong>40%</strong> is required to pass. Individual scores are not shown on completion.</p>
+                    <p class="section-desc">Confirm each work-from-home requirement before you begin.</p>
                     ${isMac ? '<div class="form-alert form-alert--error" style="display:block;margin-bottom:1rem">This device appears to be a Mac. macOS is not supported. Use a Windows PC that meets the specifications below.</div>' : ''}
                     ${isMobile ? '<div class="form-alert form-alert--error" style="display:block;margin-bottom:1rem">Mobile devices are not suitable for this assessment. Use a Windows desktop or laptop on wired LAN.</div>' : ''}
                     ${arrangeBlock}

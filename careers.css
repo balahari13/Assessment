@@ -976,7 +976,7 @@ body.admin-logged-in #hr-auth {
 }
 .admin-page {
     min-height: 100vh;
-    padding: 1.5rem 1.25rem 2.5rem;
+    padding: 1rem 1rem 2rem;
     position: relative;
     z-index: 1;
     isolation: isolate;
@@ -1020,50 +1020,57 @@ body.admin-logged-in #hr-auth {
 }
 
 .admin-dashboard {
-    max-width: 1400px;
+    max-width: 1280px;
     margin: 0 auto;
     position: relative;
     z-index: 1;
     display: flex;
     flex-direction: column;
-    gap: 1.15rem;
+    gap: 0.85rem;
 }
 .admin-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    gap: 1rem;
+    align-items: center;
+    gap: 0.85rem;
     flex-wrap: wrap;
     background: var(--white);
     border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 1.15rem 1.35rem;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
     box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
 }
 .admin-header-left {
     display: flex;
-    align-items: flex-start;
-    gap: 0.75rem;
+    align-items: center;
+    gap: 0.65rem;
 }
 .admin-header-logo {
     border-radius: 8px;
     margin-top: 0.15rem;
 }
 .admin-header h1 {
-    font-size: 1.25rem;
-    margin: 0 0 0.2rem;
+    font-size: 1.1rem;
+    margin: 0 0 0.1rem;
     color: var(--navy);
 }
 .admin-header p {
     margin: 0;
-    font-size: 0.85rem;
+    font-size: 0.78rem;
     color: var(--text-muted);
 }
 .admin-header-actions {
     display: flex;
-    gap: 0.45rem;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.35rem;
+}
+.admin-header-tools,
+.admin-header-core {
+    display: flex;
     flex-wrap: wrap;
-    align-items: center;
+    gap: 0.3rem;
+    justify-content: flex-end;
 }
 .btn-sm {
     padding: 0.45rem 0.85rem;
@@ -1072,20 +1079,20 @@ body.admin-logged-in #hr-auth {
 .admin-stats {
     display: grid;
     grid-template-columns: repeat(6, minmax(0, 1fr));
-    gap: 0.75rem;
+    gap: 0.5rem;
 }
 .admin-stat {
     background: var(--white);
     border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 0.9rem 0.75rem;
+    border-radius: 10px;
+    padding: 0.65rem 0.5rem;
     text-align: center;
     box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
 }
 .admin-stat strong {
     display: block;
     font-family: var(--font-display);
-    font-size: 1.35rem;
+    font-size: 1.15rem;
     color: var(--blue);
     line-height: 1.2;
 }
@@ -1125,7 +1132,7 @@ body.admin-logged-in #hr-auth {
 }
 .results-table th,
 .results-table td {
-    padding: 0.7rem 0.75rem;
+    padding: 0.5rem 0.65rem;
     border-bottom: 1px solid var(--border);
     text-align: left;
     vertical-align: middle;
@@ -1143,9 +1150,44 @@ body.admin-logged-in #hr-auth {
     white-space: nowrap;
 }
 .results-table tbody tr:hover td { background: rgba(37, 99, 235, 0.03); }
-.results-table--detailed { min-width: 1180px; }
+.results-table--detailed { min-width: 960px; }
 .results-table--detailed th,
 .results-table--detailed td { white-space: nowrap; font-size: 0.78rem; }
+.results-table--compact { min-width: 0; }
+.results-table--compact td { white-space: normal; }
+.admin-cand-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 10rem;
+}
+.admin-cand-cell strong {
+    font-size: 0.84rem;
+    color: var(--navy);
+    font-weight: 650;
+}
+.admin-cand-cell span {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+.admin-mini-scores {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+.admin-mini-score {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 650;
+    padding: 0.12rem 0.38rem;
+    border-radius: 99px;
+    background: #f1f5f9;
+    color: #475569;
+    white-space: nowrap;
+}
+.admin-mini-score.score-pill--high { background: rgba(16,185,129,0.12); color: #047857; }
+.admin-mini-score.score-pill--mid { background: rgba(245,158,11,0.12); color: #b45309; }
+.admin-mini-score.score-pill--low { background: rgba(244,63,94,0.12); color: #be123c; }
 .results-table--detailed td:nth-child(1),
 .results-table--detailed td:nth-child(2) {
     white-space: normal;
@@ -1282,7 +1324,16 @@ body.admin-modal-open {
 #interview-card {
     border-color: rgba(37, 99, 235, 0.28);
 }
+[data-admin-section="interviews"] #interview-card {
+    margin: 1.25rem 0 1.75rem;
+    max-width: 36rem;
+}
+.assessment-interview-card {
+    margin-top: 1.5rem;
+    text-align: left;
+}
 #interview-booked p { margin: 0.25rem 0; }
+#interview-booked .btn { margin-top: 0.75rem; }
 .careers-resume-card {
     margin-top: 1rem;
     border-color: rgba(37, 99, 235, 0.25);
@@ -1558,21 +1609,21 @@ body.admin-modal-open {
 .admin-tabs {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.4rem;
-    margin: 0 0 1.25rem;
-    padding: 0.35rem;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0.28rem;
     background: #fff;
     border: 1px solid var(--border, #e2e8f0);
-    border-radius: 12px;
+    border-radius: 10px;
 }
 .admin-tab {
     border: none;
     background: transparent;
     font: inherit;
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     font-weight: 600;
     color: var(--text-muted, #64748b);
-    padding: 0.5rem 0.85rem;
+    padding: 0.4rem 0.7rem;
     border-radius: 8px;
     cursor: pointer;
 }
@@ -1584,8 +1635,8 @@ body.admin-modal-open {
 .admin-filter-bar {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.65rem;
-    margin-bottom: 0.85rem;
+    gap: 0.5rem;
+    margin: 0 1rem 0.65rem;
 }
 .admin-filter-input,
 .admin-filter-select {
@@ -1723,17 +1774,17 @@ body.admin-modal-open {
     justify-content: space-between;
     gap: 0.75rem;
     flex-wrap: wrap;
-    padding: 1rem 1.15rem 0.35rem;
+    padding: 0.7rem 1rem 0.25rem;
 }
 .admin-section-title {
-    font-size: 1.05rem;
+    font-size: 0.95rem;
     margin: 0;
     color: var(--navy);
 }
 .admin-paused-desc {
-    padding: 0 1.15rem 0.75rem;
+    padding: 0 1rem 0.55rem;
     margin: 0;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
 }
 .admin-paused-card { margin-bottom: 0.25rem; }
 

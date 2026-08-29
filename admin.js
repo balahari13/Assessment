@@ -3,6 +3,7 @@
 
     const TOKEN_KEY = 'trinitas_admin_token';
     let cachedResults = [];
+    let answerKeyOpen = false;
 
     function scoreClass(val) {
         if (val >= 75) return 'score-pill--high';
@@ -126,13 +127,32 @@
     function renderAttemptDetail(submission, attemptNumber) {
         if (!submission) return '<p class="section-desc">No submission for this attempt.</p>';
         const data = getAssessmentData(attemptNumber);
-        if (!data) return '<p class="section-desc">Answer key not loaded.</p>';
+        const s = submission;
+        const scoresHtml = `
+            <div class="admin-section-scores">
+                <div class="admin-section-score"><strong>${s.overallScore || 0}%</strong><span>Overall</span></div>
+                <div class="admin-section-score"><strong>${s.oddman?.percent || 0}%</strong><span>Logic</span></div>
+                <div class="admin-section-score"><strong>${s.scenarios?.percent || 0}%</strong><span>Scenarios</span></div>
+                <div class="admin-section-score"><strong>${getEnglishPercent(s)}%</strong><span>English</span></div>
+                <div class="admin-section-score"><strong>${s.grammar?.percent || 0}%</strong><span>MCQ</span></div>
+                <div class="admin-section-score"><strong>${s.fillBlank?.percent || 0}%</strong><span>Fill</span></div>
+                <div class="admin-section-score"><strong>${s.reading?.percent || 0}%</strong><span>Reading</span></div>
+                <div class="admin-section-score"><strong>${s.workplace?.percent || 0}%</strong><span>Workplace</span></div>
+                <div class="admin-section-score"><strong>${(s.emailWriting || s.email)?.percent || 0}%</strong><span>Email</span></div>
+                <div class="admin-section-score"><strong>${s.typing?.bestWpm || 0}</strong><span>WPM</span></div>
+                <div class="admin-section-score"><strong>${s.typing?.bestAccuracy || 0}%</strong><span>Accuracy</span></div>
+                <div class="admin-section-score"><strong>${s.voice?.completionPercent || 0}%</strong><span>Voice</span></div>
+            </div>
+        `;
+        if (!data || !Array.isArray(data.grammarQuestions)) {
+            return `${scoresHtml}<p class="section-desc">Question text is still loading. Scores above are complete.</p>`;
+        }
 
         const mcqHtml = data.grammarQuestions.map((item, i) =>
             mcqRow(item, submission.grammar?.answers?.[i], `Q${i + 1}. ${item.q}`)
         ).join('');
 
-        const fillHtml = data.fillBlankQuestions.map((item, i) => {
+        const fillHtml = (data.fillBlankQuestions || []).map((item, i) => {
             const user = submission.fillBlank?.answers?.[i] || '—';
             const accepted = (item.answers || []).map(normalizeFill);
             const ok = accepted.includes(normalizeFill(user));
@@ -156,28 +176,14 @@
         ).join('');
 
         const typed = submission.typing?.rounds?.[0]?.typedText || '—';
-        const voiceHtml = (submission.voice?.prompts || data.voicePrompts.map((p, i) => ({ text: p.text, type: p.type, completed: false }))).map((p, i) => {
+        const voiceHtml = (submission.voice?.prompts || (data.voicePrompts || []).map(p => ({ text: p.text, type: p.type, completed: false }))).map((p, i) => {
             const done = p.completed ? 'Completed' : 'Not completed';
             const cls = p.completed ? 'admin-ans-row--ok' : 'admin-ans-row--na';
             return `<li class="admin-ans-row ${cls}"><span class="admin-ans-q">V${i + 1}. [${p.type || 'prompt'}]</span>${p.text || ''} <span class="admin-ans-user"> — ${done}${p.durationSec ? ` (${p.durationSec}s)` : ''}</span></li>`;
         }).join('');
 
-        const s = submission;
         return `
-            <div class="admin-section-scores">
-                <div class="admin-section-score"><strong>${s.overallScore || 0}%</strong><span>Overall</span></div>
-                <div class="admin-section-score"><strong>${s.oddman?.percent || 0}%</strong><span>Logic</span></div>
-                <div class="admin-section-score"><strong>${s.scenarios?.percent || 0}%</strong><span>Scenarios</span></div>
-                <div class="admin-section-score"><strong>${getEnglishPercent(s)}%</strong><span>English</span></div>
-                <div class="admin-section-score"><strong>${s.grammar?.percent || 0}%</strong><span>MCQ</span></div>
-                <div class="admin-section-score"><strong>${s.fillBlank?.percent || 0}%</strong><span>Fill</span></div>
-                <div class="admin-section-score"><strong>${s.reading?.percent || 0}%</strong><span>Reading</span></div>
-                <div class="admin-section-score"><strong>${s.workplace?.percent || 0}%</strong><span>Workplace</span></div>
-                <div class="admin-section-score"><strong>${(s.emailWriting || s.email)?.percent || 0}%</strong><span>Email</span></div>
-                <div class="admin-section-score"><strong>${s.typing?.bestWpm || 0}</strong><span>WPM</span></div>
-                <div class="admin-section-score"><strong>${s.typing?.bestAccuracy || 0}%</strong><span>Accuracy</span></div>
-                <div class="admin-section-score"><strong>${s.voice?.completionPercent || 0}%</strong><span>Voice</span></div>
-            </div>
+            ${scoresHtml}
             <div class="admin-detail-block"><h3>Logical Reasoning (${s.oddman?.score || 0}/${(data.oddManOutQuestions || []).length || 25}) — ${s.oddman?.percent || 0}%</h3></div>
             <div class="admin-detail-block"><h3>Customer Response Ranking (${s.scenarios?.score || 0} pts) — ${s.scenarios?.percent || 0}%</h3>
                 <ul class="admin-ans-list">${(s.scenarios?.rankings || []).map((r, i) =>
@@ -226,17 +232,19 @@
     let detailEmail = null;
     let detailAttempt = 1;
 
-    function openDetailModal(email) {
+    async function openDetailModal(email) {
         const raw = cachedResults.find(r => (normalizeCandidate(r)?.email || r.email) === email);
         const candidate = normalizeCandidate(raw);
         if (!candidate) return;
         detailEmail = email;
         detailAttempt = candidate.attempt1 ? 1 : 2;
-        renderDetailModal(candidate);
         const modal = document.getElementById('detail-modal');
         modal.hidden = false;
         modal.setAttribute('aria-hidden', 'false');
         document.body.classList.add('admin-modal-open');
+        renderDetailModal(candidate);
+        const ready = await ensureAssessmentData();
+        if (ready && detailEmail === email) renderDetailModal(candidate);
     }
 
     function closeDetailModal() {
@@ -394,50 +402,70 @@
         });
     }
 
+    function miniScore(label, val, suffix) {
+        const n = Number(val);
+        if (!Number.isFinite(n)) {
+            return `<span class="admin-mini-score" title="${label}">${label} —</span>`;
+        }
+        return `<span class="admin-mini-score ${scoreClass(n)}" title="${label}">${label} ${n}${suffix || ''}</span>`;
+    }
+
     function renderTable(results) {
         const tbody = document.getElementById('results-body');
+        if (!tbody) return;
         if (results !== undefined) cachedResults = results;
         const list = getFilteredResults();
         if (!list.length) {
-            tbody.innerHTML = '<tr><td colspan="17">No matching assessment submissions.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6">No matching assessment submissions.</td></tr>';
             return;
         }
 
-        tbody.innerHTML = list.map(raw => {
-            const r = normalizeCandidate(raw);
-            const email = r.email || '';
-            const a1 = getSubmission(r, 1);
-            const a2 = getSubmission(r, 2);
-            const ref = r.referenceId || a1?.referenceId || a2?.referenceId || '—';
-            return `
-            <tr data-email="${email}">
-                <td><code class="admin-ref">${ref}</code></td>
-                <td>${r.fullName || a1?.fullName || '—'}</td>
-                <td>${email || '—'}</td>
-                <td>${scorePill(a1?.overallScore)}</td>
-                <td>${scorePill(getEnglishPercent(a1))}</td>
-                <td>${scorePill(a1?.grammar?.percent)}</td>
-                <td>${scorePill(a1?.fillBlank?.percent)}</td>
-                <td>${scorePill(a1?.reading?.percent)}</td>
-                <td>${scorePill(a1?.workplace?.percent)}</td>
-                <td>${scorePill((a1?.emailWriting || (typeof a1?.email === 'object' ? a1.email : null))?.percent)}</td>
-                <td>${a1?.typing?.bestWpm ? `${a1.typing.bestWpm}` : '—'}</td>
-                <td>${scorePill(a1?.typing?.bestAccuracy)}</td>
-                <td>${scorePill(a1?.voice?.completionPercent)}</td>
-                <td>${scorePill(a2?.overallScore)}</td>
-                <td>${r.attempt2Enabled ? '<span class="score-pill score-pill--high">Yes</span>' : 'No'}</td>
-                <td><button type="button" class="btn-admin" data-action="view" data-email="${email}" ${!a1 && !a2 ? 'disabled' : ''}>View</button></td>
-                <td>
-                    <div class="admin-actions">
-                        <button type="button" class="btn-admin btn-admin--attempt2" data-action="enable2" data-email="${email}" ${!a1 || r.attempt2Enabled ? 'disabled' : ''}>Enable Att.2</button>
-                        <button type="button" class="btn-admin" data-action="pipeline" data-email="${email}" data-name="${escapeAttr(r.fullName || a1?.fullName)}" data-phone="${escapeAttr(r.phone || a1?.phone)}">To pipeline</button>
-                        <button type="button" class="btn-admin btn-admin--delete" data-action="delete" data-email="${email}">Delete</button>
-                        <button type="button" class="btn-admin btn-admin--reattempt" data-action="reattempt" data-email="${email}">Reset</button>
-                    </div>
-                </td>
-            </tr>
-        `;
-        }).join('');
+        try {
+            tbody.innerHTML = list.map(raw => {
+                const r = normalizeCandidate(raw) || {};
+                const email = r.email || '';
+                const a1 = getSubmission(r, 1);
+                const a2 = getSubmission(r, 2);
+                const ref = r.referenceId || a1?.referenceId || a2?.referenceId || '—';
+                const name = r.fullName || a1?.fullName || '—';
+                const emailWriting = a1?.emailWriting || (typeof a1?.email === 'object' ? a1.email : null);
+                return `
+                <tr data-email="${escapeAttr(email)}">
+                    <td><code class="admin-ref">${escapeHtml(ref)}</code></td>
+                    <td>
+                        <div class="admin-cand-cell">
+                            <strong>${escapeHtml(name)}</strong>
+                            <span>${escapeHtml(email || '—')}</span>
+                        </div>
+                    </td>
+                    <td>${scorePill(a1?.overallScore)}</td>
+                    <td>${a1 ? `<div class="admin-mini-scores">
+                            ${miniScore('Eng', getEnglishPercent(a1), '%')}
+                            ${miniScore('Read', a1?.reading?.percent, '%')}
+                            ${miniScore('Work', a1?.workplace?.percent, '%')}
+                            ${miniScore('Mail', emailWriting?.percent, '%')}
+                            ${miniScore('WPM', a1?.typing?.bestWpm, '')}
+                            ${miniScore('Voice', a1?.voice?.completionPercent, '%')}
+                        </div>` : '—'}
+                    </td>
+                    <td>${a2 ? scorePill(a2.overallScore) : (r.attempt2Enabled ? '<span class="score-pill score-pill--mid">Enabled</span>' : '—')}</td>
+                    <td>
+                        <div class="admin-actions">
+                            <button type="button" class="btn-admin" data-action="view" data-email="${escapeAttr(email)}" ${!a1 && !a2 ? 'disabled' : ''}>View</button>
+                            <button type="button" class="btn-admin btn-admin--attempt2" data-action="enable2" data-email="${escapeAttr(email)}" ${!a1 || r.attempt2Enabled ? 'disabled' : ''}>Att. 2</button>
+                            <button type="button" class="btn-admin" data-action="pipeline" data-email="${escapeAttr(email)}" data-name="${escapeAttr(name)}" data-phone="${escapeAttr(r.phone || a1?.phone)}">Pipeline</button>
+                            <button type="button" class="btn-admin btn-admin--reattempt" data-action="reattempt" data-email="${escapeAttr(email)}">Reset</button>
+                            <button type="button" class="btn-admin btn-admin--delete" data-action="delete" data-email="${escapeAttr(email)}">Delete</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            }).join('');
+        } catch (err) {
+            console.error('renderTable', err);
+            tbody.innerHTML = '<tr><td colspan="6">Could not render results. Refresh and try again.</td></tr>';
+            return;
+        }
 
         tbody.querySelectorAll('[data-action]').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -587,15 +615,45 @@
         `).join('');
     }
 
+    let selectAdminPanel = () => {};
+
+    function getInterviewDemoUser() {
+        return {
+            token: sessionStorage.getItem(TOKEN_KEY),
+            email: 'admin.demo@trinitas.internal',
+            fullName: 'Admin preview',
+            demo: true
+        };
+    }
+
+    function initInterviewDemo() {
+        if (!window.TrinitasInterview) return;
+        const user = getInterviewDemoUser();
+        if (!user.token) return;
+        window.TrinitasInterview.bindForm(getInterviewDemoUser);
+        window.TrinitasInterview.loadScheduler(user);
+        const reset = document.getElementById('interview-demo-reset');
+        if (reset && reset.dataset.bound !== '1') {
+            reset.dataset.bound = '1';
+            reset.addEventListener('click', () => {
+                const alert = document.getElementById('interview-alert');
+                if (alert) alert.hidden = true;
+                window.TrinitasInterview.loadScheduler(getInterviewDemoUser());
+            });
+        }
+    }
+
     function initAdminTabs() {
         const tabs = document.querySelectorAll('.admin-tab');
         if (!tabs.length) return;
         function showPanel(name) {
             tabs.forEach(t => t.classList.toggle('admin-tab--active', t.dataset.adminPanel === name));
             document.querySelectorAll('[data-admin-section]').forEach(sec => {
+                if (sec.id === 'answer-key-panel') {
+                    sec.hidden = !(name === 'results' && answerKeyOpen);
+                    return;
+                }
                 const panels = String(sec.dataset.adminSection || '').split(/\s+/);
-                const match = panels.includes(name) || (name === 'overview' && panels.includes('overview'));
-                // overview shows stats only; other panels hide overview-only
                 if (name === 'overview') {
                     sec.hidden = !panels.includes('overview');
                 } else {
@@ -603,7 +661,9 @@
                 }
             });
             // overview also shows a quick slice of pipeline + results? keep overview = stats only
+            if (name === 'interviews') initInterviewDemo();
         }
+        selectAdminPanel = showPanel;
         tabs.forEach(tab => {
             tab.addEventListener('click', () => showPanel(tab.dataset.adminPanel));
         });
@@ -1007,11 +1067,11 @@
         }
         document.body.classList.add('admin-logged-out');
         document.body.classList.remove('admin-logged-in');
-        // Never leave answer key open after logout
+        answerKeyOpen = false;
         const ak = document.getElementById('answer-key-panel');
         if (ak) ak.hidden = true;
         const toggle = document.getElementById('toggle-answer-key');
-        if (toggle) toggle.textContent = 'Answer Key';
+        if (toggle) toggle.textContent = 'Answer key';
     }
 
     async function showDashboard() {
@@ -1029,7 +1089,8 @@
         document.body.classList.add('admin-logged-in');
         loadResults();
         loadCandidates();
-        // Answer key data loads on demand when admin opens Answer Key — not at login paint
+        initInterviewDemo();
+        ensureAssessmentData();
         const ak = document.getElementById('answer-key-panel');
         if (ak) ak.hidden = true;
     }
@@ -1163,18 +1224,27 @@
             });
         }
 
+        document.getElementById('admin-interview-demo')?.addEventListener('click', () => {
+            selectAdminPanel('interviews');
+            initInterviewDemo();
+            document.getElementById('interview-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+
         document.getElementById('toggle-answer-key').addEventListener('click', async () => {
             const panel = document.getElementById('answer-key-panel');
-            const visible = !panel.hidden;
-            if (visible) {
-                panel.hidden = true;
-                document.getElementById('toggle-answer-key').textContent = 'Answer Key';
+            const btn = document.getElementById('toggle-answer-key');
+            if (answerKeyOpen) {
+                answerKeyOpen = false;
+                if (panel) panel.hidden = true;
+                if (btn) btn.textContent = 'Answer key';
                 return;
             }
             const ready = await ensureAssessmentData();
             if (!ready) return;
-            panel.hidden = false;
-            document.getElementById('toggle-answer-key').textContent = 'Hide Answer Key';
+            answerKeyOpen = true;
+            selectAdminPanel('results');
+            if (panel) panel.hidden = false;
+            if (btn) btn.textContent = 'Hide answer key';
             renderAnswerKey();
         });
 

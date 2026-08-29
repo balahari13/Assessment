@@ -37,6 +37,18 @@ function mustContain(path, needles, label) {
     ok(`${label} content checks`);
 }
 
+function mustNotContain(path, needles, label) {
+    if (!existsSync(path)) {
+        fail(`Cannot read ${label}: file missing`);
+        return;
+    }
+    const text = readFileSync(path, 'utf8');
+    for (const n of needles) {
+        if (text.includes(n)) fail(`${label} must not expose: ${n}`);
+    }
+    ok(`${label} candidate-privacy checks`);
+}
+
 console.log('\nSmoke test: deploy package');
 mustExist(deploy, 'deploy/ folder');
 [
@@ -112,13 +124,21 @@ mustContain(join(functionsDir, 'lib', 'shared.mjs'), ['ADMIN_PASSWORD', 'ALLOWED
 mustContain(join(functionsDir, 'submit-assessment.mjs'), ['serverScoreSubmission', 'referenceId'], 'server-side scoring on submit');
 mustContain(join(functionsDir, 'hr-register.mjs'), ['invite_required', 'inviteCode'], 'HR invite-only');
 mustContain(join(deploy, 'careers.html'), ['after-attempt-box', 'Assessment process', 'interview-card', '17:00'], 'careers interview scheduler');
+mustNotContain(join(deploy, 'careers.html'), ['minimum 40%', '40%'], 'careers.html hides pass mark from candidates');
+mustNotContain(join(deploy, 'assessment.js'), ['minimum 40%', 'optional — you may skip', 'Questions are optional', 'id="english-skip"', 'id="oddman-skip"'], 'assessment.js candidate copy');
+mustContain(join(deploy, 'api.js'), ['TrinitasInterview', 'Join Google Meet'], 'shared interview + Meet UI');
 mustExist(join(functionsDir, 'interview-slots.mjs'), 'function interview-slots.mjs');
-mustContain(join(functionsDir, 'interview-slots.mjs'), ['THRESHOLD', '17:00', 'createMeetEvent', 'Asia/Kolkata'], 'interview slots + Meet');
-mustContain(join(functionsDir, 'lib', 'google-calendar.mjs'), ['balahari13@gmail.com', 'hangoutsMeet'], 'Google Meet organizer');
-mustContain(join(deploy, 'admin.html'), ['Assessment data (with answers) loads only after successful admin sign-in', 'admin-logged-out', 'id="admin-dashboard" hidden'], 'admin login-gated shell');
+mustContain(join(functionsDir, 'interview-slots.mjs'), ['THRESHOLD', '17:00', 'createMeetEvent', 'publicBooking', 'Asia/Kolkata'], 'interview slots + Meet');
+mustNotContain(join(functionsDir, 'interview-slots.mjs'), ['threshold: THRESHOLD'], 'interview API does not send threshold to clients');
+mustContain(join(functionsDir, 'lib', 'google-calendar.mjs'), ['balahari13@gmail.com', 'hangoutsMeet', 'ensureHangout'], 'Google Meet organizer');
+mustContain(join(deploy, 'assessment.js'), ['id="interview-card"', 'loadScheduler'], 'post-assessment interview booking');
+mustContain(join(deploy, 'admin.html'), ['Assessment data (with answers) loads only after successful admin sign-in', 'admin-logged-out', 'id="admin-dashboard" hidden', 'admin-interview-demo', 'id="interview-card"'], 'admin login-gated shell + interview preview');
+mustContain(join(deploy, 'admin.js'), ['initInterviewDemo', 'admin-interview-demo', 'demo: true'], 'admin interview booker demo');
+mustContain(join(functionsDir, 'interview-slots.mjs'), ["get('demo')", 'body.demo'], 'interview demo bypass');
 mustContain(join(deploy, 'careers.css'), ['admin-dashboard[hidden]', 'body.admin-logged-out #admin-dashboard'], 'admin dashboard hidden CSS override fix');
-mustContain(join(deploy, 'admin.js'), ['admin-logged-in', 'admin-logged-out', 'showLogin'], 'admin session body classes');
-mustContain(join(deploy, 'assessment.js'), ['Submission received', 'Next steps'], 'professional post-assessment copy');
+mustContain(join(deploy, 'admin.js'), ['admin-logged-in', 'admin-logged-out', 'showLogin', 'ensureAssessmentData'], 'admin session body classes');
+mustContain(join(deploy, 'admin.html'), ['results-table--compact', 'Candidate results'], 'compact candidate results table');
+mustContain(join(deploy, 'assessment.js'), ['Submission received', 'Next steps', 'Type your answer'], 'professional post-assessment copy');
 
 console.log('\nSmoke test: pause / OTP path');
 mustContain(join(deploy, 'assessment.html'), ['btn-pause-session', 'btn-end-session'], 'assessment pause/end controls');
