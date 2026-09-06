@@ -67,6 +67,17 @@
                 'Process automation support',
                 'Operational quality audits'
             ]
+        },
+        {
+            title: 'Data Security and Protection Solutions',
+            category: 'Security Operations',
+            description: 'Practical data security and protection operations for remote delivery — access control, encrypted handling, monitoring, and documented controls that protect client information.',
+            deliverables: [
+                'Access control and identity hygiene for remote teams',
+                'Encrypted data handling and secure endpoint practices',
+                'Security monitoring and incident-response support',
+                'Documented controls, audits, and client reporting'
+            ]
         }
     ];
 
@@ -435,7 +446,7 @@
     }
 
     const VOICE_FAQ = [
-        { keys: ['service', 'support', 'bpo', 'outsource', 'offer'], reply: 'Trinitas delivers customer support, finance & accounting, HR, IT help desk, sales, and back-office operations — all from a 100% work-from-home model in India.' },
+        { keys: ['service', 'support', 'bpo', 'outsource', 'offer', 'security', 'protection', 'data security'], reply: 'Trinitas delivers customer support, finance & accounting, HR, IT help desk, sales, back-office operations, and data security and protection solutions — all from a 100% work-from-home model in India.' },
         { keys: ['career', 'job', 'apply', 'assessment', 'hiring', 'work from home'], reply: 'Visit our Careers page to register and complete the preliminary skills assessment. A Second Attempt with advanced questions may be available for your email after Attempt 1.' },
         { keys: ['contact', 'email', 'proposal', 'reach', 'inquiry'], reply: 'Email info@trinitasnxt.in or use the contact form on this page. Our team responds within one business day and prepares proposals within 48 hours.' },
         { keys: ['india', 'remote', 'location', 'where'], reply: 'We are an India-based BPO with a fully remote delivery model — secure, SLA-driven, and built to scale.' },
