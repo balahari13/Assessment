@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin.html
+Disallow: /assessment.html
+Disallow: /hr.html
+Disallow: /agent-mail.html
+Disallow: /agent-dashboard.html
+Disallow: /staff-employees.html
+
+Sitemap: https://trinitasnxt.in/sitemap.xml

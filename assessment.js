@@ -1680,18 +1680,8 @@
             </div>
             <div class="careers-card assessment-interview-card" id="interview-card" hidden>
                 <h3>Next-round interview</h3>
-                <p class="section-desc" id="interview-copy">Book one weekday slot (17:00–18:00 IST) for a Google Meet interview. Saturday and Sunday are not available.</p>
-                <div id="interview-booked" hidden></div>
-                <form id="interview-form" class="register-form" hidden>
-                    <div class="form-field">
-                        <label for="interviewDate">Available dates</label>
-                        <select id="interviewDate" name="date" required>
-                            <option value="">Select a weekday</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-full">Book 17:00–18:00 IST</button>
-                </form>
-                <div id="interview-alert" class="form-alert" hidden></div>
+                <p class="section-desc" id="interview-copy">Book a 30-minute interview. Pick a time that works for you.</p>
+                <div id="interview-calendly" class="interview-calendly"></div>
             </div>
             <a href="careers.html" class="btn btn-primary" style="margin-top:1.5rem">Return to Careers</a>
         `;

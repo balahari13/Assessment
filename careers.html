@@ -7,9 +7,6 @@
     <meta name="description" content="Join Trinitas NextGen Business Solutions — create an account, submit your resume, then take Attempt 1 or Attempt 2 after login.">
     <meta name="theme-color" content="#020617">
     <link rel="icon" href="logo-icon.png" type="image/png">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="careers.css">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8414734060688226" crossorigin="anonymous"></script>
@@ -28,11 +25,15 @@
                 <button type="button" class="nav-link nav-group-toggle" aria-expanded="false" aria-haspopup="true">Company</button>
                 <div class="nav-dropdown">
                     <a href="about.html">About</a>
+                    <a href="mission.html">Mission &amp; values</a>
+                    <a href="how-we-work.html">How we work</a>
+                    <a href="insights.html">Insights</a>
+                    <a href="faq.html">FAQ</a>
                     <a href="index.html#why">Engagement model</a>
                     <a href="privacy.html">Privacy</a>
                 </div>
             </div>
-            <a href="index.html#services" class="nav-link">Services</a>
+            <a href="services.html" class="nav-link">Services</a>
             <div class="nav-group">
                 <button type="button" class="nav-link nav-group-toggle active" aria-expanded="false" aria-haspopup="true">Careers</button>
                 <div class="nav-dropdown">
@@ -55,9 +56,10 @@
         <nav class="mobile-menu-nav">
             <p class="mobile-menu-label">Company</p>
             <a href="about.html" class="mobile-menu-link">About</a>
+            <a href="mission.html" class="mobile-menu-link">Mission &amp; values</a>
             <a href="index.html#why" class="mobile-menu-link">Engagement model</a>
             <p class="mobile-menu-label">Services</p>
-            <a href="index.html#services" class="mobile-menu-link">BPO services</a>
+            <a href="services.html" class="mobile-menu-link">BPO services</a>
             <p class="mobile-menu-label">Careers</p>
             <a href="careers.html" class="mobile-menu-link">Open roles</a>
             <a href="healthcare.html" class="mobile-menu-link">Healthcare WFH</a>
@@ -274,18 +276,8 @@
 
                         <div class="careers-card" id="interview-card" hidden>
                             <h3>Next-round interview</h3>
-                            <p class="section-desc" id="interview-copy">When you are invited to the next round, book one weekday slot (17:00–18:00 IST) for a Google Meet interview. Saturday and Sunday are not available. One booking per day across all candidates.</p>
-                            <div id="interview-booked" hidden></div>
-                            <form id="interview-form" class="register-form" hidden>
-                                <div class="form-field">
-                                    <label for="interviewDate">Available dates</label>
-                                    <select id="interviewDate" name="date" required>
-                                        <option value="">Select a weekday</option>
-                                    </select>
-                                </div>
-                                <button type="submit" class="btn btn-primary btn-full">Book 17:00–18:00 IST</button>
-                            </form>
-                            <div id="interview-alert" class="form-alert" hidden></div>
+                            <p class="section-desc" id="interview-copy">When you are invited to the next round, book a 30-minute interview. Pick a time that works for you.</p>
+                            <div id="interview-calendly" class="interview-calendly"></div>
                         </div>
 
                         <div class="careers-card careers-resume-card" id="resume">
@@ -316,7 +308,7 @@
     <footer class="footer">
         <div class="container footer-bottom" style="border-top:none;padding-top:0">
             <span>© 2026 Trinitas NextGen Business Solutions Private Limited.</span>
-            <a href="index.html" style="color:rgba(255,255,255,0.6)">Back to Home</a>
+            <a href="index.html" style="color:inherit">Back to Home</a>
         </div>
     </footer>
 

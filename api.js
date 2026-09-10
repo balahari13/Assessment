@@ -501,60 +501,72 @@
         }[c]));
     }
 
-    function safeMeetHref(link) {
-        const raw = String(link || '').trim();
-        if (/^https:\/\/meet\.google\.com\/[^\s"'<>]+$/i.test(raw)) return raw;
-        return 'https://meet.google.com/ygi-ejrk-sae';
+    const CALENDLY_BASE = 'https://calendly.com/balahari13/30min';
+
+    function calendlyUrl(candidate) {
+        const u = new URL(CALENDLY_BASE);
+        u.searchParams.set('hide_gdpr_banner', '1');
+        const email = String(candidate?.email || '');
+        if (email && !email.endsWith('@trinitas.internal')) u.searchParams.set('email', email);
+        if (candidate?.fullName && !candidate.demo) u.searchParams.set('name', candidate.fullName);
+        return u.toString();
     }
 
-    function safeCalendarHref(link) {
-        const raw = String(link || '').trim();
-        if (/^https:\/\/calendar\.google\.com\/[^\s"'<>]+$/i.test(raw)) return raw;
-        if (/^https:\/\/www\.google\.com\/calendar\/[^\s"'<>]+$/i.test(raw)) return raw;
-        return '';
-    }
-
-    function setInterviewAlert(message, type) {
-        const el = document.getElementById('interview-alert');
-        if (!el) return;
-        el.textContent = message || '';
-        el.className = `form-alert form-alert--${type || 'error'}`;
-        el.hidden = !message;
+    function ensureCalendlyScript() {
+        if (window.Calendly) return Promise.resolve();
+        const existing = document.getElementById('calendly-widget-script');
+        if (existing) {
+            return new Promise(resolve => {
+                existing.addEventListener('load', () => resolve(), { once: true });
+                if (window.Calendly) resolve();
+            });
+        }
+        return new Promise(resolve => {
+            const s = document.createElement('script');
+            s.id = 'calendly-widget-script';
+            s.src = 'https://assets.calendly.com/assets/external/widget.js';
+            s.async = true;
+            s.onload = () => resolve();
+            document.body.appendChild(s);
+        });
     }
 
     window.TrinitasInterview = {
-        renderBooked(booking) {
-            const box = document.getElementById('interview-booked');
-            const form = document.getElementById('interview-form');
-            if (form) form.hidden = true;
-            if (!box || !booking) return;
-            box.hidden = false;
-            const meet = safeMeetHref(booking.meetLink);
-            const date = escapeInterviewHtml(booking.date);
-            const slot = escapeInterviewHtml(booking.slot || '17:00–18:00 IST');
-            const cal = safeCalendarHref(booking.htmlLink);
-            box.innerHTML = `
-                <p class="section-desc" style="margin:0 0 0.65rem">${booking.demo ? 'Preview confirmation — this did not reserve a live slot.' : 'Your interview is confirmed.'}</p>
-                <p><strong>${date}</strong> · ${slot}</p>
-                <a class="btn btn-primary" href="${meet}" target="_blank" rel="noopener noreferrer">Join Google Meet</a>
-                ${cal ? `<p style="margin-top:0.65rem"><a href="${escapeInterviewHtml(cal)}" target="_blank" rel="noopener noreferrer">Open calendar event</a></p>` : ''}
-            `;
+        async mountCalendly(candidate) {
+            const host = document.getElementById('interview-calendly');
+            if (!host) return;
+            const url = calendlyUrl(candidate);
+            host.innerHTML = '';
+            await ensureCalendlyScript();
+            if (window.Calendly && typeof window.Calendly.initInlineWidget === 'function') {
+                window.Calendly.initInlineWidget({
+                    url,
+                    parentElement: host,
+                    resize: true
+                });
+                return;
+            }
+            const iframe = document.createElement('iframe');
+            iframe.title = 'Interview scheduler';
+            iframe.src = url;
+            iframe.setAttribute('style', 'width:100%;min-height:680px;border:0;');
+            host.appendChild(iframe);
         },
 
         async loadScheduler(candidate) {
             const card = document.getElementById('interview-card');
             if (!card || !candidate?.email) return { ok: false, eligible: false };
-            const { ok, data } = await window.TrinitasAPI.interviewSlots(candidate.email, candidate.token, {
-                demo: !!candidate.demo
-            });
+            if (candidate.demo) {
+                card.hidden = false;
+                await window.TrinitasInterview.mountCalendly(candidate);
+                return { ok: true, eligible: true, booking: null };
+            }
+            const { ok, data } = await window.TrinitasAPI.interviewSlots(candidate.email, candidate.token);
             if (!ok) {
                 card.hidden = false;
-                const form = document.getElementById('interview-form');
-                if (form) form.hidden = true;
-                const box = document.getElementById('interview-booked');
-                if (box) {
-                    box.hidden = false;
-                    box.innerHTML = `
+                const host = document.getElementById('interview-calendly');
+                if (host) {
+                    host.innerHTML = `
                         <p class="section-desc" style="margin:0 0 0.75rem">Interview scheduling could not be loaded. Please try again.</p>
                         <button type="button" class="btn btn-secondary" id="interview-retry">Try again</button>
                     `;
@@ -564,69 +576,17 @@
                 }
                 return { ok: false, eligible: false };
             }
-            if (!data.eligible && !data.booking && !candidate.demo) {
+            if (!data.eligible && !data.booking) {
                 card.hidden = true;
                 return { ok: true, eligible: false, booking: null };
             }
             card.hidden = false;
-            if (data.booking) {
-                window.TrinitasInterview.renderBooked(data.booking);
-                return { ok: true, eligible: true, booking: data.booking };
-            }
-            const box = document.getElementById('interview-booked');
-            if (box) {
-                box.hidden = true;
-                box.innerHTML = '';
-            }
-            const form = document.getElementById('interview-form');
-            const select = document.getElementById('interviewDate');
-            if (form) form.hidden = false;
-            if (select) {
-                const open = (data.dates || []).filter(d => d.available);
-                select.innerHTML = '<option value="">Select a weekday</option>' +
-                    open.map(d => `<option value="${escapeInterviewHtml(d.date)}">${escapeInterviewHtml(d.weekday)} ${escapeInterviewHtml(d.date)} · 17:00–18:00 IST</option>`).join('');
-            }
-            return { ok: true, eligible: true, booking: null };
+            await window.TrinitasInterview.mountCalendly(candidate);
+            return { ok: true, eligible: true, booking: data.booking || null };
         },
 
-        bindForm(getCandidateFn) {
-            const form = document.getElementById('interview-form');
-            if (!form || form.dataset.bound === '1') return;
-            form.dataset.bound = '1';
-            form.addEventListener('submit', async e => {
-                e.preventDefault();
-                setInterviewAlert('', 'success');
-                const candidate = typeof getCandidateFn === 'function' ? getCandidateFn() : getCandidateFn;
-                const date = form.date.value;
-                if (!candidate?.token || !date) {
-                    setInterviewAlert('Select an available weekday.', 'error');
-                    return;
-                }
-                const btn = form.querySelector('button[type="submit"]');
-                const label = btn ? btn.textContent : '';
-                if (btn) {
-                    btn.disabled = true;
-                    btn.textContent = 'Booking…';
-                }
-                const payload = {
-                    email: candidate.email,
-                    fullName: candidate.fullName,
-                    date
-                };
-                if (candidate.demo) payload.demo = true;
-                const { ok, data } = await window.TrinitasAPI.interviewBook(candidate.token, payload);
-                if (btn) {
-                    btn.disabled = false;
-                    btn.textContent = label;
-                }
-                if (!ok) {
-                    setInterviewAlert(data.message || data.error || 'Could not book that slot.', 'error');
-                    window.TrinitasInterview.loadScheduler(candidate);
-                    return;
-                }
-                window.TrinitasInterview.renderBooked(data.booking);
-                setInterviewAlert(data.message || 'Interview booked.', 'success');
-            });
+        bindForm() {
+            /* Calendly owns booking. */
         }
     };
 })();

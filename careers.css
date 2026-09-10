@@ -2,11 +2,8 @@
 .careers-hero {
     position: relative;
     padding: calc(var(--nav-height) + 4rem) 0 4rem;
-    background:
-        radial-gradient(ellipse 55% 45% at 80% 10%, rgba(37, 99, 235, 0.2) 0%, transparent 55%),
-        radial-gradient(ellipse 45% 40% at 10% 80%, rgba(124, 58, 237, 0.15) 0%, transparent 50%),
-        var(--gradient-hero);
-    color: var(--white);
+    background: var(--navy);
+    color: var(--on-dark, #fff);
 }
 .careers-hero h1 { color: var(--white); }
 .careers-hero .lead-light { max-width: 62ch; }
@@ -61,7 +58,7 @@
 .career-step strong {
     display: block;
     font-family: var(--font-display);
-    color: var(--sky);
+    color: var(--on-dark, #fff);
     margin-bottom: 0.25rem;
 }
 .career-step span { font-size: 0.8rem; color: rgba(255,255,255,0.6); }
@@ -72,8 +69,8 @@
     gap: 1rem;
 }
 .careers-card--advanced {
-    border-color: rgba(124, 58, 237, 0.25);
-    background: linear-gradient(180deg, rgba(124, 58, 237, 0.04), #fff);
+    border-color: var(--border);
+    background: var(--white);
 }
 .attempt2-link {
     margin-top: 0.75rem;
@@ -1331,6 +1328,13 @@ body.admin-modal-open {
 .assessment-interview-card {
     margin-top: 1.5rem;
     text-align: left;
+}
+.interview-calendly {
+    min-height: 680px;
+    margin-top: 0.75rem;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
 }
 #interview-booked p { margin: 0.25rem 0; }
 #interview-booked .btn { margin-top: 0.75rem; }

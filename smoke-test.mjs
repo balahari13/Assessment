@@ -53,7 +53,15 @@ console.log('\nSmoke test: deploy package');
 mustExist(deploy, 'deploy/ folder');
 [
     'index.html',
+    'about.html',
+    'mission.html',
+    'services.html',
+    'how-we-work.html',
+    'faq.html',
+    'insights.html',
     'privacy.html',
+    'robots.txt',
+    'sitemap.xml',
     'careers.html',
     'admin.html',
     'assessment.html',
@@ -71,10 +79,15 @@ mustContain(join(deploy, 'index.html'), [
     'Employee Login',
     'Open roles',
     'page-home',
-    'Engagement model',
+    'services.html',
+    'insights.html',
+    'faq.html',
+    'trinitasnxt.in',
     'nav-group',
     'Company'
 ], 'index.html CTA / grouped nav / compact homepage');
+mustContain(join(deploy, 'services.html'), ['Customer support', 'least privilege', 'Back office'], 'services guide content');
+mustContain(join(deploy, 'insights-wfh-bpo.html'), ['work-from-home BPO'], 'WFH insight article');
 
 console.log('\nSmoke test: privacy page');
 mustContain(join(deploy, 'privacy.html'), [
@@ -123,10 +136,10 @@ mustContain(join(functionsDir, 'pipeline.mjs'), ['PIPELINE_STAGES', 'DEFAULT_MEE
 mustContain(join(functionsDir, 'lib', 'shared.mjs'), ['ADMIN_PASSWORD', 'ALLOWED_ORIGINS', 'generateReferenceId'], 'env secrets + CORS + ref IDs');
 mustContain(join(functionsDir, 'submit-assessment.mjs'), ['serverScoreSubmission', 'referenceId'], 'server-side scoring on submit');
 mustContain(join(functionsDir, 'hr-register.mjs'), ['invite_required', 'inviteCode'], 'HR invite-only');
-mustContain(join(deploy, 'careers.html'), ['after-attempt-box', 'Assessment process', 'interview-card', '17:00'], 'careers interview scheduler');
+mustContain(join(deploy, 'careers.html'), ['after-attempt-box', 'Assessment process', 'interview-card', 'interview-calendly'], 'careers interview scheduler');
 mustNotContain(join(deploy, 'careers.html'), ['minimum 40%', '40%'], 'careers.html hides pass mark from candidates');
 mustNotContain(join(deploy, 'assessment.js'), ['minimum 40%', 'optional — you may skip', 'Questions are optional', 'id="english-skip"', 'id="oddman-skip"'], 'assessment.js candidate copy');
-mustContain(join(deploy, 'api.js'), ['TrinitasInterview', 'Join Google Meet'], 'shared interview + Meet UI');
+mustContain(join(deploy, 'api.js'), ['TrinitasInterview', 'calendly.com/balahari13/30min'], 'Calendly interview scheduler');
 mustExist(join(functionsDir, 'interview-slots.mjs'), 'function interview-slots.mjs');
 mustContain(join(functionsDir, 'interview-slots.mjs'), ['THRESHOLD', '17:00', 'createMeetEvent', 'publicBooking', 'Asia/Kolkata'], 'interview slots + Meet');
 mustNotContain(join(functionsDir, 'interview-slots.mjs'), ['threshold: THRESHOLD'], 'interview API does not send threshold to clients');

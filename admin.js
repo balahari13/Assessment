@@ -630,17 +630,7 @@
         if (!window.TrinitasInterview) return;
         const user = getInterviewDemoUser();
         if (!user.token) return;
-        window.TrinitasInterview.bindForm(getInterviewDemoUser);
         window.TrinitasInterview.loadScheduler(user);
-        const reset = document.getElementById('interview-demo-reset');
-        if (reset && reset.dataset.bound !== '1') {
-            reset.dataset.bound = '1';
-            reset.addEventListener('click', () => {
-                const alert = document.getElementById('interview-alert');
-                if (alert) alert.hidden = true;
-                window.TrinitasInterview.loadScheduler(getInterviewDemoUser());
-            });
-        }
     }
 
     function initAdminTabs() {
