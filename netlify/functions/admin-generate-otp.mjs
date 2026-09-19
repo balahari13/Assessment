@@ -6,9 +6,9 @@ import {
     normalizeEmail,
     verifyAdminToken
 } from './lib/shared.mjs';
+import { sendTransactionalEmail } from './lib/send-mail.mjs';
 
 const OTP_TTL_MS = 24 * 60 * 60 * 1000;
-const FORM_EMAIL = 'info@trinitasnxt.in';
 
 function pauseKey(email) {
     return `pause:${normalizeEmail(email)}`;
@@ -19,31 +19,23 @@ function hashOtp(otp, email) {
 }
 
 async function sendOtpEmail(toEmail, fullName, otp) {
-    const targets = [toEmail, FORM_EMAIL];
-    let anyOk = false;
-    for (const target of targets) {
-        try {
-            const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(target)}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-                body: JSON.stringify({
-                    _subject: `Trinitas Assessment OTP — resume your session`,
-                    _template: 'table',
-                    _captcha: 'false',
-                    name: fullName || 'Candidate',
-                    email: toEmail,
-                    message: `Your one-time code to resume the Trinitas assessment is: ${otp}. It is valid for 24 hours. Enter this OTP on the Careers page under Resume assessment.`,
-                    otp_code: otp,
-                    candidate_email: toEmail
-                })
-            });
-            const data = await response.json().catch(() => ({}));
-            if (response.ok && data.success !== false) anyOk = true;
-        } catch {
-            /* try next */
-        }
-    }
-    return anyOk;
+    const text = [
+        `Hello ${fullName || ''},`.trim(),
+        '',
+        `Your Trinitas code to resume the assessment is: ${otp}`,
+        '',
+        'Enter this 6-digit code on the Careers page under Resume assessment.',
+        'The code is valid for 24 hours.',
+        '',
+        '— Trinitas NextGen Business Solutions'
+    ].join('\n');
+    const result = await sendTransactionalEmail({
+        to: toEmail,
+        fullName,
+        subject: `${otp} is your Trinitas resume-assessment code`,
+        text
+    });
+    return result.ok;
 }
 
 export default async (req, context) => {

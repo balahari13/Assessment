@@ -8,11 +8,11 @@ import {
 } from './lib/shared.mjs';
 import { hashPassword } from './lib/password.mjs';
 import { writeAudit } from './lib/audit.mjs';
+import { sendTransactionalEmail } from './lib/send-mail.mjs';
 
 const CANDIDATE_INDEX = 'candidate-index';
 const MAX_BYTES = 1.5 * 1024 * 1024;
 const OTP_TTL_MS = 10 * 60 * 1000;
-const FORM_EMAIL = 'info@trinitasnxt.in';
 const ALLOWED_SOURCES = ['Job portal', 'LinkedIn', 'Friends', 'Word of mouth', 'Employee referral'];
 
 function candidateKey(username) {
@@ -94,31 +94,26 @@ async function consumeCaptcha(store, id, answer) {
 }
 
 async function sendRegisterOtpEmail(toEmail, fullName, otp) {
-    const targets = [toEmail, FORM_EMAIL];
-    let anyOk = false;
-    for (const target of targets) {
-        try {
-            const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(target)}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-                body: JSON.stringify({
-                    _subject: 'Trinitas registration OTP',
-                    _template: 'table',
-                    _captcha: 'false',
-                    name: fullName || 'Candidate',
-                    email: toEmail,
-                    message: `Your Trinitas registration code is: ${otp}. It is valid for 10 minutes. Enter it on the Careers page to finish creating your account.`,
-                    otp_code: otp,
-                    candidate_email: toEmail
-                })
-            });
-            const data = await response.json().catch(() => ({}));
-            if (response.ok && data.success !== false) anyOk = true;
-        } catch {
-            /* try next */
-        }
-    }
-    return anyOk;
+    const text = [
+        `Hello ${fullName || ''},`.trim(),
+        '',
+        `Your Trinitas registration code is: ${otp}`,
+        '',
+        'Enter this 6-digit code on the Careers page to finish creating your account.',
+        'The code expires in 10 minutes.',
+        '',
+        'If you did not start a registration, you can ignore this email.',
+        '',
+        '— Trinitas NextGen Business Solutions',
+        'https://trinitasnxt.in/careers.html'
+    ].join('\n');
+    const result = await sendTransactionalEmail({
+        to: toEmail,
+        fullName,
+        subject: `${otp} is your Trinitas verification code`,
+        text
+    });
+    return result.ok;
 }
 
 async function createAccount(store, pending) {

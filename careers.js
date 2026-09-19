@@ -371,6 +371,9 @@
                 button.disabled = false;
                 button.textContent = 'Verify & create account';
                 let msg = data.message || 'Enter the code we emailed you.';
+                if (!data.emailed) {
+                    msg += ' If nothing arrives, wait a minute and use Send verification code again, and check spam.';
+                }
                 if (data.devOtp) msg += ` (Local test code: ${data.devOtp})`;
                 showAlert(alert, msg, 'success');
                 document.getElementById('suOtp')?.focus();
