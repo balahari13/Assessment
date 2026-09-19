@@ -119,7 +119,7 @@ mustExist(join(functionsDir, 'admin-candidates.mjs'), 'function admin-candidates
 mustExist(join(functionsDir, 'admin-password-reset.mjs'), 'function admin-password-reset.mjs');
 mustExist(join(functionsDir, 'admin-resumes.mjs'), 'function admin-resumes.mjs');
 mustContain(join(functionsDir, 'candidate-register.mjs'), ['export default', 'fileBase64', 'passwordHash', 'token', 'send-otp', 'captcha', 'sendTransactionalEmail'], 'candidate-register handler');
-mustContain(join(functionsDir, 'lib', 'send-mail.mjs'), ['_autoresponse', 'gmail.googleapis.com', 'RESEND_API_KEY'], 'OTP mailer');
+mustContain(join(functionsDir, 'lib', 'send-mail.mjs'), ['_autoresponse', 'gmail.googleapis.com', 'RESEND_API_KEY', 'trinitasnxt.in'], 'OTP mailer');
 mustExist(join(functionsDir, 'register-captcha.mjs'), 'function register-captcha.mjs');
 mustContain(join(deploy, 'careers.html'), ['signup-captcha', 'suOtp', 'Send verification code'], 'careers registration captcha + OTP');
 mustContain(join(functionsDir, 'candidate-reset-password.mjs'), ['export default', 'passwordResetEnabled', 'passwordHash'], 'candidate-reset-password handler');

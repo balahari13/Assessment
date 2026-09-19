@@ -12,6 +12,17 @@ function toBase64Url(str) {
         .replace(/=+$/, '');
 }
 
+function siteOrigin(requestOrigin) {
+    const allowed = new Set([
+        'https://trinitasnxt.in',
+        'https://www.trinitasnxt.in'
+    ]);
+    if (requestOrigin && allowed.has(requestOrigin)) return requestOrigin;
+    const envUrl = String(process.env.URL || process.env.SITE_URL || 'https://trinitasnxt.in').replace(/\/$/, '');
+    if (allowed.has(envUrl)) return envUrl;
+    return 'https://trinitasnxt.in';
+}
+
 async function tryResend({ to, subject, text, html }) {
     const key = process.env.RESEND_API_KEY;
     if (!key) return { ok: false, reason: 'not_configured' };
@@ -89,34 +100,44 @@ async function tryGmail({ to, subject, text }) {
 }
 
 /**
- * FormSubmit cannot POST to a new candidate inbox (each address must be activated).
- * Post to our activated inbox and use _autoresponse so the visitor (email field) gets the OTP.
+ * FormSubmit rejects posts that look like local files unless Origin/Referer are a live site.
+ * Post to the activated inbox and auto-respond to the candidate (email field).
  */
-async function tryFormSubmitAutoresponse({ to, subject, text, fullName }) {
+async function tryFormSubmitAutoresponse({ to, subject, text, fullName, origin }) {
     const inbox = SITE_INBOX;
+    const site = siteOrigin(origin);
+    const headers = {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Origin: site,
+        Referer: `${site}/careers.html`,
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+    };
+    const body = {
+        _subject: subject,
+        _template: 'box',
+        _captcha: 'false',
+        _autoresponse: text,
+        name: fullName || 'Candidate',
+        email: to,
+        message: text
+    };
     try {
         const res = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(inbox)}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-            body: JSON.stringify({
-                _subject: subject,
-                _template: 'box',
-                _captcha: 'false',
-                _autoresponse: text,
-                name: fullName || 'Candidate',
-                email: to,
-                message: text
-            })
+            headers,
+            body: JSON.stringify(body)
         });
         const data = await res.json().catch(() => ({}));
-        if (res.ok && data.success !== false) return { ok: true, via: 'formsubmit' };
-        return { ok: false, reason: 'formsubmit_failed', detail: data };
+        const ok = res.ok && data.success !== false && String(data.success).toLowerCase() !== 'false';
+        if (ok) return { ok: true, via: 'formsubmit' };
+        return { ok: false, reason: 'formsubmit_failed', detail: data, status: res.status };
     } catch (err) {
         return { ok: false, reason: 'formsubmit_error', detail: String(err.message || err) };
     }
 }
 
-export async function sendTransactionalEmail({ to, subject, text, html, fullName }) {
+export async function sendTransactionalEmail({ to, subject, text, html, fullName, origin }) {
     const dest = String(to || '').trim();
     if (!dest.includes('@')) return { ok: false, reason: 'bad_to' };
 
@@ -126,5 +147,15 @@ export async function sendTransactionalEmail({ to, subject, text, html, fullName
     const gmail = await tryGmail({ to: dest, subject, text });
     if (gmail.ok) return gmail;
 
-    return tryFormSubmitAutoresponse({ to: dest, subject, text, fullName });
+    const formsubmit = await tryFormSubmitAutoresponse({
+        to: dest,
+        subject,
+        text,
+        fullName,
+        origin
+    });
+    if (!formsubmit.ok) {
+        console.error('sendTransactionalEmail failed', { resend, gmail, formsubmit });
+    }
+    return formsubmit;
 }

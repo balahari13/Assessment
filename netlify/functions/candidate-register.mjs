@@ -93,7 +93,7 @@ async function consumeCaptcha(store, id, answer) {
     return safeEqualHex(rec.hash, hashCaptcha(id, answer));
 }
 
-async function sendRegisterOtpEmail(toEmail, fullName, otp) {
+async function sendRegisterOtpEmail(toEmail, fullName, otp, origin) {
     const text = [
         `Hello ${fullName || ''},`.trim(),
         '',
@@ -111,7 +111,8 @@ async function sendRegisterOtpEmail(toEmail, fullName, otp) {
         to: toEmail,
         fullName,
         subject: `${otp} is your Trinitas verification code`,
-        text
+        text,
+        origin
     });
     return result.ok;
 }
@@ -305,7 +306,7 @@ export default async (req, context) => {
             createdAt: new Date().toISOString()
         };
         await store.set(pendingKey(email), JSON.stringify(pending));
-        const emailed = await sendRegisterOtpEmail(email, fullName, otp);
+        const emailed = await sendRegisterOtpEmail(email, fullName, otp, origin);
 
         const payload = {
             success: true,

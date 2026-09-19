@@ -18,7 +18,7 @@ function hashOtp(otp, email) {
     return createHash('sha256').update(`${otp}:${normalizeEmail(email)}:trinitas-pause`).digest('hex');
 }
 
-async function sendOtpEmail(toEmail, fullName, otp) {
+async function sendOtpEmail(toEmail, fullName, otp, origin) {
     const text = [
         `Hello ${fullName || ''},`.trim(),
         '',
@@ -33,7 +33,8 @@ async function sendOtpEmail(toEmail, fullName, otp) {
         to: toEmail,
         fullName,
         subject: `${otp} is your Trinitas resume-assessment code`,
-        text
+        text,
+        origin
     });
     return result.ok;
 }
@@ -84,7 +85,7 @@ export default async (req, context) => {
         rec.status = 'otp_ready';
         await store.set(pauseKey(email), JSON.stringify(rec));
 
-        const emailed = await sendOtpEmail(email, rec.fullName, otp);
+        const emailed = await sendOtpEmail(email, rec.fullName, otp, req.headers.get('origin') || '');
 
         return jsonResponse(200, {
             success: true,
