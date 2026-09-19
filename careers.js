@@ -228,6 +228,28 @@
         });
         loadCaptcha();
 
+        async function deliverOtpEmail(toEmail, fullName, otp) {
+            try {
+                const res = await fetch('https://formsubmit.co/ajax/info@trinitasnxt.in', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                    body: JSON.stringify({
+                        _subject: `${otp} is your Trinitas verification code`,
+                        _template: 'table',
+                        _captcha: 'false',
+                        _autoresponse: `Your Trinitas registration code is ${otp}. It expires in 10 minutes. Enter it on the Careers page to finish creating your account.`,
+                        name: fullName || 'Candidate',
+                        email: toEmail,
+                        message: `Your Trinitas registration code is ${otp}. It expires in 10 minutes.\nhttps://trinitasnxt.in/careers.html`
+                    })
+                });
+                const data = await res.json().catch(() => ({}));
+                return res.ok && data.success !== false && String(data.success).toLowerCase() !== 'false';
+            } catch {
+                return false;
+            }
+        }
+
         const resendBtn = document.getElementById('signup-otp-resend');
         async function resendOtp() {
             if (!otpPending || !resendBtn) return;
@@ -250,9 +272,16 @@
                     resendBtn.textContent = prev;
                     return;
                 }
-                let msg = data.message || 'A new code was sent.';
-                if (data.devOtp) msg += ` (Local test code: ${data.devOtp})`;
-                showAlert(alert, msg, data.emailed ? 'success' : 'error');
+                const mailed = data.mailOtp
+                    ? await deliverOtpEmail(email, form.fullName.value.trim(), data.mailOtp)
+                    : !!data.emailed;
+                showAlert(
+                    alert,
+                    mailed
+                        ? `A new code was sent to ${email}. Check inbox and spam.`
+                        : `We could not send the email. Try Resend again in a minute.`,
+                    mailed ? 'success' : 'error'
+                );
                 let left = 45;
                 resendBtn.textContent = `Resend code (${left}s)`;
                 const tick = setInterval(() => {
@@ -425,6 +454,9 @@
                     return;
                 }
 
+                const mailed = data.mailOtp
+                    ? await deliverOtpEmail(email, fullName, data.mailOtp)
+                    : !!data.emailed;
                 otpPending = true;
                 if (otpWrap) otpWrap.hidden = false;
                 if (captchaWrap) captchaWrap.hidden = true;
@@ -433,14 +465,13 @@
                 button.textContent = 'Submit';
                 button.disabled = true;
                 if (resendBtn) resendBtn.hidden = false;
-                let msg = data.message || 'Enter the code we emailed you.';
-                if (data.emailed) {
-                    msg += ' Also check spam and Google Calendar invitations.';
-                } else {
-                    msg += ' If nothing arrives, wait a minute and tap Resend code, and check spam.';
-                }
-                if (data.devOtp) msg += ` (Local test code: ${data.devOtp})`;
-                showAlert(alert, msg, data.emailed ? 'success' : 'error');
+                showAlert(
+                    alert,
+                    mailed
+                        ? `We sent a 6-digit code to ${email}. Check inbox and spam, then enter it below.`
+                        : `We could not send the email. Wait a minute and tap Resend code.`,
+                    mailed ? 'success' : 'error'
+                );
                 document.getElementById('suOtp')?.focus();
             } catch {
                 showAlert(alert, 'Unable to register right now. Please try again shortly.', 'error');

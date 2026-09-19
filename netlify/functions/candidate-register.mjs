@@ -267,21 +267,14 @@ export default async (req, context) => {
             pending.lastSentAt = Date.now();
             pending.resendCount = resends + 1;
             await store.set(pendingKey(email), JSON.stringify(pending));
-            const emailed = await sendRegisterOtpEmail(email, pending.fullName, otp, origin);
-            const payload = {
+            sendRegisterOtpEmail(email, pending.fullName, otp, origin).catch(() => {});
+            return jsonResponse(200, {
                 success: true,
                 step: 'otp_sent',
                 email,
-                emailed,
-                message: emailed
-                    ? `A new 6-digit code was sent to ${email}.`
-                    : `We could not confirm email delivery. Check ${email} and spam, then try Resend again.`
-            };
-            const host = (() => {
-                try { return new URL(origin).hostname; } catch { return ''; }
-            })();
-            if (host === 'localhost' || host === '127.0.0.1') payload.devOtp = otp;
-            return jsonResponse(200, payload, origin);
+                mailOtp: otp,
+                message: `Enter the 6-digit code sent to ${email}. Check inbox and spam.`
+            }, origin);
         }
 
         const fullName = String(body.fullName || '').trim();
@@ -356,23 +349,14 @@ export default async (req, context) => {
             createdAt: new Date().toISOString()
         };
         await store.set(pendingKey(email), JSON.stringify(pending));
-        const emailed = await sendRegisterOtpEmail(email, fullName, otp, origin);
-
-        const payload = {
+        sendRegisterOtpEmail(email, fullName, otp, origin).catch(() => {});
+        return jsonResponse(200, {
             success: true,
             step: 'otp_sent',
             email,
-            emailed,
-            message: emailed
-                ? `We sent a 6-digit code to ${email}. Enter it below to finish registration.`
-                : `We could not confirm email delivery. Check ${email} (and spam), or try again in a minute.`
-        };
-        const host = (() => {
-            try { return new URL(origin).hostname; } catch { return ''; }
-        })();
-        if (host === 'localhost' || host === '127.0.0.1') payload.devOtp = otp;
-
-        return jsonResponse(200, payload, origin);
+            mailOtp: otp,
+            message: `Enter the 6-digit code sent to ${email}. Check inbox and spam.`
+        }, origin);
     } catch (err) {
         console.error('candidate-register error:', err);
         return jsonResponse(500, { error: 'Server error', message: err.message }, origin);
