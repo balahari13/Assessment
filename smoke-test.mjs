@@ -99,7 +99,7 @@ mustContain(join(deploy, 'privacy.html'), [
 
 console.log('\nSmoke test: candidate account + resume path');
 mustContain(join(deploy, 'careers.html'), ['id="signup-form"', 'id="signin-form"', 'suPassword', 'Begin Attempt 1', 'panel-forgot', 'Forgot password'], 'careers account + attempts');
-mustContain(join(deploy, 'careers.js'), ['candidate-register', 'candidate-login', 'passwordStrength', 'btn-attempt1', 'candidate-reset-password'], 'careers.js account flow');
+mustContain(join(deploy, 'careers.js'), ['candidateRegister', 'candidate-login', 'passwordStrength', 'btn-attempt1', 'candidate-reset-password'], 'careers.js account flow');
 mustContain(join(deploy, 'admin.html'), ['id="resumes-body"', 'Resume submissions', 'id="candidates-body"', 'Candidate accounts', 'Hiring pipeline', 'hr-team-body', 'admin-pipeline-board', 'admin-tabs', 'audit-body', 'btn-hr-invite', 'results-search'], 'admin tabs + pipeline + HR + audit');
 mustContain(join(deploy, 'admin.js'), ['loadResumes', 'handleResumeDelete', 'loadPipeline', 'loadHrTeam', 'loadAudit', 'initAdminTabs', 'ensureAssessmentData'], 'admin.js product UX');
 mustContain(join(deploy, 'api.js'), ['adminResumes', 'adminResumeDelete', 'adminCandidates', 'pipelineList', 'hrRegister', 'adminHrInvite', 'adminAudit'], 'api.js full admin/HR surface');
