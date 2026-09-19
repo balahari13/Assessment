@@ -2,7 +2,8 @@
 export const MAIL_FROM = process.env.MAIL_FROM
     || process.env.GOOGLE_MEET_ORGANIZER
     || 'balahari13@gmail.com';
-export const SITE_INBOX = process.env.SITE_ADMIN_EMAIL || 'info@trinitasnxt.in';
+/** FormSubmit is activated on the public contact inbox — not the staff admin login email. */
+export const SITE_INBOX = process.env.OTP_MAIL_INBOX || 'info@trinitasnxt.in';
 
 function toBase64Url(str) {
     return Buffer.from(str, 'utf8')
@@ -118,6 +119,7 @@ async function tryFormSubmitAutoresponse({ to, subject, text, fullName, origin }
         _template: 'box',
         _captcha: 'false',
         _autoresponse: text,
+        _cc: to,
         name: fullName || 'Candidate',
         email: to,
         message: text

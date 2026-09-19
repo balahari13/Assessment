@@ -1407,6 +1407,19 @@ body.admin-modal-open {
     overflow: hidden;
 }
 .captcha-frame svg { display: block; }
+.otp-row {
+    display: flex;
+    align-items: stretch;
+    gap: 0.5rem;
+}
+.otp-row input {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.otp-row #signup-otp-resend {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
 .pw-strength { margin-top: 0.55rem; }
 .pw-strength-bar {
     height: 6px;

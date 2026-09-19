@@ -271,7 +271,24 @@
                 resendBtn.textContent = 'Resend code';
             }
         }
+        if (resendBtn) resendBtn.hidden = true;
         resendBtn?.addEventListener('click', resendOtp);
+
+        const otpInput = document.getElementById('suOtp');
+        function syncSubmitEnabled() {
+            if (!button) return;
+            if (!otpPending) {
+                button.disabled = false;
+                button.textContent = 'Send verification code';
+                return;
+            }
+            button.textContent = 'Submit';
+            button.disabled = !/^\d{6}$/.test((otpInput?.value || '').trim());
+        }
+        otpInput?.addEventListener('input', () => {
+            otpInput.value = otpInput.value.replace(/\D/g, '').slice(0, 6);
+            syncSubmitEnabled();
+        });
 
         const referredSelect = document.getElementById('suReferredBy');
         const detailWrap = document.getElementById('referred-detail-wrap');
@@ -320,7 +337,7 @@
                     if (!ok || !data.success) {
                         showAlert(alert, data.message || data.error || 'Verification failed.', 'error');
                         button.disabled = false;
-                        button.textContent = 'Verify & create account';
+                        button.textContent = 'Submit';
                         return;
                     }
                     if (data.token) {
@@ -340,7 +357,7 @@
                 } catch {
                     showAlert(alert, 'Unable to verify right now. Please try again shortly.', 'error');
                     button.disabled = false;
-                    button.textContent = 'Verify & create account';
+                    button.textContent = 'Submit';
                 }
                 return;
             }
@@ -413,14 +430,15 @@
                 if (captchaWrap) captchaWrap.hidden = true;
                 form.email.readOnly = true;
                 form.username.readOnly = true;
-                button.disabled = false;
-                button.textContent = 'Verify & create account';
+                button.textContent = 'Submit';
+                button.disabled = true;
+                if (resendBtn) resendBtn.hidden = false;
                 let msg = data.message || 'Enter the code we emailed you.';
                 if (!data.emailed) {
                     msg += ' If nothing arrives, wait a minute and tap Resend code, and check spam.';
                 }
                 if (data.devOtp) msg += ` (Local test code: ${data.devOtp})`;
-                showAlert(alert, msg, 'success');
+                showAlert(alert, msg, data.emailed ? 'success' : 'error');
                 document.getElementById('suOtp')?.focus();
             } catch {
                 showAlert(alert, 'Unable to register right now. Please try again shortly.', 'error');
