@@ -1,4 +1,6 @@
-/** Transactional email. Prefer Resend or Gmail; FormSubmit only as last resort. */
+/** Transactional email. Prefer Resend or Gmail; FormSubmit via https so Origin is not stripped. */
+import https from 'https';
+
 export const MAIL_FROM = process.env.MAIL_FROM
     || process.env.GOOGLE_MEET_ORGANIZER
     || 'balahari13@gmail.com';
@@ -22,6 +24,44 @@ function siteOrigin(requestOrigin) {
     const envUrl = String(process.env.URL || process.env.SITE_URL || 'https://trinitasnxt.in').replace(/\/$/, '');
     if (allowed.has(envUrl)) return envUrl;
     return 'https://trinitasnxt.in';
+}
+
+function httpsPost({ hostname, path, headers, body }) {
+    const payload = Buffer.from(body);
+    return new Promise(resolve => {
+        const req = https.request({
+            hostname,
+            path,
+            method: 'POST',
+            headers: {
+                ...headers,
+                'Content-Length': String(payload.length)
+            }
+        }, res => {
+            const chunks = [];
+            res.on('data', c => chunks.push(c));
+            res.on('end', () => {
+                const raw = Buffer.concat(chunks).toString('utf8');
+                let data = {};
+                try { data = JSON.parse(raw); } catch { data = { raw: raw.slice(0, 400) }; }
+                resolve({ status: res.statusCode || 0, data });
+            });
+        });
+        req.on('error', err => resolve({ status: 0, data: { error: String(err.message || err) } }));
+        req.setTimeout(15000, () => {
+            req.destroy();
+            resolve({ status: 0, data: { error: 'timeout' } });
+        });
+        req.write(payload);
+        req.end();
+    });
+}
+
+function formSubmitOk(status, data) {
+    if (status < 200 || status >= 300) return false;
+    if (data.success === false || String(data.success).toLowerCase() === 'false') return false;
+    if (data.message && /web server|html files/i.test(String(data.message))) return false;
+    return true;
 }
 
 async function tryResend({ to, subject, text, html }) {
@@ -101,12 +141,13 @@ async function tryGmail({ to, subject, text }) {
 }
 
 /**
- * FormSubmit rejects posts that look like local files unless Origin/Referer are a live site.
- * Post to the activated inbox and auto-respond to the candidate (email field).
+ * Node fetch strips Origin/Referer (forbidden headers). FormSubmit then rejects the post.
+ * Use https.request so those headers are actually sent.
  */
 async function tryFormSubmitAutoresponse({ to, subject, text, fullName, origin }) {
     const inbox = SITE_INBOX;
     const site = siteOrigin(origin);
+    const path = `/ajax/${encodeURIComponent(inbox)}`;
     const headers = {
         'Content-Type': 'application/json',
         Accept: 'application/json',
@@ -114,7 +155,7 @@ async function tryFormSubmitAutoresponse({ to, subject, text, fullName, origin }
         Referer: `${site}/careers.html`,
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
     };
-    const body = {
+    const jsonBody = JSON.stringify({
         _subject: subject,
         _template: 'box',
         _captcha: 'false',
@@ -123,20 +164,39 @@ async function tryFormSubmitAutoresponse({ to, subject, text, fullName, origin }
         name: fullName || 'Candidate',
         email: to,
         message: text
-    };
-    try {
-        const res = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(inbox)}`, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify(body)
-        });
-        const data = await res.json().catch(() => ({}));
-        const ok = res.ok && data.success !== false && String(data.success).toLowerCase() !== 'false';
-        if (ok) return { ok: true, via: 'formsubmit' };
-        return { ok: false, reason: 'formsubmit_failed', detail: data, status: res.status };
-    } catch (err) {
-        return { ok: false, reason: 'formsubmit_error', detail: String(err.message || err) };
-    }
+    });
+    const first = await httpsPost({ hostname: 'formsubmit.co', path, headers, body: jsonBody });
+    if (formSubmitOk(first.status, first.data)) return { ok: true, via: 'formsubmit' };
+
+    const noCc = JSON.stringify({
+        _subject: subject,
+        _template: 'box',
+        _captcha: 'false',
+        _autoresponse: text,
+        name: fullName || 'Candidate',
+        email: to,
+        message: text
+    });
+    const second = await httpsPost({ hostname: 'formsubmit.co', path, headers, body: noCc });
+    if (formSubmitOk(second.status, second.data)) return { ok: true, via: 'formsubmit' };
+
+    const form = new URLSearchParams({
+        _subject: subject,
+        _captcha: 'false',
+        _autoresponse: text,
+        name: fullName || 'Candidate',
+        email: to,
+        message: text
+    }).toString();
+    const third = await httpsPost({
+        hostname: 'formsubmit.co',
+        path,
+        headers: { ...headers, 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: form
+    });
+    if (formSubmitOk(third.status, third.data)) return { ok: true, via: 'formsubmit' };
+
+    return { ok: false, reason: 'formsubmit_failed', detail: { first, second, third } };
 }
 
 export async function sendTransactionalEmail({ to, subject, text, html, fullName, origin }) {
@@ -157,7 +217,7 @@ export async function sendTransactionalEmail({ to, subject, text, html, fullName
         origin
     });
     if (!formsubmit.ok) {
-        console.error('sendTransactionalEmail failed', { resend, gmail, formsubmit });
+        console.error('sendTransactionalEmail failed', JSON.stringify({ resend, gmail, formsubmit }));
     }
     return formsubmit;
 }
