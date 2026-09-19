@@ -228,6 +228,51 @@
         });
         loadCaptcha();
 
+        const resendBtn = document.getElementById('signup-otp-resend');
+        async function resendOtp() {
+            if (!otpPending || !resendBtn) return;
+            const email = form.email.value.trim().toLowerCase();
+            if (!email) {
+                showAlert(alert, 'Email is required to resend the code.', 'error');
+                return;
+            }
+            resendBtn.disabled = true;
+            const prev = resendBtn.textContent;
+            resendBtn.textContent = 'Sending…';
+            try {
+                const { ok, data } = await window.TrinitasAPI.candidateRegister({
+                    step: 'resend-otp',
+                    email
+                });
+                if (!ok || !data.success) {
+                    showAlert(alert, data.message || data.error || 'Could not resend the code.', 'error');
+                    resendBtn.disabled = false;
+                    resendBtn.textContent = prev;
+                    return;
+                }
+                let msg = data.message || 'A new code was sent.';
+                if (data.devOtp) msg += ` (Local test code: ${data.devOtp})`;
+                showAlert(alert, msg, data.emailed ? 'success' : 'error');
+                let left = 45;
+                resendBtn.textContent = `Resend code (${left}s)`;
+                const tick = setInterval(() => {
+                    left -= 1;
+                    if (left <= 0) {
+                        clearInterval(tick);
+                        resendBtn.disabled = false;
+                        resendBtn.textContent = 'Resend code';
+                        return;
+                    }
+                    resendBtn.textContent = `Resend code (${left}s)`;
+                }, 1000);
+            } catch {
+                showAlert(alert, 'Unable to resend right now. Please try again shortly.', 'error');
+                resendBtn.disabled = false;
+                resendBtn.textContent = 'Resend code';
+            }
+        }
+        resendBtn?.addEventListener('click', resendOtp);
+
         const referredSelect = document.getElementById('suReferredBy');
         const detailWrap = document.getElementById('referred-detail-wrap');
         if (referredSelect && detailWrap) {
@@ -372,7 +417,7 @@
                 button.textContent = 'Verify & create account';
                 let msg = data.message || 'Enter the code we emailed you.';
                 if (!data.emailed) {
-                    msg += ' If nothing arrives, wait a minute and use Send verification code again, and check spam.';
+                    msg += ' If nothing arrives, wait a minute and tap Resend code, and check spam.';
                 }
                 if (data.devOtp) msg += ` (Local test code: ${data.devOtp})`;
                 showAlert(alert, msg, 'success');

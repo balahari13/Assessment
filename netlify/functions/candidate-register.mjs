@@ -236,6 +236,54 @@ export default async (req, context) => {
             }, origin);
         }
 
+        if (step === 'resend-otp') {
+            const email = normalizeEmail(body.email);
+            if (!email || !email.includes('@')) {
+                return jsonResponse(400, { error: 'validation', message: 'Email is required to resend the code.' }, origin);
+            }
+            const pendingRaw = await store.get(pendingKey(email), { type: 'text' });
+            if (!pendingRaw) {
+                return jsonResponse(400, { error: 'otp_expired', message: 'No pending registration found. Start again from the form.' }, origin);
+            }
+            const pending = JSON.parse(pendingRaw);
+            const lastSent = Number(pending.lastSentAt || pending.createdAt || 0);
+            const lastMs = Number.isFinite(lastSent) ? lastSent : Date.parse(pending.createdAt) || 0;
+            if (Date.now() - lastMs < 45 * 1000) {
+                return jsonResponse(429, {
+                    error: 'too_soon',
+                    message: 'Please wait about a minute before requesting another code.'
+                }, origin);
+            }
+            const resends = Number(pending.resendCount || 0);
+            if (resends >= 8) {
+                return jsonResponse(429, {
+                    error: 'too_many',
+                    message: 'Too many codes requested. Wait a few minutes or start registration again.'
+                }, origin);
+            }
+            const otp = String(randomInt(100000, 999999));
+            pending.otpHash = hashOtp(otp, email);
+            pending.otpExpiresAt = Date.now() + OTP_TTL_MS;
+            pending.lastSentAt = Date.now();
+            pending.resendCount = resends + 1;
+            await store.set(pendingKey(email), JSON.stringify(pending));
+            const emailed = await sendRegisterOtpEmail(email, pending.fullName, otp, origin);
+            const payload = {
+                success: true,
+                step: 'otp_sent',
+                email,
+                emailed,
+                message: emailed
+                    ? `A new 6-digit code was sent to ${email}.`
+                    : `We could not confirm email delivery. Check ${email} and spam, then try Resend again.`
+            };
+            const host = (() => {
+                try { return new URL(origin).hostname; } catch { return ''; }
+            })();
+            if (host === 'localhost' || host === '127.0.0.1') payload.devOtp = otp;
+            return jsonResponse(200, payload, origin);
+        }
+
         const fullName = String(body.fullName || '').trim();
         const email = normalizeEmail(body.email);
         const phone = String(body.phone || '').trim();
@@ -303,6 +351,8 @@ export default async (req, context) => {
             fileBase64,
             otpHash: hashOtp(otp, email),
             otpExpiresAt: Date.now() + OTP_TTL_MS,
+            lastSentAt: Date.now(),
+            resendCount: 0,
             createdAt: new Date().toISOString()
         };
         await store.set(pendingKey(email), JSON.stringify(pending));
