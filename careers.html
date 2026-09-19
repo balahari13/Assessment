@@ -124,7 +124,7 @@
 
                         <div class="careers-card careers-cv-card" id="panel-signup">
                             <h3>Create account &amp; submit resume</h3>
-                            <p class="section-desc">Register with a username and password, attach your CV, then sign in to start assessments.</p>
+                            <p class="section-desc">Register with a username and password, complete the captcha, verify your email with an OTP, then start assessments.</p>
                             <form class="register-form" id="signup-form" novalidate>
                                 <div class="form-field">
                                     <label for="suName">Full Name</label>
@@ -196,7 +196,20 @@
                                         <span>I agree Trinitas may store my account and resume for recruitment only.</span>
                                     </label>
                                 </div>
-                                <button type="submit" class="btn btn-primary btn-full" id="signup-btn">Create account &amp; submit resume</button>
+                                <div class="form-field" id="signup-captcha-wrap">
+                                    <label for="suCaptcha">Captcha</label>
+                                    <div class="captcha-row">
+                                        <div class="captcha-frame" id="signup-captcha-img" aria-hidden="true"></div>
+                                        <button type="button" class="btn btn-secondary btn-sm" id="signup-captcha-refresh">Refresh</button>
+                                    </div>
+                                    <input type="text" id="suCaptcha" name="captcha" required placeholder="Enter the letters shown" autocomplete="off" maxlength="8" spellcheck="false">
+                                </div>
+                                <div class="form-field" id="signup-otp-wrap" hidden>
+                                    <label for="suOtp">Email verification code</label>
+                                    <input type="text" id="suOtp" name="otp" placeholder="6-digit code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code">
+                                    <span class="field-hint">We emailed a code to the address you entered. It expires in 10 minutes.</span>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-full" id="signup-btn">Send verification code</button>
                             </form>
                             <div id="signup-alert" class="form-alert" hidden></div>
                         </div>

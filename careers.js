@@ -203,6 +203,31 @@
         const alert = document.getElementById('signup-alert');
         if (!form) return;
 
+        let captchaId = '';
+        let otpPending = false;
+        const captchaBox = document.getElementById('signup-captcha-img');
+        const otpWrap = document.getElementById('signup-otp-wrap');
+        const captchaWrap = document.getElementById('signup-captcha-wrap');
+        const button = document.getElementById('signup-btn');
+
+        async function loadCaptcha() {
+            if (!captchaBox || !window.TrinitasAPI?.registerCaptcha) return;
+            const { ok, data } = await window.TrinitasAPI.registerCaptcha();
+            if (!ok || !data.svg) {
+                captchaBox.innerHTML = '<span class="field-hint">Unable to load captcha</span>';
+                return;
+            }
+            captchaId = data.id || '';
+            captchaBox.innerHTML = data.svg;
+            const input = document.getElementById('suCaptcha');
+            if (input) input.value = '';
+        }
+
+        document.getElementById('signup-captcha-refresh')?.addEventListener('click', () => {
+            loadCaptcha();
+        });
+        loadCaptcha();
+
         const referredSelect = document.getElementById('suReferredBy');
         const detailWrap = document.getElementById('referred-detail-wrap');
         if (referredSelect && detailWrap) {
@@ -230,6 +255,50 @@
             const notes = form.notes.value.trim();
             const consent = form.consent.checked;
             const file = document.getElementById('suFile')?.files?.[0];
+            const captchaAnswer = (form.captcha?.value || '').trim();
+            const otp = (form.otp?.value || '').trim();
+
+            if (otpPending) {
+                if (!/^\d{6}$/.test(otp)) {
+                    showAlert(alert, 'Enter the 6-digit code from your email.', 'error');
+                    return;
+                }
+                if (!button) return;
+                button.disabled = true;
+                button.textContent = 'Verifying…';
+                try {
+                    const { ok, data } = await window.TrinitasAPI.candidateRegister({
+                        step: 'complete',
+                        email,
+                        otp
+                    });
+                    if (!ok || !data.success) {
+                        showAlert(alert, data.message || data.error || 'Verification failed.', 'error');
+                        button.disabled = false;
+                        button.textContent = 'Verify & create account';
+                        return;
+                    }
+                    if (data.token) {
+                        setCandidate({
+                            token: data.token,
+                            username: data.username,
+                            fullName: data.fullName,
+                            email: data.email,
+                            phone: data.phone,
+                            referenceId: data.referenceId || null
+                        });
+                        showLoggedIn(getCandidate());
+                        if (data.referenceId) {
+                            showAlert(alert, `Account created. Reference ID: ${data.referenceId}`, 'success');
+                        }
+                    }
+                } catch {
+                    showAlert(alert, 'Unable to verify right now. Please try again shortly.', 'error');
+                    button.disabled = false;
+                    button.textContent = 'Verify & create account';
+                }
+                return;
+            }
 
             const strength = passwordStrength(password);
             if (!fullName || !email || !phone || !username || !consent) {
@@ -252,11 +321,14 @@
                 showAlert(alert, 'Resume must be under 1.5 MB.', 'error');
                 return;
             }
+            if (!captchaId || !captchaAnswer) {
+                showAlert(alert, 'Complete the captcha before we send a verification code.', 'error');
+                return;
+            }
 
-            const button = document.getElementById('signup-btn');
-            const label = button.textContent;
+            if (!button) return;
             button.disabled = true;
-            button.textContent = 'Creating account…';
+            button.textContent = 'Sending code…';
 
             try {
                 const fileBase64 = await new Promise((resolve, reject) => {
@@ -266,54 +338,48 @@
                     reader.readAsDataURL(file);
                 });
 
-                const res = await fetch('/.netlify/functions/candidate-register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        fullName,
-                        email,
-                        phone,
-                        username,
-                        password,
-                        role,
-                        referredBy,
-                        referredDetail,
-                        notes,
-                        fileName: file.name,
-                        fileType: file.type || 'application/pdf',
-                        fileBase64
-                    })
+                const { ok, data } = await window.TrinitasAPI.candidateRegister({
+                    step: 'send-otp',
+                    fullName,
+                    email,
+                    phone,
+                    username,
+                    password,
+                    role,
+                    referredBy,
+                    referredDetail,
+                    notes,
+                    fileName: file.name,
+                    fileType: file.type || 'application/pdf',
+                    fileBase64,
+                    captchaId,
+                    captchaAnswer
                 });
-                const data = await res.json().catch(() => ({}));
-                if (!res.ok || !data.success) {
-                    showAlert(alert, data.message || data.error || 'Registration failed.', 'error');
+                if (!ok || !data.success) {
+                    showAlert(alert, data.message || data.error || 'Could not send the code.', 'error');
+                    loadCaptcha();
                     button.disabled = false;
-                    button.textContent = label;
+                    button.textContent = 'Send verification code';
                     return;
                 }
 
-                if (data.token) {
-                    setCandidate({
-                        token: data.token,
-                        username: data.username,
-                        fullName: data.fullName,
-                        email: data.email,
-                        phone: data.phone,
-                        referenceId: data.referenceId || null
-                    });
-                    showLoggedIn(getCandidate());
-                    if (data.referenceId) {
-                        showAlert(alert, `Account created. Reference ID: ${data.referenceId}`, 'success');
-                    }
-                } else {
-                    showAlert(alert, data.message || 'Account created. Please sign in.', 'success');
-                    document.querySelector('.careers-tab[data-panel="signin"]')?.click();
-                }
+                otpPending = true;
+                if (otpWrap) otpWrap.hidden = false;
+                if (captchaWrap) captchaWrap.hidden = true;
+                form.email.readOnly = true;
+                form.username.readOnly = true;
+                button.disabled = false;
+                button.textContent = 'Verify & create account';
+                let msg = data.message || 'Enter the code we emailed you.';
+                if (data.devOtp) msg += ` (Local test code: ${data.devOtp})`;
+                showAlert(alert, msg, 'success');
+                document.getElementById('suOtp')?.focus();
             } catch {
                 showAlert(alert, 'Unable to register right now. Please try again shortly.', 'error');
+                loadCaptcha();
+                button.disabled = false;
+                button.textContent = 'Send verification code';
             }
-            button.disabled = false;
-            button.textContent = label;
         });
     }
 

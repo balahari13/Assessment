@@ -118,7 +118,9 @@ mustExist(join(functionsDir, 'candidate-reset-password.mjs'), 'function candidat
 mustExist(join(functionsDir, 'admin-candidates.mjs'), 'function admin-candidates.mjs');
 mustExist(join(functionsDir, 'admin-password-reset.mjs'), 'function admin-password-reset.mjs');
 mustExist(join(functionsDir, 'admin-resumes.mjs'), 'function admin-resumes.mjs');
-mustContain(join(functionsDir, 'candidate-register.mjs'), ['export default', 'fileBase64', 'passwordHash', 'token'], 'candidate-register handler');
+mustContain(join(functionsDir, 'candidate-register.mjs'), ['export default', 'fileBase64', 'passwordHash', 'token', 'send-otp', 'captcha'], 'candidate-register handler');
+mustExist(join(functionsDir, 'register-captcha.mjs'), 'function register-captcha.mjs');
+mustContain(join(deploy, 'careers.html'), ['signup-captcha', 'suOtp', 'Send verification code'], 'careers registration captcha + OTP');
 mustContain(join(functionsDir, 'candidate-reset-password.mjs'), ['export default', 'passwordResetEnabled', 'passwordHash'], 'candidate-reset-password handler');
 mustContain(join(functionsDir, 'admin-password-reset.mjs'), ['export default', 'enable', 'set-temp', 'verifyAdminToken'], 'admin-password-reset handler');
 mustContain(join(functionsDir, 'admin-resumes.mjs'), ['export default', 'verifyAdminToken', 'resume-index', 'delete'], 'admin-resumes handler');
@@ -173,6 +175,7 @@ console.log('\nSmoke test: functions directory inventory');
 const fnFiles = readdirSync(functionsDir).filter(f => f.endsWith('.mjs'));
 const requiredFns = [
     'candidate-register.mjs',
+    'register-captcha.mjs',
     'candidate-login.mjs',
     'candidate-reset-password.mjs',
     'admin-candidates.mjs',

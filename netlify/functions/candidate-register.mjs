@@ -1,4 +1,4 @@
-import { randomBytes } from 'crypto';
+import { createHash, randomBytes, randomInt, timingSafeEqual } from 'crypto';
 import {
     corsHeaders,
     jsonResponse,
@@ -11,9 +11,39 @@ import { writeAudit } from './lib/audit.mjs';
 
 const CANDIDATE_INDEX = 'candidate-index';
 const MAX_BYTES = 1.5 * 1024 * 1024;
+const OTP_TTL_MS = 10 * 60 * 1000;
+const FORM_EMAIL = 'info@trinitasnxt.in';
+const ALLOWED_SOURCES = ['Job portal', 'LinkedIn', 'Friends', 'Word of mouth', 'Employee referral'];
 
 function candidateKey(username) {
     return `candidate:${String(username || '').trim().toLowerCase()}`;
+}
+
+function pendingKey(email) {
+    return `reg-pending:${normalizeEmail(email)}`;
+}
+
+function captchaKey(id) {
+    return `reg-captcha:${id}`;
+}
+
+function hashOtp(otp, email) {
+    return createHash('sha256').update(`${otp}:${normalizeEmail(email)}:trinitas-register`).digest('hex');
+}
+
+function hashCaptcha(id, answer) {
+    return createHash('sha256').update(`${id}:${String(answer).toUpperCase()}:trinitas-captcha`).digest('hex');
+}
+
+function safeEqualHex(a, b) {
+    try {
+        const ba = Buffer.from(String(a), 'hex');
+        const bb = Buffer.from(String(b), 'hex');
+        if (ba.length !== bb.length) return false;
+        return timingSafeEqual(ba, bb);
+    } catch {
+        return false;
+    }
 }
 
 function validatePassword(password) {
@@ -31,6 +61,139 @@ function validateUsername(username) {
     return null;
 }
 
+async function emailTaken(store, email, exceptUsername) {
+    const idxRaw = await store.get(CANDIDATE_INDEX, { type: 'text' });
+    const index = idxRaw ? JSON.parse(idxRaw) : [];
+    for (const username of index) {
+        if (exceptUsername && username === exceptUsername) continue;
+        const raw = await store.get(candidateKey(username), { type: 'text' });
+        if (!raw) continue;
+        try {
+            const rec = JSON.parse(raw);
+            if (normalizeEmail(rec.email) === email) return true;
+        } catch {
+            /* skip */
+        }
+    }
+    return false;
+}
+
+async function consumeCaptcha(store, id, answer) {
+    if (!id || !answer) return false;
+    const raw = await store.get(captchaKey(id), { type: 'text' });
+    if (!raw) return false;
+    let rec;
+    try {
+        rec = JSON.parse(raw);
+    } catch {
+        return false;
+    }
+    await store.delete(captchaKey(id));
+    if (Date.now() > Number(rec.expiresAt || 0)) return false;
+    return safeEqualHex(rec.hash, hashCaptcha(id, answer));
+}
+
+async function sendRegisterOtpEmail(toEmail, fullName, otp) {
+    const targets = [toEmail, FORM_EMAIL];
+    let anyOk = false;
+    for (const target of targets) {
+        try {
+            const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(target)}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                body: JSON.stringify({
+                    _subject: 'Trinitas registration OTP',
+                    _template: 'table',
+                    _captcha: 'false',
+                    name: fullName || 'Candidate',
+                    email: toEmail,
+                    message: `Your Trinitas registration code is: ${otp}. It is valid for 10 minutes. Enter it on the Careers page to finish creating your account.`,
+                    otp_code: otp,
+                    candidate_email: toEmail
+                })
+            });
+            const data = await response.json().catch(() => ({}));
+            if (response.ok && data.success !== false) anyOk = true;
+        } catch {
+            /* try next */
+        }
+    }
+    return anyOk;
+}
+
+async function createAccount(store, pending) {
+    const username = pending.username;
+    const resumeId = `resume-${Date.now()}-${username.replace(/[^a-z0-9]/g, '')}`;
+    const referenceId = generateReferenceId();
+
+    const resumeRecord = {
+        id: resumeId,
+        fullName: pending.fullName,
+        email: pending.email,
+        phone: pending.phone,
+        role: pending.role,
+        referredBy: pending.referredBy,
+        referredDetail: pending.referredDetail,
+        notes: pending.notes,
+        fileName: pending.fileName,
+        fileType: pending.fileType,
+        fileBase64: pending.fileBase64,
+        username,
+        referenceId,
+        submittedAt: new Date().toISOString()
+    };
+    await store.set(`resume:${resumeId}`, JSON.stringify(resumeRecord));
+
+    const resumeIdxRaw = await store.get('resume-index', { type: 'text' });
+    const resumeIndex = resumeIdxRaw ? JSON.parse(resumeIdxRaw) : [];
+    resumeIndex.unshift(resumeId);
+    await store.set('resume-index', JSON.stringify(resumeIndex.slice(0, 500)));
+
+    const candidate = {
+        username,
+        fullName: pending.fullName,
+        email: pending.email,
+        phone: pending.phone,
+        salt: pending.salt,
+        passwordHash: pending.passwordHash,
+        resumeId,
+        role: pending.role,
+        referredBy: pending.referredBy,
+        referredDetail: pending.referredDetail,
+        referenceId,
+        passwordResetEnabled: false,
+        createdAt: new Date().toISOString()
+    };
+    await store.set(candidateKey(username), JSON.stringify(candidate));
+
+    const idxRaw = await store.get(CANDIDATE_INDEX, { type: 'text' });
+    const index = idxRaw ? JSON.parse(idxRaw) : [];
+    if (!index.includes(username)) {
+        index.push(username);
+        await store.set(CANDIDATE_INDEX, JSON.stringify(index));
+    }
+
+    const token = randomBytes(24).toString('hex');
+    await store.set(`candidate-session:${token}`, JSON.stringify({
+        username: candidate.username,
+        email: candidate.email,
+        fullName: candidate.fullName,
+        phone: candidate.phone,
+        referenceId,
+        expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000
+    }));
+
+    await writeAudit(store, {
+        actor: username,
+        role: 'candidate',
+        action: 'candidate_register',
+        target: candidate.email,
+        meta: { referenceId, resumeId }
+    });
+
+    return { token, username, fullName: candidate.fullName, email: candidate.email, phone: candidate.phone, referenceId };
+}
+
 export default async (req, context) => {
     const origin = req.headers.get('origin') || '';
     if (req.method === 'OPTIONS') {
@@ -42,19 +205,55 @@ export default async (req, context) => {
 
     try {
         const body = await req.json();
+        const step = String(body.step || 'send-otp');
+        const store = getAssessmentStore(context);
+
+        if (step === 'complete') {
+            const email = normalizeEmail(body.email);
+            const otp = String(body.otp || '').trim();
+            if (!email || !/^\d{6}$/.test(otp)) {
+                return jsonResponse(400, { error: 'validation', message: 'Enter the 6-digit code sent to your email.' }, origin);
+            }
+            const pendingRaw = await store.get(pendingKey(email), { type: 'text' });
+            if (!pendingRaw) {
+                return jsonResponse(400, { error: 'otp_expired', message: 'That code has expired. Request a new one and try again.' }, origin);
+            }
+            const pending = JSON.parse(pendingRaw);
+            if (Date.now() > Number(pending.otpExpiresAt || 0)) {
+                await store.delete(pendingKey(email));
+                return jsonResponse(400, { error: 'otp_expired', message: 'That code has expired. Request a new one and try again.' }, origin);
+            }
+            if (!safeEqualHex(pending.otpHash, hashOtp(otp, email))) {
+                return jsonResponse(400, { error: 'invalid_otp', message: 'That code is not correct. Check the email and try again.' }, origin);
+            }
+            const existing = await store.get(candidateKey(pending.username), { type: 'text' });
+            if (existing) {
+                await store.delete(pendingKey(email));
+                return jsonResponse(409, { error: 'exists', message: 'That username is already taken. Choose another or sign in.' }, origin);
+            }
+            const created = await createAccount(store, pending);
+            await store.delete(pendingKey(email));
+            return jsonResponse(200, {
+                success: true,
+                ...created,
+                message: `Account created. Your reference ID is ${created.referenceId}. You can start Attempt 1 now.`
+            }, origin);
+        }
+
         const fullName = String(body.fullName || '').trim();
         const email = normalizeEmail(body.email);
         const phone = String(body.phone || '').trim();
         const username = String(body.username || '').trim().toLowerCase();
         const password = String(body.password || '');
         const role = String(body.role || 'General application').trim().slice(0, 120);
-        const ALLOWED_SOURCES = ['Job portal', 'LinkedIn', 'Friends', 'Word of mouth', 'Employee referral'];
         const referredBy = String(body.referredBy || '').trim();
         const referredDetail = String(body.referredDetail || '').trim().slice(0, 120);
         const notes = String(body.notes || '').trim().slice(0, 1000);
         const fileName = String(body.fileName || '').trim().slice(0, 180);
         const fileType = String(body.fileType || 'application/pdf').trim().slice(0, 80);
         const fileBase64 = String(body.fileBase64 || '').replace(/^data:[^;]+;base64,/, '');
+        const captchaId = String(body.captchaId || '').trim();
+        const captchaAnswer = String(body.captchaAnswer || '').trim();
 
         if (!fullName || !email || !email.includes('@') || !phone) {
             return jsonResponse(400, { error: 'validation', message: 'Name, email, and phone are required.' }, origin);
@@ -77,21 +276,28 @@ export default async (req, context) => {
             return jsonResponse(400, { error: 'validation', message: 'Only PDF or Word resumes are accepted.' }, origin);
         }
 
-        const store = getAssessmentStore(context);
+        const captchaOk = await consumeCaptcha(store, captchaId, captchaAnswer);
+        if (!captchaOk) {
+            return jsonResponse(400, { error: 'captcha', message: 'Captcha is incorrect or expired. Refresh it and try again.' }, origin);
+        }
+
         const existing = await store.get(candidateKey(username), { type: 'text' });
         if (existing) {
             return jsonResponse(409, { error: 'exists', message: 'That username is already taken. Choose another or sign in.' }, origin);
         }
+        if (await emailTaken(store, email)) {
+            return jsonResponse(409, { error: 'exists', message: 'An account already exists for this email. Sign in instead.' }, origin);
+        }
 
         const { salt, passwordHash } = hashPassword(password);
-        const resumeId = `resume-${Date.now()}-${username.replace(/[^a-z0-9]/g, '')}`;
-        const referenceId = generateReferenceId();
-
-        const resumeRecord = {
-            id: resumeId,
+        const otp = String(randomInt(100000, 999999));
+        const pending = {
             fullName,
             email,
             phone,
+            username,
+            salt,
+            passwordHash,
             role,
             referredBy,
             referredDetail,
@@ -99,69 +305,28 @@ export default async (req, context) => {
             fileName,
             fileType,
             fileBase64,
-            username,
-            referenceId,
-            submittedAt: new Date().toISOString()
-        };
-        await store.set(`resume:${resumeId}`, JSON.stringify(resumeRecord));
-
-        const resumeIdxRaw = await store.get('resume-index', { type: 'text' });
-        const resumeIndex = resumeIdxRaw ? JSON.parse(resumeIdxRaw) : [];
-        resumeIndex.unshift(resumeId);
-        await store.set('resume-index', JSON.stringify(resumeIndex.slice(0, 500)));
-
-        const candidate = {
-            username,
-            fullName,
-            email,
-            phone,
-            salt,
-            passwordHash,
-            resumeId,
-            role,
-            referredBy,
-            referredDetail,
-            referenceId,
-            passwordResetEnabled: false,
+            otpHash: hashOtp(otp, email),
+            otpExpiresAt: Date.now() + OTP_TTL_MS,
             createdAt: new Date().toISOString()
         };
-        await store.set(candidateKey(username), JSON.stringify(candidate));
+        await store.set(pendingKey(email), JSON.stringify(pending));
+        const emailed = await sendRegisterOtpEmail(email, fullName, otp);
 
-        const idxRaw = await store.get(CANDIDATE_INDEX, { type: 'text' });
-        const index = idxRaw ? JSON.parse(idxRaw) : [];
-        if (!index.includes(username)) {
-            index.push(username);
-            await store.set(CANDIDATE_INDEX, JSON.stringify(index));
-        }
-
-        const token = randomBytes(24).toString('hex');
-        await store.set(`candidate-session:${token}`, JSON.stringify({
-            username: candidate.username,
-            email: candidate.email,
-            fullName: candidate.fullName,
-            phone: candidate.phone,
-            referenceId,
-            expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000
-        }));
-
-        await writeAudit(store, {
-            actor: username,
-            role: 'candidate',
-            action: 'candidate_register',
-            target: email,
-            meta: { referenceId, resumeId }
-        });
-
-        return jsonResponse(200, {
+        const payload = {
             success: true,
-            token,
-            username,
-            fullName,
+            step: 'otp_sent',
             email,
-            phone,
-            referenceId,
-            message: `Account created. Your reference ID is ${referenceId}. You can start Attempt 1 now.`
-        }, origin);
+            emailed,
+            message: emailed
+                ? `We sent a 6-digit code to ${email}. Enter it below to finish registration.`
+                : `We could not confirm email delivery. Check ${email} (and spam), or try again in a minute.`
+        };
+        const host = (() => {
+            try { return new URL(origin).hostname; } catch { return ''; }
+        })();
+        if (host === 'localhost' || host === '127.0.0.1') payload.devOtp = otp;
+
+        return jsonResponse(200, payload, origin);
     } catch (err) {
         console.error('candidate-register error:', err);
         return jsonResponse(500, { error: 'Server error', message: err.message }, origin);

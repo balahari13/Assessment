@@ -188,6 +188,17 @@
             });
         },
 
+        async registerCaptcha() {
+            return request('/register-captcha', { method: 'GET' });
+        },
+
+        async candidateRegister(payload) {
+            return request('/candidate-register', {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+        },
+
         async submitAssessment(payload) {
             try {
                 const contactEmail = resolveContactEmail(payload);
