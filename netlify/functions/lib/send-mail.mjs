@@ -1,10 +1,9 @@
-/** Transactional email. Prefer Resend or Gmail; FormSubmit via https so Origin is not stripped. */
+/** OTP mail: Resend, Gmail API, Calendar invite (uses existing Google OAuth), then FormSubmit. */
 import https from 'https';
 
 export const MAIL_FROM = process.env.MAIL_FROM
     || process.env.GOOGLE_MEET_ORGANIZER
     || 'balahari13@gmail.com';
-/** FormSubmit is activated on the public contact inbox — not the staff admin login email. */
 export const SITE_INBOX = process.env.OTP_MAIL_INBOX || 'info@trinitasnxt.in';
 
 function toBase64Url(str) {
@@ -16,10 +15,7 @@ function toBase64Url(str) {
 }
 
 function siteOrigin(requestOrigin) {
-    const allowed = new Set([
-        'https://trinitasnxt.in',
-        'https://www.trinitasnxt.in'
-    ]);
+    const allowed = new Set(['https://trinitasnxt.in', 'https://www.trinitasnxt.in']);
     if (requestOrigin && allowed.has(requestOrigin)) return requestOrigin;
     const envUrl = String(process.env.URL || process.env.SITE_URL || 'https://trinitasnxt.in').replace(/\/$/, '');
     if (allowed.has(envUrl)) return envUrl;
@@ -33,10 +29,7 @@ function httpsPost({ hostname, path, headers, body }) {
             hostname,
             path,
             method: 'POST',
-            headers: {
-                ...headers,
-                'Content-Length': String(payload.length)
-            }
+            headers: { ...headers, 'Content-Length': String(payload.length) }
         }, res => {
             const chunks = [];
             res.on('data', c => chunks.push(c));
@@ -48,7 +41,7 @@ function httpsPost({ hostname, path, headers, body }) {
             });
         });
         req.on('error', err => resolve({ status: 0, data: { error: String(err.message || err) } }));
-        req.setTimeout(15000, () => {
+        req.setTimeout(12000, () => {
             req.destroy();
             resolve({ status: 0, data: { error: 'timeout' } });
         });
@@ -71,17 +64,8 @@ async function tryResend({ to, subject, text, html }) {
     try {
         const res = await fetch('https://api.resend.com/emails', {
             method: 'POST',
-            headers: {
-                Authorization: `Bearer ${key}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                from,
-                to: [to],
-                subject,
-                text,
-                html: html || undefined
-            })
+            headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ from, to: [to], subject, text, html: html || undefined })
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) return { ok: false, reason: 'resend_failed', detail: data };
@@ -113,9 +97,8 @@ async function googleAccessToken() {
 async function tryGmail({ to, subject, text }) {
     const access = await googleAccessToken();
     if (!access) return { ok: false, reason: 'not_configured' };
-    const from = MAIL_FROM;
     const raw = [
-        `From: Trinitas NextGen <${from}>`,
+        `From: Trinitas NextGen <${MAIL_FROM}>`,
         `To: ${to}`,
         `Subject: ${subject}`,
         'MIME-Version: 1.0',
@@ -126,10 +109,7 @@ async function tryGmail({ to, subject, text }) {
     try {
         const res = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
             method: 'POST',
-            headers: {
-                Authorization: `Bearer ${access}`,
-                'Content-Type': 'application/json'
-            },
+            headers: { Authorization: `Bearer ${access}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({ raw: toBase64Url(raw) })
         });
         const data = await res.json().catch(() => ({}));
@@ -140,14 +120,43 @@ async function tryGmail({ to, subject, text }) {
     }
 }
 
-/**
- * Node fetch strips Origin/Referer (forbidden headers). FormSubmit then rejects the post.
- * Use https.request so those headers are actually sent.
- */
-async function tryFormSubmitAutoresponse({ to, subject, text, fullName, origin }) {
-    const inbox = SITE_INBOX;
+/** Calendar invites email attendees. Uses the same OAuth as Google Meet. */
+async function tryCalendarInvite({ to, subject, text }) {
+    const access = await googleAccessToken();
+    if (!access) return { ok: false, reason: 'not_configured' };
+    const start = new Date(Date.now() + 10 * 60 * 1000);
+    const end = new Date(start.getTime() + 15 * 60 * 1000);
+    try {
+        const res = await fetch(
+            'https://www.googleapis.com/calendar/v3/calendars/primary/events?sendUpdates=all',
+            {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${access}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    summary: subject,
+                    description: text,
+                    start: { dateTime: start.toISOString() },
+                    end: { dateTime: end.toISOString() },
+                    attendees: [{ email: to }],
+                    guestsCanModify: false,
+                    guestsCanInviteOthers: false,
+                    transparency: 'transparent',
+                    visibility: 'private'
+                })
+            }
+        );
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) return { ok: false, reason: 'calendar_failed', detail: data };
+        return { ok: true, via: 'calendar' };
+    } catch (err) {
+        return { ok: false, reason: 'calendar_error', detail: String(err.message || err) };
+    }
+}
+
+async function tryFormSubmit({ to, subject, text, fullName, origin }) {
     const site = siteOrigin(origin);
-    const path = `/ajax/${encodeURIComponent(inbox)}`;
+    const inboxes = [...new Set([SITE_INBOX, 'info@trinitasnxt.in', MAIL_FROM])];
+    const short = text.length > 900 ? `${text.slice(0, 880)}\n…` : text;
     const headers = {
         'Content-Type': 'application/json',
         Accept: 'application/json',
@@ -155,48 +164,27 @@ async function tryFormSubmitAutoresponse({ to, subject, text, fullName, origin }
         Referer: `${site}/careers.html`,
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
     };
-    const jsonBody = JSON.stringify({
-        _subject: subject,
-        _template: 'box',
-        _captcha: 'false',
-        _autoresponse: text,
-        _cc: to,
-        name: fullName || 'Candidate',
-        email: to,
-        message: text
-    });
-    const first = await httpsPost({ hostname: 'formsubmit.co', path, headers, body: jsonBody });
-    if (formSubmitOk(first.status, first.data)) return { ok: true, via: 'formsubmit' };
-
-    const noCc = JSON.stringify({
-        _subject: subject,
-        _template: 'box',
-        _captcha: 'false',
-        _autoresponse: text,
-        name: fullName || 'Candidate',
-        email: to,
-        message: text
-    });
-    const second = await httpsPost({ hostname: 'formsubmit.co', path, headers, body: noCc });
-    if (formSubmitOk(second.status, second.data)) return { ok: true, via: 'formsubmit' };
-
-    const form = new URLSearchParams({
-        _subject: subject,
-        _captcha: 'false',
-        _autoresponse: text,
-        name: fullName || 'Candidate',
-        email: to,
-        message: text
-    }).toString();
-    const third = await httpsPost({
-        hostname: 'formsubmit.co',
-        path,
-        headers: { ...headers, 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: form
-    });
-    if (formSubmitOk(third.status, third.data)) return { ok: true, via: 'formsubmit' };
-
-    return { ok: false, reason: 'formsubmit_failed', detail: { first, second, third } };
+    let last = { ok: false, reason: 'formsubmit_failed' };
+    for (const inbox of inboxes) {
+        const body = JSON.stringify({
+            _subject: subject,
+            _template: 'box',
+            _captcha: 'false',
+            _autoresponse: short,
+            name: fullName || 'Candidate',
+            email: to,
+            message: short
+        });
+        const result = await httpsPost({
+            hostname: 'formsubmit.co',
+            path: `/ajax/${encodeURIComponent(inbox)}`,
+            headers,
+            body
+        });
+        if (formSubmitOk(result.status, result.data)) return { ok: true, via: `formsubmit:${inbox}` };
+        last = { ok: false, reason: 'formsubmit_failed', inbox, detail: result };
+    }
+    return last;
 }
 
 export async function sendTransactionalEmail({ to, subject, text, html, fullName, origin }) {
@@ -209,15 +197,12 @@ export async function sendTransactionalEmail({ to, subject, text, html, fullName
     const gmail = await tryGmail({ to: dest, subject, text });
     if (gmail.ok) return gmail;
 
-    const formsubmit = await tryFormSubmitAutoresponse({
-        to: dest,
-        subject,
-        text,
-        fullName,
-        origin
-    });
+    const calendar = await tryCalendarInvite({ to: dest, subject, text });
+    if (calendar.ok) return calendar;
+
+    const formsubmit = await tryFormSubmit({ to: dest, subject, text, fullName, origin });
     if (!formsubmit.ok) {
-        console.error('sendTransactionalEmail failed', JSON.stringify({ resend, gmail, formsubmit }));
+        console.error('sendTransactionalEmail failed', JSON.stringify({ resend, gmail, calendar, formsubmit }));
     }
     return formsubmit;
 }

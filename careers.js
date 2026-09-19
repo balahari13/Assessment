@@ -434,7 +434,9 @@
                 button.disabled = true;
                 if (resendBtn) resendBtn.hidden = false;
                 let msg = data.message || 'Enter the code we emailed you.';
-                if (!data.emailed) {
+                if (data.emailed) {
+                    msg += ' Also check spam and Google Calendar invitations.';
+                } else {
                     msg += ' If nothing arrives, wait a minute and tap Resend code, and check spam.';
                 }
                 if (data.devOtp) msg += ` (Local test code: ${data.devOtp})`;
