@@ -118,11 +118,10 @@ mustExist(join(functionsDir, 'candidate-reset-password.mjs'), 'function candidat
 mustExist(join(functionsDir, 'admin-candidates.mjs'), 'function admin-candidates.mjs');
 mustExist(join(functionsDir, 'admin-password-reset.mjs'), 'function admin-password-reset.mjs');
 mustExist(join(functionsDir, 'admin-resumes.mjs'), 'function admin-resumes.mjs');
-mustContain(join(functionsDir, 'candidate-register.mjs'), ['export default', 'fileBase64', 'passwordHash', 'token', 'send-otp', 'captcha', 'sendTransactionalEmail'], 'candidate-register handler');
+mustContain(join(functionsDir, 'candidate-register.mjs'), ['export default', 'fileBase64', 'passwordHash', 'token', 'captcha', 'createAccount'], 'candidate-register handler');
 mustContain(join(functionsDir, 'lib', 'send-mail.mjs'), ['tryCalendarInvite', 'sendUpdates=all', 'formsubmit.co', 'info@trinitasnxt.in'], 'OTP mailer');
 mustExist(join(functionsDir, 'register-captcha.mjs'), 'function register-captcha.mjs');
-mustContain(join(deploy, 'careers.html'), ['signup-captcha', 'suOtp', 'signup-otp-resend', 'Send verification code'], 'careers registration captcha + OTP');
-mustContain(join(functionsDir, 'candidate-register.mjs'), ['resend-otp'], 'registration OTP resend');
+mustContain(join(deploy, 'careers.html'), ['signup-captcha', 'Create account'], 'careers registration captcha');
 mustContain(join(functionsDir, 'candidate-reset-password.mjs'), ['export default', 'passwordResetEnabled', 'passwordHash'], 'candidate-reset-password handler');
 mustContain(join(functionsDir, 'admin-password-reset.mjs'), ['export default', 'enable', 'set-temp', 'verifyAdminToken'], 'admin-password-reset handler');
 mustContain(join(functionsDir, 'admin-resumes.mjs'), ['export default', 'verifyAdminToken', 'resume-index', 'delete'], 'admin-resumes handler');

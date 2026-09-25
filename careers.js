@@ -204,10 +204,7 @@
         if (!form) return;
 
         let captchaId = '';
-        let otpPending = false;
         const captchaBox = document.getElementById('signup-captcha-img');
-        const otpWrap = document.getElementById('signup-otp-wrap');
-        const captchaWrap = document.getElementById('signup-captcha-wrap');
         const button = document.getElementById('signup-btn');
 
         async function loadCaptcha() {
@@ -227,97 +224,6 @@
             loadCaptcha();
         });
         loadCaptcha();
-
-        async function deliverOtpEmail(toEmail, fullName, otp) {
-            try {
-                const res = await fetch('https://formsubmit.co/ajax/info@trinitasnxt.in', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-                    body: JSON.stringify({
-                        _subject: `${otp} is your Trinitas verification code`,
-                        _template: 'table',
-                        _captcha: 'false',
-                        _autoresponse: `Your Trinitas registration code is ${otp}. It expires in 10 minutes. Enter it on the Careers page to finish creating your account.`,
-                        name: fullName || 'Candidate',
-                        email: toEmail,
-                        message: `Your Trinitas registration code is ${otp}. It expires in 10 minutes.\nhttps://trinitasnxt.in/careers.html`
-                    })
-                });
-                const data = await res.json().catch(() => ({}));
-                return res.ok && data.success !== false && String(data.success).toLowerCase() !== 'false';
-            } catch {
-                return false;
-            }
-        }
-
-        const resendBtn = document.getElementById('signup-otp-resend');
-        async function resendOtp() {
-            if (!otpPending || !resendBtn) return;
-            const email = form.email.value.trim().toLowerCase();
-            if (!email) {
-                showAlert(alert, 'Email is required to resend the code.', 'error');
-                return;
-            }
-            resendBtn.disabled = true;
-            const prev = resendBtn.textContent;
-            resendBtn.textContent = 'Sending…';
-            try {
-                const { ok, data } = await window.TrinitasAPI.candidateRegister({
-                    step: 'resend-otp',
-                    email
-                });
-                if (!ok || !data.success) {
-                    showAlert(alert, data.message || data.error || 'Could not resend the code.', 'error');
-                    resendBtn.disabled = false;
-                    resendBtn.textContent = prev;
-                    return;
-                }
-                const mailed = data.mailOtp
-                    ? await deliverOtpEmail(email, form.fullName.value.trim(), data.mailOtp)
-                    : !!data.emailed;
-                showAlert(
-                    alert,
-                    mailed
-                        ? `A new code was sent to ${email}. Check inbox and spam.`
-                        : `We could not send the email. Try Resend again in a minute.`,
-                    mailed ? 'success' : 'error'
-                );
-                let left = 45;
-                resendBtn.textContent = `Resend code (${left}s)`;
-                const tick = setInterval(() => {
-                    left -= 1;
-                    if (left <= 0) {
-                        clearInterval(tick);
-                        resendBtn.disabled = false;
-                        resendBtn.textContent = 'Resend code';
-                        return;
-                    }
-                    resendBtn.textContent = `Resend code (${left}s)`;
-                }, 1000);
-            } catch {
-                showAlert(alert, 'Unable to resend right now. Please try again shortly.', 'error');
-                resendBtn.disabled = false;
-                resendBtn.textContent = 'Resend code';
-            }
-        }
-        if (resendBtn) resendBtn.hidden = true;
-        resendBtn?.addEventListener('click', resendOtp);
-
-        const otpInput = document.getElementById('suOtp');
-        function syncSubmitEnabled() {
-            if (!button) return;
-            if (!otpPending) {
-                button.disabled = false;
-                button.textContent = 'Send verification code';
-                return;
-            }
-            button.textContent = 'Submit';
-            button.disabled = !/^\d{6}$/.test((otpInput?.value || '').trim());
-        }
-        otpInput?.addEventListener('input', () => {
-            otpInput.value = otpInput.value.replace(/\D/g, '').slice(0, 6);
-            syncSubmitEnabled();
-        });
 
         const referredSelect = document.getElementById('suReferredBy');
         const detailWrap = document.getElementById('referred-detail-wrap');
@@ -347,50 +253,6 @@
             const consent = form.consent.checked;
             const file = document.getElementById('suFile')?.files?.[0];
             const captchaAnswer = (form.captcha?.value || '').trim();
-            const otp = (form.otp?.value || '').trim();
-
-            if (otpPending) {
-                if (!/^\d{6}$/.test(otp)) {
-                    showAlert(alert, 'Enter the 6-digit code from your email.', 'error');
-                    return;
-                }
-                if (!button) return;
-                button.disabled = true;
-                button.textContent = 'Verifying…';
-                try {
-                    const { ok, data } = await window.TrinitasAPI.candidateRegister({
-                        step: 'complete',
-                        email,
-                        otp
-                    });
-                    if (!ok || !data.success) {
-                        showAlert(alert, data.message || data.error || 'Verification failed.', 'error');
-                        button.disabled = false;
-                        button.textContent = 'Submit';
-                        return;
-                    }
-                    if (data.token) {
-                        setCandidate({
-                            token: data.token,
-                            username: data.username,
-                            fullName: data.fullName,
-                            email: data.email,
-                            phone: data.phone,
-                            referenceId: data.referenceId || null
-                        });
-                        showLoggedIn(getCandidate());
-                        if (data.referenceId) {
-                            showAlert(alert, `Account created. Reference ID: ${data.referenceId}`, 'success');
-                        }
-                    }
-                } catch {
-                    showAlert(alert, 'Unable to verify right now. Please try again shortly.', 'error');
-                    button.disabled = false;
-                    button.textContent = 'Submit';
-                }
-                return;
-            }
-
             const strength = passwordStrength(password);
             if (!fullName || !email || !phone || !username || !consent) {
                 showAlert(alert, 'Please complete all required fields and accept the consent.', 'error');
@@ -413,13 +275,13 @@
                 return;
             }
             if (!captchaId || !captchaAnswer) {
-                showAlert(alert, 'Complete the captcha before we send a verification code.', 'error');
+                showAlert(alert, 'Complete the captcha before creating your account.', 'error');
                 return;
             }
 
             if (!button) return;
             button.disabled = true;
-            button.textContent = 'Sending code…';
+            button.textContent = 'Creating account…';
 
             try {
                 const fileBase64 = await new Promise((resolve, reject) => {
@@ -430,7 +292,6 @@
                 });
 
                 const { ok, data } = await window.TrinitasAPI.candidateRegister({
-                    step: 'send-otp',
                     fullName,
                     email,
                     phone,
@@ -447,37 +308,27 @@
                     captchaAnswer
                 });
                 if (!ok || !data.success) {
-                    showAlert(alert, data.message || data.error || 'Could not send the code.', 'error');
+                    showAlert(alert, data.message || data.error || 'Could not create the account.', 'error');
                     loadCaptcha();
                     button.disabled = false;
-                    button.textContent = 'Send verification code';
+                    button.textContent = 'Create account';
                     return;
                 }
-
-                const mailed = data.mailOtp
-                    ? await deliverOtpEmail(email, fullName, data.mailOtp)
-                    : !!data.emailed;
-                otpPending = true;
-                if (otpWrap) otpWrap.hidden = false;
-                if (captchaWrap) captchaWrap.hidden = true;
-                form.email.readOnly = true;
-                form.username.readOnly = true;
-                button.textContent = 'Submit';
-                button.disabled = true;
-                if (resendBtn) resendBtn.hidden = false;
-                showAlert(
-                    alert,
-                    mailed
-                        ? `We sent a 6-digit code to ${email}. Check inbox and spam, then enter it below.`
-                        : `We could not send the email. Wait a minute and tap Resend code.`,
-                    mailed ? 'success' : 'error'
-                );
-                document.getElementById('suOtp')?.focus();
+                setCandidate({
+                    token: data.token,
+                    username: data.username,
+                    fullName: data.fullName,
+                    email: data.email,
+                    phone: data.phone,
+                    referenceId: data.referenceId || null
+                });
+                showLoggedIn(getCandidate());
+                showAlert(alert, `Account created. Reference ID: ${data.referenceId}`, 'success');
             } catch {
                 showAlert(alert, 'Unable to register right now. Please try again shortly.', 'error');
                 loadCaptcha();
                 button.disabled = false;
-                button.textContent = 'Send verification code';
+                button.textContent = 'Create account';
             }
         });
     }

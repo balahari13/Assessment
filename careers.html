@@ -124,7 +124,7 @@
 
                         <div class="careers-card careers-cv-card" id="panel-signup">
                             <h3>Create account &amp; submit resume</h3>
-                            <p class="section-desc">Register with a username and password, complete the captcha, verify your email with an OTP, then start assessments.</p>
+                            <p class="section-desc">Register with a username and password, complete the captcha, then start assessments.</p>
                             <form class="register-form" id="signup-form" novalidate>
                                 <div class="form-field">
                                     <label for="suName">Full Name</label>
@@ -204,15 +204,7 @@
                                     </div>
                                     <input type="text" id="suCaptcha" name="captcha" required placeholder="Enter the letters shown" autocomplete="off" maxlength="8" spellcheck="false">
                                 </div>
-                                <div class="form-field" id="signup-otp-wrap" hidden>
-                                    <label for="suOtp">Email verification code</label>
-                                    <div class="otp-row">
-                                        <input type="text" id="suOtp" name="otp" placeholder="6-digit code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code">
-                                        <button type="button" class="btn btn-secondary" id="signup-otp-resend" hidden>Resend code</button>
-                                    </div>
-                                    <span class="field-hint">We email a 6-digit code (subject starts with the code). Check inbox and spam. It expires in 10 minutes.</span>
-                                </div>
-                                <button type="submit" class="btn btn-primary btn-full" id="signup-btn">Send verification code</button>
+                                <button type="submit" class="btn btn-primary btn-full" id="signup-btn">Create account</button>
                             </form>
                             <div id="signup-alert" class="form-alert" hidden></div>
                         </div>
