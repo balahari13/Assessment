@@ -1,4 +1,4 @@
-import { createHash, randomBytes, randomInt, timingSafeEqual } from 'crypto';
+import { createHash, randomBytes, timingSafeEqual } from 'crypto';
 import {
     corsHeaders,
     jsonResponse,
@@ -8,27 +8,17 @@ import {
 } from './lib/shared.mjs';
 import { hashPassword } from './lib/password.mjs';
 import { writeAudit } from './lib/audit.mjs';
-import { sendTransactionalEmail } from './lib/send-mail.mjs';
 
 const CANDIDATE_INDEX = 'candidate-index';
 const MAX_BYTES = 1.5 * 1024 * 1024;
-const OTP_TTL_MS = 10 * 60 * 1000;
 const ALLOWED_SOURCES = ['Job portal', 'LinkedIn', 'Friends', 'Word of mouth', 'Employee referral'];
 
 function candidateKey(username) {
     return `candidate:${String(username || '').trim().toLowerCase()}`;
 }
 
-function pendingKey(email) {
-    return `reg-pending:${normalizeEmail(email)}`;
-}
-
 function captchaKey(id) {
     return `reg-captcha:${id}`;
-}
-
-function hashOtp(otp, email) {
-    return createHash('sha256').update(`${otp}:${normalizeEmail(email)}:trinitas-register`).digest('hex');
 }
 
 function hashCaptcha(id, answer) {
@@ -91,30 +81,6 @@ async function consumeCaptcha(store, id, answer) {
     await store.delete(captchaKey(id));
     if (Date.now() > Number(rec.expiresAt || 0)) return false;
     return safeEqualHex(rec.hash, hashCaptcha(id, answer));
-}
-
-async function sendRegisterOtpEmail(toEmail, fullName, otp, origin) {
-    const text = [
-        `Hello ${fullName || ''},`.trim(),
-        '',
-        `Your Trinitas registration code is: ${otp}`,
-        '',
-        'Enter this 6-digit code on the Careers page to finish creating your account.',
-        'The code expires in 10 minutes.',
-        '',
-        'If you did not start a registration, you can ignore this email.',
-        '',
-        '— Trinitas NextGen Business Solutions',
-        'https://trinitasnxt.in/careers.html'
-    ].join('\n');
-    const result = await sendTransactionalEmail({
-        to: toEmail,
-        fullName,
-        subject: `${otp} is your Trinitas verification code`,
-        text,
-        origin
-    });
-    return result.ok;
 }
 
 async function createAccount(store, pending) {
@@ -201,81 +167,7 @@ export default async (req, context) => {
 
     try {
         const body = await req.json();
-        const step = String(body.step || 'send-otp');
         const store = getAssessmentStore(context);
-
-        if (step === 'complete') {
-            const email = normalizeEmail(body.email);
-            const otp = String(body.otp || '').trim();
-            if (!email || !/^\d{6}$/.test(otp)) {
-                return jsonResponse(400, { error: 'validation', message: 'Enter the 6-digit code sent to your email.' }, origin);
-            }
-            const pendingRaw = await store.get(pendingKey(email), { type: 'text' });
-            if (!pendingRaw) {
-                return jsonResponse(400, { error: 'otp_expired', message: 'That code has expired. Request a new one and try again.' }, origin);
-            }
-            const pending = JSON.parse(pendingRaw);
-            if (Date.now() > Number(pending.otpExpiresAt || 0)) {
-                await store.delete(pendingKey(email));
-                return jsonResponse(400, { error: 'otp_expired', message: 'That code has expired. Request a new one and try again.' }, origin);
-            }
-            if (!safeEqualHex(pending.otpHash, hashOtp(otp, email))) {
-                return jsonResponse(400, { error: 'invalid_otp', message: 'That code is not correct. Check the email and try again.' }, origin);
-            }
-            const existing = await store.get(candidateKey(pending.username), { type: 'text' });
-            if (existing) {
-                await store.delete(pendingKey(email));
-                return jsonResponse(409, { error: 'exists', message: 'That username is already taken. Choose another or sign in.' }, origin);
-            }
-            const created = await createAccount(store, pending);
-            await store.delete(pendingKey(email));
-            return jsonResponse(200, {
-                success: true,
-                ...created,
-                message: `Account created. Your reference ID is ${created.referenceId}. You can start Attempt 1 now.`
-            }, origin);
-        }
-
-        if (step === 'resend-otp') {
-            const email = normalizeEmail(body.email);
-            if (!email || !email.includes('@')) {
-                return jsonResponse(400, { error: 'validation', message: 'Email is required to resend the code.' }, origin);
-            }
-            const pendingRaw = await store.get(pendingKey(email), { type: 'text' });
-            if (!pendingRaw) {
-                return jsonResponse(400, { error: 'otp_expired', message: 'No pending registration found. Start again from the form.' }, origin);
-            }
-            const pending = JSON.parse(pendingRaw);
-            const lastSent = Number(pending.lastSentAt || pending.createdAt || 0);
-            const lastMs = Number.isFinite(lastSent) ? lastSent : Date.parse(pending.createdAt) || 0;
-            if (Date.now() - lastMs < 45 * 1000) {
-                return jsonResponse(429, {
-                    error: 'too_soon',
-                    message: 'Please wait about a minute before requesting another code.'
-                }, origin);
-            }
-            const resends = Number(pending.resendCount || 0);
-            if (resends >= 8) {
-                return jsonResponse(429, {
-                    error: 'too_many',
-                    message: 'Too many codes requested. Wait a few minutes or start registration again.'
-                }, origin);
-            }
-            const otp = String(randomInt(100000, 999999));
-            pending.otpHash = hashOtp(otp, email);
-            pending.otpExpiresAt = Date.now() + OTP_TTL_MS;
-            pending.lastSentAt = Date.now();
-            pending.resendCount = resends + 1;
-            await store.set(pendingKey(email), JSON.stringify(pending));
-            sendRegisterOtpEmail(email, pending.fullName, otp, origin).catch(() => {});
-            return jsonResponse(200, {
-                success: true,
-                step: 'otp_sent',
-                email,
-                mailOtp: otp,
-                message: `Enter the 6-digit code sent to ${email}. Check inbox and spam.`
-            }, origin);
-        }
 
         const fullName = String(body.fullName || '').trim();
         const email = normalizeEmail(body.email);
@@ -327,8 +219,7 @@ export default async (req, context) => {
         }
 
         const { salt, passwordHash } = hashPassword(password);
-        const otp = String(randomInt(100000, 999999));
-        const pending = {
+        const registration = {
             fullName,
             email,
             phone,
@@ -342,20 +233,13 @@ export default async (req, context) => {
             fileName,
             fileType,
             fileBase64,
-            otpHash: hashOtp(otp, email),
-            otpExpiresAt: Date.now() + OTP_TTL_MS,
-            lastSentAt: Date.now(),
-            resendCount: 0,
             createdAt: new Date().toISOString()
         };
-        await store.set(pendingKey(email), JSON.stringify(pending));
-        sendRegisterOtpEmail(email, fullName, otp, origin).catch(() => {});
+        const created = await createAccount(store, registration);
         return jsonResponse(200, {
             success: true,
-            step: 'otp_sent',
-            email,
-            mailOtp: otp,
-            message: `Enter the 6-digit code sent to ${email}. Check inbox and spam.`
+            ...created,
+            message: `Account created. Your reference ID is ${created.referenceId}. You can start Attempt 1 now.`
         }, origin);
     } catch (err) {
         console.error('candidate-register error:', err);
