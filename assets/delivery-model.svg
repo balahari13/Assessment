@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 400" fill="none">
+  <defs>
+    <pattern id="grid" x="28" y="11" width="28" height="28" patternUnits="userSpaceOnUse">
+      <path d="M28 0H0v28" stroke="#c1d2bb" stroke-opacity=".18"/>
+    </pattern>
+    <radialGradient id="field">
+      <stop stop-color="#456653"/>
+      <stop offset="1" stop-color="#203e32"/>
+    </radialGradient>
+  </defs>
+  <path fill="url(#field)" d="M0 0h560v400H0z"/>
+  <path fill="url(#grid)" d="M28 11h504v378H28z"/>
+  <g stroke="#96ab91" stroke-width="1">
+    <path d="M28 30V11h19m466 0h19v19M28 370v19h19m466 0h19v-19"/>
+    <path d="M52 200h456M280 28v344" stroke-dasharray="2 6" opacity=".7"/>
+    <circle cx="280" cy="200" r="154" stroke-dasharray="2 6"/>
+    <circle cx="280" cy="200" r="111" opacity=".45"/>
+  </g>
+  <g stroke="#e5f394" stroke-width="1.5">
+    <ellipse cx="280" cy="200" rx="191" ry="60" transform="rotate(-30 280 200)"/>
+    <ellipse cx="280" cy="200" rx="191" ry="60" transform="rotate(30 280 200)" opacity=".75"/>
+    <ellipse cx="280" cy="200" rx="171" ry="60" transform="rotate(90 280 200)" opacity=".45"/>
+  </g>
+  <g fill="#e5f394" stroke="#254335" stroke-width="2">
+    <circle cx="112" cy="290" r="7"/>
+    <circle cx="437" cy="298" r="7"/>
+    <circle cx="446" cy="105" r="7"/>
+    <circle cx="280" cy="29" r="5"/>
+    <circle cx="280" cy="371" r="5"/>
+    <circle cx="125" cy="100" r="5"/>
+    <circle cx="280" cy="200" r="52"/>
+  </g>
+  <circle cx="280" cy="200" r="43" stroke="#254335" stroke-opacity=".55"/>
+  <path d="m280 166 6 28 28 6-28 6-6 28-6-28-28-6 28-6z" fill="#254335"/>
+  <g stroke="#b8cfad" stroke-linecap="square" opacity=".8">
+    <path d="M72 64h12m-6-6v12m398 258h12m-6-6v12M68 346h12m-6-6v12m409-294h12m-6-6v12"/>
+    <path d="M446 105h53m-387 185H60m377 8h59" stroke-dasharray="2 4"/>
+  </g>
+</svg>
